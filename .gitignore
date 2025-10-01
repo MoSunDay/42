@@ -1,0 +1,42 @@
+# Love2D
+*.love
+
+# macOS
+.DS_Store
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+.directory
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~
+
+# Build artifacts
+build/
+dist/
+*.exe
+*.app
+*.dmg
+
+# Large asset files (optional - uncomment if using Git LFS)
+# game/assets/images/*.png
+# game/assets/sounds/*.ogg
+# game/assets/sounds/*.wav
+
