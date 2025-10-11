@@ -274,5 +274,23 @@ function Player:levelUp()
     self.defense = self.defense + 1
 end
 
+-- Set equipment system
+function Player:setEquipmentSystem(equipSystem)
+    self.equipmentSystem = equipSystem
+    self:updateStatsWithEquipment()
+end
+
+-- Update stats with equipment bonuses
+function Player:updateStatsWithEquipment()
+    if not self.equipmentSystem then
+        return
+    end
+
+    local equipStats = self.equipmentSystem:getTotalStats()
+    self.attack = self.baseAttack + equipStats.attack
+    self.defense = self.baseDefense + equipStats.defense
+    self.battleSpeed = 6 + equipStats.speed
+end
+
 return Player
 

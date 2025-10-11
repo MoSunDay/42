@@ -88,3 +88,12 @@ function love.textinput(text)
     end
 end
 
+function love.mousepressed(x, y, button)
+    -- Handle login mouse input
+    if game.state and game.state:getMode() == "login" then
+        game.state:mousepressed(x, y, button)
+    elseif game.inputSystem then
+        game.inputSystem:mousepressed(x, y, button)
+    end
+end
+

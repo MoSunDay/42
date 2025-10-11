@@ -7,6 +7,7 @@ local Camera = require("core.camera")
 local EncounterZone = require("entities.encounter_zone")
 local BattleSystem = require("systems.battle_system")
 local AudioSystem = require("systems.audio_system")
+local EquipmentSystem = require("systems.equipment_system")
 local AccountManager = require("account.account_manager")
 local LoginUI = require("account.login_ui")
 
@@ -63,14 +64,22 @@ function GameState:initializeWorld(character)
     self.player = Player.new(character.x, character.y, self.assetManager)
     self.player:setAnimationManager(self.animationManager)
 
+    -- Equipment system
+    self.equipmentSystem = EquipmentSystem.new()
+    if character.equipment then
+        self.equipmentSystem:deserialize(character.equipment)
+    end
+    self.player:setEquipmentSystem(self.equipmentSystem)
+
     -- Sync player stats with character data
     self.player.level = character.level
     self.player.exp = character.exp
     self.player.gold = character.gold
     self.player.maxHp = character.maxHp
     self.player.hp = character.hp
-    self.player.attack = character.attack
-    self.player.defense = character.defense
+    self.player.baseAttack = character.attack
+    self.player.baseDefense = character.defense
+    self.player:updateStatsWithEquipment()
     -- Don't override movement speed, keep default 250
     -- self.player.speed is for movement, character.speed is for battle
 
@@ -257,6 +266,17 @@ end
 function GameState:keypressed(key)
     if self.mode == GAME_MODE.LOGIN then
         local character = self.loginUI:keypressed(key)
+        if character then
+            -- Login successful, initialize world
+            self:initializeWorld(character)
+        end
+    end
+end
+
+-- Handle login mouse press
+function GameState:mousepressed(x, y, button)
+    if self.mode == GAME_MODE.LOGIN then
+        local character = self.loginUI:mousepressed(x, y, button)
         if character then
             -- Login successful, initialize world
             self:initializeWorld(character)
