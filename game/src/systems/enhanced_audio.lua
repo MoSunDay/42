@@ -112,8 +112,10 @@ function EnhancedAudio.generateBGM(theme, duration)
         leftValue = math.max(-1, math.min(1, leftValue))
         rightValue = math.max(-1, math.min(1, rightValue))
 
-        -- Love2D uses 1-based channel indexing for stereo (1=left, 2=right)
-        soundData:setSample(i, leftValue, rightValue)
+        -- Love2D setSample for stereo: setSample(sample_index, channel, value)
+        -- Channel 1 = left, Channel 2 = right (1-based indexing)
+        soundData:setSample(i, 1, leftValue)
+        soundData:setSample(i, 2, rightValue)
     end
     
     return love.audio.newSource(soundData)
@@ -165,7 +167,8 @@ function EnhancedAudio.generateBattleBGM(duration)
         leftValue = math.max(-1, math.min(1, leftValue))
         rightValue = math.max(-1, math.min(1, rightValue))
 
-        soundData:setSample(i, leftValue, rightValue)
+        soundData:setSample(i, 1, leftValue)
+        soundData:setSample(i, 2, rightValue)
     end
     
     return love.audio.newSource(soundData)

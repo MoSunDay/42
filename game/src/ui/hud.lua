@@ -51,11 +51,6 @@ function HUD:drawMinimap(playerX, playerY, mapWidth, mapHeight)
     love.graphics.rectangle("line", mm.x, mm.y, mm.size, mm.size, 5, 5)
     love.graphics.setLineWidth(1)
 
-    -- Title
-    love.graphics.setFont(self.fontLarge)
-    love.graphics.setColor(0.4, 0.7, 1.0)
-    love.graphics.print("Minimap", mm.x + 10, mm.y - 25)
-
     -- Draw map area (simplified grid with town roads)
     local gridSize = mm.size / 10
     for i = 0, 9 do
