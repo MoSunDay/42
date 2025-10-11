@@ -36,14 +36,18 @@ function love.load()
     -- Initialize game state
     game.state = GameState.new(game.assetManager)
 
-    -- Initialize systems
-    game.inputSystem = InputSystem.new(game.state)
+    -- Initialize render system first (to get battleUI)
     game.renderSystem = RenderSystem.new(game.state, game.assetManager)
+
+    -- Initialize input system with battleUI
+    game.inputSystem = InputSystem.new(game.state, game.renderSystem:getBattleUI())
 
     -- Set background color
     love.graphics.setBackgroundColor(0.15, 0.15, 0.2)
 
     print("Game loaded successfully!")
+    print("Battle System Active - Walk around to encounter enemies!")
+    print("Battle Controls: WASD/Arrows to navigate, Enter/Space to confirm")
 end
 
 function love.update(dt)
@@ -67,6 +71,8 @@ end
 function love.keypressed(key)
     if key == "escape" then
         love.event.quit()
+    elseif game.inputSystem then
+        game.inputSystem:keypressed(key)
     end
 end
 
