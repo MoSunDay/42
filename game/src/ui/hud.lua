@@ -21,14 +21,6 @@ function HUD.new(assetManager)
         padding = 10
     }
 
-    -- Coordinate panel config
-    self.coordPanel = {
-        x = 20,
-        y = 20,
-        width = 220,
-        height = 70
-    }
-
     -- Fonts
     self.font = assetManager:getFont("default")
     self.fontLarge = assetManager:getFont("large")
@@ -38,42 +30,11 @@ end
 
 -- Draw HUD
 function HUD:draw(playerX, playerY, mapWidth, mapHeight)
-    -- Draw coordinate panel
-    self:drawCoordinatePanel(playerX, playerY)
-
-    -- Draw minimap
+    -- Draw minimap with coordinates below
     self:drawMinimap(playerX, playerY, mapWidth, mapHeight)
 
     -- Draw FPS
     self:drawFPS()
-end
-
--- Draw coordinate panel
-function HUD:drawCoordinatePanel(playerX, playerY)
-    local panel = self.coordPanel
-
-    -- Background
-    love.graphics.setColor(0, 0, 0, 0.75)
-    love.graphics.rectangle("fill", panel.x, panel.y, panel.width, panel.height, 5, 5)
-
-    -- Border
-    love.graphics.setColor(0.4, 0.7, 1.0, 0.8)
-    love.graphics.setLineWidth(2)
-    love.graphics.rectangle("line", panel.x, panel.y, panel.width, panel.height, 5, 5)
-    love.graphics.setLineWidth(1)
-
-    -- Title
-    love.graphics.setFont(self.fontLarge)
-    love.graphics.setColor(0.4, 0.7, 1.0)
-    love.graphics.print("Position", panel.x + 10, panel.y + 8)
-
-    -- Coordinate info
-    love.graphics.setFont(self.font)
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.print(string.format("X: %.0f", playerX), panel.x + 15, panel.y + 35)
-    love.graphics.print(string.format("Y: %.0f", playerY), panel.x + 120, panel.y + 35)
-
-    love.graphics.setColor(1, 1, 1)
 end
 
 -- Draw minimap
@@ -130,6 +91,24 @@ function HUD:drawMinimap(playerX, playerY, mapWidth, mapHeight)
 
     love.graphics.setColor(1, 1, 1)
     love.graphics.circle("line", playerMinimapX, playerMinimapY, 5)
+
+    -- Draw coordinates below minimap
+    local coordY = mm.y + mm.size + 10
+
+    -- Background for coordinates
+    love.graphics.setColor(0, 0, 0, 0.75)
+    love.graphics.rectangle("fill", mm.x, coordY, mm.size, 30, 5, 5)
+
+    -- Border
+    love.graphics.setColor(0.4, 0.7, 1.0, 0.8)
+    love.graphics.setLineWidth(2)
+    love.graphics.rectangle("line", mm.x, coordY, mm.size, 30, 5, 5)
+    love.graphics.setLineWidth(1)
+
+    -- Coordinate text
+    love.graphics.setFont(self.font)
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.print(string.format("X: %.0f  Y: %.0f", playerX, playerY), mm.x + 10, coordY + 8)
 
     love.graphics.setColor(1, 1, 1)
 end

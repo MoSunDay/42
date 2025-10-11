@@ -89,20 +89,25 @@ end
 
 -- Draw player character
 function BattleUI:drawPlayer(player, x, y)
+    -- Get character avatar color
+    local AccountManager = require("account.account_manager")
+    local character = AccountManager.getCurrentCharacter()
+    local avatarColor = character and character.avatarColor or {0.2, 0.6, 1.0}
+
     -- Draw shadow
     love.graphics.setColor(0, 0, 0, 0.3)
     love.graphics.ellipse("fill", x, y + 40, 25, 10)
-    
-    -- Draw player (blue circle)
-    love.graphics.setColor(0.2, 0.6, 1.0)
+
+    -- Draw player (use avatar color)
+    love.graphics.setColor(avatarColor)
     love.graphics.circle("fill", x, y, 20)
-    
+
     -- Draw direction indicator
     love.graphics.setColor(1, 1, 1)
     love.graphics.circle("fill", x, y - 10, 4)
-    
+
     -- Draw border
-    love.graphics.setColor(0.1, 0.4, 0.8)
+    love.graphics.setColor(avatarColor[1] * 0.5, avatarColor[2] * 0.5, avatarColor[3] * 0.5)
     love.graphics.setLineWidth(2)
     love.graphics.circle("line", x, y, 20)
     love.graphics.setLineWidth(1)

@@ -3,6 +3,7 @@
 
 local UI = require("ui.hud")
 local BattleUI = require("ui.battle_ui")
+local AvatarRenderer = require("account.avatar_renderer")
 
 local RenderSystem = {}
 RenderSystem.__index = RenderSystem
@@ -24,10 +25,20 @@ end
 function RenderSystem:render()
     local mode = self.gameState:getMode()
 
-    if mode == "exploration" then
+    if mode == "login" then
+        self:renderLogin()
+    elseif mode == "exploration" then
         self:renderExploration()
     elseif mode == "battle" then
         self:renderBattle()
+    end
+end
+
+-- Render login screen
+function RenderSystem:renderLogin()
+    local loginUI = self.gameState:getLoginUI()
+    if loginUI then
+        loginUI:draw()
     end
 end
 
@@ -67,6 +78,14 @@ end
 function RenderSystem:renderUI()
     local playerX, playerY = self.gameState:getPlayerPosition()
     self.hud:draw(playerX, playerY, self.gameState.map.width, self.gameState.map.height)
+
+    -- Draw character info panel
+    local AccountManager = require("account.account_manager")
+    local character = AccountManager.getCurrentCharacter()
+    if character then
+        local w, h = love.graphics.getDimensions()
+        AvatarRenderer.drawCharacterPanel(10, 10, 200, 200, character, self.assetManager.fonts.default)
+    end
 end
 
 -- Get battle UI (for input system)

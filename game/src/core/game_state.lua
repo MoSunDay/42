@@ -66,7 +66,8 @@ function GameState:initializeWorld(character)
     self.player.hp = character.hp
     self.player.attack = character.attack
     self.player.defense = character.defense
-    self.player.speed = character.speed
+    -- Don't override movement speed, keep default 250
+    -- self.player.speed is for movement, character.speed is for battle
 
     -- 设置玩家的地图边界
     self.player:setMapBounds(self.map.width, self.map.height)
@@ -191,11 +192,33 @@ function GameState:endBattle()
         self.audioSystem:playSFX("defeat")
     end
 
+    -- Sync player data to character
+    self:syncPlayerToCharacter()
+
     -- Return to exploration mode
     self.mode = GAME_MODE.EXPLORATION
 
     -- Switch back to exploration music
     self.audioSystem:playBGM("exploration")
+end
+
+-- Sync player data to character (save progress)
+function GameState:syncPlayerToCharacter()
+    local character = AccountManager.getCurrentCharacter()
+    if character and self.player then
+        character.level = self.player.level
+        character.exp = self.player.exp
+        character.gold = self.player.gold
+        character.hp = self.player.hp
+        character.maxHp = self.player.maxHp
+        character.attack = self.player.attack
+        character.defense = self.player.defense
+        character.x = self.player.x
+        character.y = self.player.y
+
+        -- Save to account manager
+        AccountManager.saveCharacter()
+    end
 end
 
 -- Get game mode
