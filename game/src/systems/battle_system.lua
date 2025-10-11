@@ -3,6 +3,8 @@
 
 local Enemy = require("entities.enemy")
 local BattleAnimation = require("systems.battle_animation")
+local BattleLog = require("src.systems.battle_log")
+local BattleAI = require("src.systems.battle_ai")
 
 local BattleSystem = {}
 BattleSystem.__index = BattleSystem
@@ -27,7 +29,7 @@ function BattleSystem.new(player, audioSystem, animationManager)
     self.turn = 1
     self.selectedAction = nil
     self.selectedTarget = nil
-    self.battleLog = {}
+    self.battleLog = BattleLog.new()
     self.introTimer = 0
     self.actionTimer = 0
     self.isActive = false
@@ -69,7 +71,7 @@ function BattleSystem:startBattle(enemyCount)
     -- Reset battle state
     self.state = BATTLE_STATE.INTRO
     self.turn = 1
-    self.battleLog = {}
+    self.battleLog:clear()
     self.introTimer = 1.5  -- 1.5 second intro
     self.isActive = true
     
@@ -272,7 +274,7 @@ function BattleSystem:executeNextEnemyAttack()
         if enemy:isAlive() then
             -- Found an alive enemy, execute their action
             self.actionTimer = 0.8  -- Delay between enemy attacks
-            local action = enemy:decideAction(self.player)
+            local action = BattleAI.enemyAction(enemy, self.player)
 
             if action == "attack" then
                 -- Add enemy attack animation
@@ -372,10 +374,7 @@ end
 
 -- Add to battle log
 function BattleSystem:addLog(message)
-    table.insert(self.battleLog, message)
-    if #self.battleLog > 10 then
-        table.remove(self.battleLog, 1)
-    end
+    self.battleLog:add(message)
 end
 
 -- Get battle state
@@ -385,7 +384,7 @@ end
 
 -- Get battle log
 function BattleSystem:getLog()
-    return self.battleLog
+    return self.battleLog:getMessages()
 end
 
 -- Get enemies
@@ -435,21 +434,17 @@ function BattleSystem:autoExecutePlayerAction()
         return
     end
 
-    -- Simple AI: always attack the first alive enemy
-    local aliveEnemies = self:getAliveEnemies()
-    if #aliveEnemies > 0 then
-        -- Find first alive enemy
-        for i, enemy in ipairs(self.enemies) do
-            if enemy:isAlive() then
-                self.selectedTarget = i
-                break
-            end
-        end
-
-        -- Execute attack
-        self.selectedAction = "attack"
+    local action, target = BattleAI.autoPlayerAction(self)
+    if action and target then
+        self.selectedAction = action
+        self.selectedTarget = target
         self:executePlayerAction()
     end
+end
+
+-- Get animation manager
+function BattleSystem:getAnimationManager()
+    return self.animationManager
 end
 
 -- Export battle states

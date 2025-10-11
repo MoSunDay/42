@@ -1,6 +1,8 @@
 -- battle_ui.lua - Battle UI rendering
 -- Displays battle scene, HP bars, action menu, and battle log
 
+local BattleBackground = require("src.ui.battle_background")
+
 local BattleUI = {}
 BattleUI.__index = BattleUI
 
@@ -41,10 +43,10 @@ function BattleUI:draw(battleSystem, player)
     local h = self.screenHeight
     
     -- Draw diagonal gradient background (bottom-left to top-right)
-    self:drawDiagonalBackground(w, h)
+    BattleBackground.draw(w, h)
 
     -- Draw player (right bottom corner)
-    self:drawPlayer(player, w * 0.75, h * 0.7)
+    self:drawPlayer(player, w * 0.75, h * 0.7, battleSystem:getAnimationManager())
 
     -- Draw enemies (left top area)
     local enemies = battleSystem:getEnemies()
@@ -88,29 +90,43 @@ function BattleUI:draw(battleSystem, player)
 end
 
 -- Draw player character
-function BattleUI:drawPlayer(player, x, y)
+function BattleUI:drawPlayer(player, x, y, animationManager)
     -- Get character avatar color
     local AccountManager = require("account.account_manager")
     local character = AccountManager.getCurrentCharacter()
     local avatarColor = character and character.avatarColor or {0.2, 0.6, 1.0}
 
+    -- Get animation transform
+    local offsetX, offsetY, rotation, scaleX, scaleY = 0, 0, 0, 1, 1
+    if animationManager and player.animationId then
+        offsetX, offsetY, rotation, scaleX, scaleY = animationManager:getTransform(player.animationId)
+    end
+
+    -- Apply transform
+    love.graphics.push()
+    love.graphics.translate(x + offsetX, y + offsetY)
+    love.graphics.rotate(rotation)
+    love.graphics.scale(scaleX, scaleY)
+
     -- Draw shadow
     love.graphics.setColor(0, 0, 0, 0.3)
-    love.graphics.ellipse("fill", x, y + 40, 25, 10)
+    love.graphics.ellipse("fill", 0, 40, 25, 10)
 
     -- Draw player (use avatar color)
     love.graphics.setColor(avatarColor)
-    love.graphics.circle("fill", x, y, 20)
+    love.graphics.circle("fill", 0, 0, 20)
 
     -- Draw direction indicator
     love.graphics.setColor(1, 1, 1)
-    love.graphics.circle("fill", x, y - 10, 4)
+    love.graphics.circle("fill", 0, -10, 4)
 
     -- Draw border
     love.graphics.setColor(avatarColor[1] * 0.5, avatarColor[2] * 0.5, avatarColor[3] * 0.5)
     love.graphics.setLineWidth(2)
-    love.graphics.circle("line", x, y, 20)
+    love.graphics.circle("line", 0, 0, 20)
     love.graphics.setLineWidth(1)
+
+    love.graphics.pop()
 end
 
 -- Draw enemy
@@ -346,49 +362,6 @@ end
 -- Set selected enemy (for mouse click)
 function BattleUI:setSelectedEnemy(index)
     self.selectedEnemy = index
-end
-
--- Draw diagonal gradient background (bottom-left to top-right)
-function BattleUI:drawDiagonalBackground(w, h)
-    -- Draw using triangular strips for diagonal gradient
-    -- Bottom-left is darker, top-right is lighter
-
-    local segments = 20  -- Number of gradient segments
-
-    for i = 0, segments do
-        local t = i / segments
-
-        -- Color interpolation from dark (bottom-left) to light (top-right)
-        local r = 0.1 + t * 0.15  -- 0.1 to 0.25
-        local g = 0.1 + t * 0.15  -- 0.1 to 0.25
-        local b = 0.15 + t * 0.15 -- 0.15 to 0.3
-
-        love.graphics.setColor(r, g, b, 0.95)
-
-        -- Draw diagonal strips
-        local x1 = (i / segments) * w
-        local y1 = 0
-        local x2 = ((i + 1) / segments) * w
-        local y2 = 0
-        local x3 = 0
-        local y3 = (i / segments) * h
-        local x4 = 0
-        local y4 = ((i + 1) / segments) * h
-
-        -- Top triangle
-        if x1 < w then
-            love.graphics.polygon("fill", x1, y1, x2, y2, w, h * (i / segments), w, h * ((i + 1) / segments))
-        end
-
-        -- Bottom triangle
-        if y3 < h then
-            love.graphics.polygon("fill", x3, y3, x4, y4, w * (i / segments), h, w * ((i + 1) / segments), h)
-        end
-    end
-
-    -- Draw battle ground overlay
-    love.graphics.setColor(0.3, 0.25, 0.2, 0.3)
-    love.graphics.rectangle("fill", 0, h * 0.6, w, h * 0.4)
 end
 
 return BattleUI

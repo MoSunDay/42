@@ -40,3 +40,5 @@ dist/
 # game/assets/sounds/*.ogg
 # game/assets/sounds/*.wav
 
+./env
+./venv
