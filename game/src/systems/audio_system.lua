@@ -1,23 +1,26 @@
 -- audio_system.lua - Audio management system
 -- Handles background music and sound effects
 
+local EnhancedAudio = require("src.systems.enhanced_audio")
+
 local AudioSystem = {}
 AudioSystem.__index = AudioSystem
 
 function AudioSystem.new()
     local self = setmetatable({}, AudioSystem)
-    
+
     -- Music
     self.bgm = nil
-    self.bgmVolume = 0.5
-    
+    self.bgmVolume = 0.3
+    self.currentTheme = nil
+
     -- Sound effects
     self.sfx = {}
     self.sfxVolume = 0.7
-    
+
     -- Generate procedural sounds
     self:generateSounds()
-    
+
     return self
 end
 
@@ -60,44 +63,31 @@ end
 
 -- Play background music
 function AudioSystem:playBGM(mode)
+    -- Don't restart if already playing same theme
+    if self.currentTheme == mode and self.bgm and self.bgm:isPlaying() then
+        return
+    end
+
     -- Stop current music
     if self.bgm then
         self.bgm:stop()
     end
 
-    -- Generate background music with better melodies
-    if mode == "exploration" then
-        -- Peaceful exploration melody (C major scale with harmony)
-        -- C - E - G - E - F - D - E - C (I - III - V - III - IV - II - III - I)
-        self.bgm = self:createHarmonyMelody({
-            {262, 330, 392},  -- C major chord
-            {330, 392, 523},  -- E minor chord
-            {392, 494, 587},  -- G major chord
-            {330, 392, 523},  -- E minor chord
-            {349, 440, 523},  -- F major chord
-            {294, 370, 440},  -- D minor chord
-            {330, 392, 523},  -- E minor chord
-            {262, 330, 392},  -- C major chord
-        }, 0.6)
-    elseif mode == "battle" then
-        -- Intense battle melody (A minor with tension)
-        -- A - C - D - E - D - C - B - A
-        self.bgm = self:createHarmonyMelody({
-            {440, 523, 659},  -- A minor chord
-            {523, 659, 784},  -- C major chord
-            {587, 698, 880},  -- D major chord
-            {659, 784, 988},  -- E minor chord
-            {587, 698, 880},  -- D major chord
-            {523, 659, 784},  -- C major chord
-            {494, 587, 740},  -- B diminished
-            {440, 523, 659},  -- A minor chord
-        }, 0.45)
+    -- Generate enhanced background music
+    if mode == "battle" then
+        self.bgm = EnhancedAudio.generateBattleBGM(8.0)
+    elseif mode == "spring" or mode == "summer" or mode == "autumn" or mode == "winter" then
+        self.bgm = EnhancedAudio.generateSeasonalBGM(mode, 8.0)
+    else
+        -- Default exploration music
+        self.bgm = EnhancedAudio.generateBGM("exploration", 8.0)
     end
 
     if self.bgm then
         self.bgm:setLooping(true)
         self.bgm:setVolume(self.bgmVolume)
         self.bgm:play()
+        self.currentTheme = mode
     end
 end
 

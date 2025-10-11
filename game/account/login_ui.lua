@@ -36,7 +36,13 @@ function LoginUI.new()
     self.titleFont = love.graphics.newFont(32)
     self.normalFont = love.graphics.newFont(18)
     self.smallFont = love.graphics.newFont(14)
-    
+
+    -- UI element positions (will be calculated in draw)
+    self.usernameFieldRect = {x = 0, y = 0, width = 0, height = 0}
+    self.passwordFieldRect = {x = 0, y = 0, width = 0, height = 0}
+    self.loginButtonRect = {x = 0, y = 0, width = 0, height = 0}
+    self.registerButtonRect = {x = 0, y = 0, width = 0, height = 0}
+
     return self
 end
 
@@ -81,18 +87,27 @@ function LoginUI:draw()
     love.graphics.rectangle("line", panelX, panelY, panelW, panelH, 10, 10)
     
     -- Username field
-    self:drawInputField("Username:", self.username, panelX + 30, panelY + 60, 
-        panelW - 60, self.selectedField == "username")
-    
+    self.usernameFieldRect = {x = panelX + 30, y = panelY + 60, width = panelW - 60, height = 40}
+    self:drawInputField("Username:", self.username, self.usernameFieldRect.x, self.usernameFieldRect.y,
+        self.usernameFieldRect.width, self.selectedField == "username")
+
     -- Password field
-    self:drawInputField("Password:", self.passwordDisplay, panelX + 30, panelY + 150, 
-        panelW - 60, self.selectedField == "password")
-    
+    self.passwordFieldRect = {x = panelX + 30, y = panelY + 150, width = panelW - 60, height = 40}
+    self:drawInputField("Password:", self.passwordDisplay, self.passwordFieldRect.x, self.passwordFieldRect.y,
+        self.passwordFieldRect.width, self.selectedField == "password")
+
     -- Login button
-    self:drawButton("Login", panelX + 30, panelY + 240, 160, 40, false)
-    
+    self.loginButtonRect = {x = panelX + 30, y = panelY + 240, width = 160, height = 40}
+    local mx, my = love.mouse.getPosition()
+    local loginHover = self:isMouseOver(self.loginButtonRect, mx, my)
+    self:drawButton("Login", self.loginButtonRect.x, self.loginButtonRect.y,
+        self.loginButtonRect.width, self.loginButtonRect.height, false, loginHover)
+
     -- Register button (placeholder)
-    self:drawButton("Register", panelX + 210, panelY + 240, 160, 40, true)
+    self.registerButtonRect = {x = panelX + 210, y = panelY + 240, width = 160, height = 40}
+    local registerHover = self:isMouseOver(self.registerButtonRect, mx, my)
+    self:drawButton("Register", self.registerButtonRect.x, self.registerButtonRect.y,
+        self.registerButtonRect.width, self.registerButtonRect.height, true, registerHover)
     
     -- Error message
     if self.errorMessage ~= "" then
@@ -150,20 +165,27 @@ function LoginUI:drawInputField(label, text, x, y, width, selected)
 end
 
 -- Draw button
-function LoginUI:drawButton(text, x, y, width, height, disabled)
+function LoginUI:drawButton(text, x, y, width, height, disabled, hover)
     -- Background
     if disabled then
         love.graphics.setColor(0.3, 0.3, 0.35)
+    elseif hover then
+        love.graphics.setColor(0.4, 0.6, 1.0)
     else
         love.graphics.setColor(0.3, 0.5, 0.8)
     end
     love.graphics.rectangle("fill", x, y, width, height, 5, 5)
-    
+
     -- Border
-    love.graphics.setColor(self.colors.border)
-    love.graphics.setLineWidth(1)
+    if hover and not disabled then
+        love.graphics.setColor(0.5, 0.7, 1.0)
+        love.graphics.setLineWidth(2)
+    else
+        love.graphics.setColor(self.colors.border)
+        love.graphics.setLineWidth(1)
+    end
     love.graphics.rectangle("line", x, y, width, height, 5, 5)
-    
+
     -- Text
     love.graphics.setFont(self.normalFont)
     if disabled then
@@ -238,6 +260,40 @@ end
 -- Check if active
 function LoginUI:isLoginActive()
     return self.isActive
+end
+
+-- Check if mouse is over a rectangle
+function LoginUI:isMouseOver(rect, mx, my)
+    return mx >= rect.x and mx <= rect.x + rect.width and
+           my >= rect.y and my <= rect.y + rect.height
+end
+
+-- Handle mouse click
+function LoginUI:mousepressed(x, y, button)
+    if button ~= 1 then  -- Only left click
+        return nil
+    end
+
+    -- Check username field click
+    if self:isMouseOver(self.usernameFieldRect, x, y) then
+        self.selectedField = "username"
+        return nil
+    end
+
+    -- Check password field click
+    if self:isMouseOver(self.passwordFieldRect, x, y) then
+        self.selectedField = "password"
+        return nil
+    end
+
+    -- Check login button click
+    if self:isMouseOver(self.loginButtonRect, x, y) then
+        return self:attemptLogin()
+    end
+
+    -- Register button is disabled for now
+
+    return nil
 end
 
 return LoginUI
