@@ -2,7 +2,7 @@
 -- Top-down combat game MVP v1
 
 -- Add src directory to Lua path
-package.path = package.path .. ";src/?.lua;src/core/?.lua;src/entities/?.lua;src/systems/?.lua;src/ui/?.lua"
+package.path = package.path .. ";src/?.lua;src/core/?.lua;src/entities/?.lua;src/systems/?.lua;src/ui/?.lua;account/?.lua;map/?.lua;map/maps/?.lua;map/minimap/?.lua"
 
 -- Core modules
 local GameState = require("core.game_state")
@@ -71,8 +71,20 @@ end
 function love.keypressed(key)
     if key == "escape" then
         love.event.quit()
-    elseif game.inputSystem then
-        game.inputSystem:keypressed(key)
+    else
+        -- Handle login input first
+        if game.state and game.state:getMode() == "login" then
+            game.state:keypressed(key)
+        elseif game.inputSystem then
+            game.inputSystem:keypressed(key)
+        end
+    end
+end
+
+function love.textinput(text)
+    -- Handle login text input
+    if game.state and game.state:getMode() == "login" then
+        game.state:textinput(text)
     end
 end
 
