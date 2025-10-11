@@ -40,13 +40,8 @@ function BattleUI:draw(battleSystem, player)
     local w = self.screenWidth
     local h = self.screenHeight
     
-    -- Draw background
-    love.graphics.setColor(self.colors.background)
-    love.graphics.rectangle("fill", 0, 0, w, h)
-    
-    -- Draw battle ground
-    love.graphics.setColor(0.3, 0.25, 0.2)
-    love.graphics.rectangle("fill", 0, h * 0.5, w, h * 0.5)
+    -- Draw diagonal gradient background (bottom-left to top-right)
+    self:drawDiagonalBackground(w, h)
 
     -- Draw player (right bottom corner)
     self:drawPlayer(player, w * 0.75, h * 0.7)
@@ -209,10 +204,9 @@ function BattleUI:drawPlayerPanel(player, x, y)
     love.graphics.print("ATK: " .. player.attack, x + 10, y + 80)
     love.graphics.print("DEF: " .. player.defense, x + 120, y + 80)
     love.graphics.print("SPD: " .. player.speed, x + 230, y + 80)
-    
-    -- Level and EXP (placeholder)
-    love.graphics.print("Level: 1", x + 10, y + 105)
-    love.graphics.print("EXP: 0 / 100", x + 10, y + 130)
+
+    -- Gold
+    love.graphics.print("Gold: " .. (player.gold or 0), x + 10, y + 105)
 end
 
 -- Draw action menu
@@ -224,9 +218,10 @@ function BattleUI:drawActionMenu(battleSystem, x, y)
         return
     end
     
-    -- Panel background
+    -- Panel background (dynamic height based on action count)
+    local menuHeight = 40 + #self.actions * 30
     love.graphics.setColor(self.colors.panel)
-    love.graphics.rectangle("fill", x, y, 200, 160, 5, 5)
+    love.graphics.rectangle("fill", x, y, 200, menuHeight, 5, 5)
     
     -- Title
     love.graphics.setColor(self.colors.text)
@@ -351,6 +346,49 @@ end
 -- Set selected enemy (for mouse click)
 function BattleUI:setSelectedEnemy(index)
     self.selectedEnemy = index
+end
+
+-- Draw diagonal gradient background (bottom-left to top-right)
+function BattleUI:drawDiagonalBackground(w, h)
+    -- Draw using triangular strips for diagonal gradient
+    -- Bottom-left is darker, top-right is lighter
+
+    local segments = 20  -- Number of gradient segments
+
+    for i = 0, segments do
+        local t = i / segments
+
+        -- Color interpolation from dark (bottom-left) to light (top-right)
+        local r = 0.1 + t * 0.15  -- 0.1 to 0.25
+        local g = 0.1 + t * 0.15  -- 0.1 to 0.25
+        local b = 0.15 + t * 0.15 -- 0.15 to 0.3
+
+        love.graphics.setColor(r, g, b, 0.95)
+
+        -- Draw diagonal strips
+        local x1 = (i / segments) * w
+        local y1 = 0
+        local x2 = ((i + 1) / segments) * w
+        local y2 = 0
+        local x3 = 0
+        local y3 = (i / segments) * h
+        local x4 = 0
+        local y4 = ((i + 1) / segments) * h
+
+        -- Top triangle
+        if x1 < w then
+            love.graphics.polygon("fill", x1, y1, x2, y2, w, h * (i / segments), w, h * ((i + 1) / segments))
+        end
+
+        -- Bottom triangle
+        if y3 < h then
+            love.graphics.polygon("fill", x3, y3, x4, y4, w * (i / segments), h, w * ((i + 1) / segments), h)
+        end
+    end
+
+    -- Draw battle ground overlay
+    love.graphics.setColor(0.3, 0.25, 0.2, 0.3)
+    love.graphics.rectangle("fill", 0, h * 0.6, w, h * 0.4)
 end
 
 return BattleUI

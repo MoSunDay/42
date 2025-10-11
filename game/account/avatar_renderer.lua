@@ -67,10 +67,6 @@ function AvatarRenderer.drawCharacterPanel(x, y, width, height, character, font)
     love.graphics.setColor(1, 1, 1)
     love.graphics.print(character.characterName, avatarX + avatarSize + 15, y + 10)
     
-    -- Level
-    love.graphics.setColor(0.8, 0.8, 0.9)
-    love.graphics.print("Lv." .. character.level, avatarX + avatarSize + 15, y + 30)
-    
     -- Stats
     local statsY = y + 70
     local lineHeight = 20
@@ -86,32 +82,6 @@ function AvatarRenderer.drawCharacterPanel(x, y, width, height, character, font)
     
     love.graphics.setColor(0.5, 0.7, 1)
     love.graphics.print("DEF: " .. character.defense, x + 10, statsY + lineHeight * 3)
-    
-    -- EXP bar
-    local expBarY = statsY + lineHeight * 4 + 10
-    local expBarWidth = width - 20
-    local expBarHeight = 15
-    
-    local expNeeded = character.level * 100
-    local expProgress = character.exp / expNeeded
-    
-    -- EXP bar background
-    love.graphics.setColor(0.2, 0.2, 0.25)
-    love.graphics.rectangle("fill", x + 10, expBarY, expBarWidth, expBarHeight, 3, 3)
-    
-    -- EXP bar fill
-    love.graphics.setColor(0.3, 0.8, 0.4)
-    love.graphics.rectangle("fill", x + 10, expBarY, expBarWidth * expProgress, expBarHeight, 3, 3)
-    
-    -- EXP bar border
-    love.graphics.setColor(0.4, 0.4, 0.5)
-    love.graphics.setLineWidth(1)
-    love.graphics.rectangle("line", x + 10, expBarY, expBarWidth, expBarHeight, 3, 3)
-    
-    -- EXP text
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.printf("EXP: " .. character.exp .. "/" .. expNeeded, 
-        x + 10, expBarY + 1, expBarWidth, "center")
 end
 
 -- Draw HP bar (for battle)
