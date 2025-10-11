@@ -1,6 +1,8 @@
 -- player.lua - 玩家实体
 -- 处理玩家的移动、动画和状态
 
+local AnimationManager = require("src.animations.animation_manager")
+
 local Player = {}
 Player.__index = Player
 
@@ -52,7 +54,19 @@ function Player.new(x, y, assetManager)
     self.gold = 0
     self.isDefending = false
 
+    -- Animation manager (shared instance will be set by game state)
+    self.animationManager = nil
+    self.animationId = "player"
+
     return self
+end
+
+-- Set animation manager
+function Player:setAnimationManager(animManager)
+    self.animationManager = animManager
+    if animManager then
+        animManager:createAnimationSet(self.animationId)
+    end
 end
 
 -- 设置地图边界
@@ -109,6 +123,11 @@ end
 
 -- 更新玩家状态
 function Player:update(dt)
+    -- Update animations
+    if self.animationManager then
+        self.animationManager:updateEntity(self.animationId, dt, self.isMoving)
+    end
+
     if not self.isMoving then
         return
     end
@@ -155,12 +174,23 @@ end
 -- 绘制玩家
 function Player:draw()
     love.graphics.setColor(1, 1, 1)
-    
+
+    -- Get animation transform
+    local offsetX, offsetY, rotation, scaleX, scaleY = 0, 0, 0, 1, 1
+    if self.animationManager then
+        offsetX, offsetY, rotation, scaleX, scaleY = self.animationManager:getTransform(self.animationId)
+    end
+
     -- 绘制玩家精灵
     if self.sprite then
-        love.graphics.draw(self.sprite, 
-            self.x - self.width/2, 
-            self.y - self.height/2)
+        love.graphics.push()
+        love.graphics.translate(self.x + offsetX, self.y + offsetY)
+        love.graphics.rotate(rotation)
+        love.graphics.scale(scaleX, scaleY)
+        love.graphics.draw(self.sprite,
+            -self.width/2,
+            -self.height/2)
+        love.graphics.pop()
     end
     
     -- 如果正在移动，绘制目标位置标记
