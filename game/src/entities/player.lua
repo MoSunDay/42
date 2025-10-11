@@ -43,10 +43,13 @@ function Player.new(x, y, assetManager)
     self.assetManager = assetManager
     self.sprite = assetManager:getImage("player")
 
-    -- Battle stats
+    -- Battle stats (base stats, before equipment bonuses)
+    self.baseHp = 100
     self.hp = 100
     self.maxHp = 100
+    self.baseAttack = 15
     self.attack = 15
+    self.baseDefense = 5
     self.defense = 5
     self.battleSpeed = 6
     self.level = 1
@@ -57,6 +60,9 @@ function Player.new(x, y, assetManager)
     -- Animation manager (shared instance will be set by game state)
     self.animationManager = nil
     self.animationId = "player"
+
+    -- Equipment system (will be set by game state)
+    self.equipmentSystem = nil
 
     return self
 end
