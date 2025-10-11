@@ -47,22 +47,11 @@ function AssetManager:loadFonts()
     print("  - Fonts loaded")
 end
 
--- 加载图片资源
+-- Load image resources
 function AssetManager:loadImages()
-    -- 尝试加载剑客精灵（优先级：knight.png > player.png > 程序生成）
-    local knightPath = self.paths.images .. "knight.png"
-    local playerPath = self.paths.images .. "player.png"
-
-    if love.filesystem.getInfo(knightPath) then
-        self.images.player = love.graphics.newImage(knightPath)
-        print("  - Loaded knight sprite: " .. knightPath)
-    elseif love.filesystem.getInfo(playerPath) then
-        self.images.player = love.graphics.newImage(playerPath)
-        print("  - Loaded player sprite: " .. playerPath)
-    else
-        print("  - No sprite found, using generated graphics")
-        self.images.player = self:createPlayerSprite()
-    end
+    -- Always use generated sprite (blue circle)
+    print("  - Using generated player sprite (blue circle)")
+    self.images.player = self:createPlayerSprite()
 
     -- 尝试加载城镇地图瓦片（优先级：town.png > tileset.png > 程序生成）
     local townPath = self.paths.images .. "town.png"

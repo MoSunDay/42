@@ -25,8 +25,9 @@ function Player.new(x, y, assetManager)
     self.width = 32
     self.height = 32
 
-    -- 方向
-    self.direction = "down" -- up, down, left, right
+    -- 方向 (8方向)
+    self.direction = "down" -- up, down, left, right, up-left, up-right, down-left, down-right
+    self.angle = 0  -- 朝向角度
 
     -- 动画
     self.animationTime = 0
@@ -39,6 +40,17 @@ function Player.new(x, y, assetManager)
     -- 资源管理器
     self.assetManager = assetManager
     self.sprite = assetManager:getImage("player")
+
+    -- Battle stats
+    self.hp = 100
+    self.maxHp = 100
+    self.attack = 15
+    self.defense = 5
+    self.battleSpeed = 6
+    self.level = 1
+    self.exp = 0
+    self.gold = 0
+    self.isDefending = false
 
     return self
 end
@@ -57,14 +69,41 @@ function Player:moveTo(x, y)
 
     self.isMoving = true
 
-    -- 计算移动方向
+    -- 计算移动方向（8方向）
     local dx = self.targetX - self.x
     local dy = self.targetY - self.y
 
-    if math.abs(dx) > math.abs(dy) then
+    -- 计算角度
+    self.angle = math.atan2(dy, dx)
+
+    -- 确定8方向
+    local absX = math.abs(dx)
+    local absY = math.abs(dy)
+    local threshold = 0.4  -- 斜向判定阈值
+
+    if absX < 1 and absY < 1 then
+        -- 几乎不移动
+        return
+    end
+
+    -- 判断主要方向
+    if absY < absX * threshold then
+        -- 主要是水平移动
         self.direction = dx > 0 and "right" or "left"
-    else
+    elseif absX < absY * threshold then
+        -- 主要是垂直移动
         self.direction = dy > 0 and "down" or "up"
+    else
+        -- 斜向移动
+        if dx > 0 and dy > 0 then
+            self.direction = "down-right"
+        elseif dx > 0 and dy < 0 then
+            self.direction = "up-right"
+        elseif dx < 0 and dy > 0 then
+            self.direction = "down-left"
+        else
+            self.direction = "up-left"
+        end
     end
 end
 
@@ -143,6 +182,60 @@ function Player:draw()
     end
     
     love.graphics.setColor(1, 1, 1)
+end
+
+-- Battle methods
+function Player:takeDamage(damage)
+    local defense = self.isDefending and self.defense * 2 or self.defense
+    local actualDamage = math.max(1, damage - defense)
+    self.hp = self.hp - actualDamage
+
+    if self.hp < 0 then
+        self.hp = 0
+    end
+
+    self.isDefending = false
+    return actualDamage
+end
+
+function Player:heal(amount)
+    self.hp = math.min(self.maxHp, self.hp + amount)
+end
+
+function Player:isAlive()
+    return self.hp > 0
+end
+
+function Player:getHPPercent()
+    return self.hp / self.maxHp
+end
+
+function Player:calculateDamage()
+    -- Random damage between 80% to 120% of attack
+    local variance = 0.2
+    local multiplier = 1 + (math.random() * 2 - 1) * variance
+    return math.floor(self.attack * multiplier)
+end
+
+function Player:gainExp(amount)
+    self.exp = self.exp + amount
+    -- Simple level up (every 100 exp)
+    while self.exp >= 100 do
+        self.exp = self.exp - 100
+        self:levelUp()
+    end
+end
+
+function Player:gainGold(amount)
+    self.gold = self.gold + amount
+end
+
+function Player:levelUp()
+    self.level = self.level + 1
+    self.maxHp = self.maxHp + 10
+    self.hp = self.maxHp
+    self.attack = self.attack + 2
+    self.defense = self.defense + 1
 end
 
 return Player

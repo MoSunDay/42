@@ -2,35 +2,56 @@
 -- 统一管理所有渲染逻辑
 
 local UI = require("ui.hud")
+local BattleUI = require("ui.battle_ui")
 
 local RenderSystem = {}
 RenderSystem.__index = RenderSystem
 
 function RenderSystem.new(gameState, assetManager)
     local self = setmetatable({}, RenderSystem)
-    
+
     self.gameState = gameState
     self.assetManager = assetManager
-    
+
     -- 创建UI
     self.hud = UI.new(assetManager)
-    
+    self.battleUI = BattleUI.new()
+
     return self
 end
 
 -- 主渲染函数
 function RenderSystem:render()
+    local mode = self.gameState:getMode()
+
+    if mode == "exploration" then
+        self:renderExploration()
+    elseif mode == "battle" then
+        self:renderBattle()
+    end
+end
+
+-- Render exploration mode
+function RenderSystem:renderExploration()
     -- 应用相机变换
     self.gameState.camera:apply()
-    
+
     -- 渲染世界空间的对象
     self:renderWorld()
-    
+
     -- 重置相机变换
     self.gameState.camera:reset()
-    
+
     -- 渲染屏幕空间的UI
     self:renderUI()
+end
+
+-- Render battle mode
+function RenderSystem:renderBattle()
+    local battleSystem = self.gameState:getBattleSystem()
+    local player = self.gameState.player
+
+    self.battleUI:draw(battleSystem, player)
 end
 
 -- 渲染世界空间对象
@@ -46,6 +67,11 @@ end
 function RenderSystem:renderUI()
     local playerX, playerY = self.gameState:getPlayerPosition()
     self.hud:draw(playerX, playerY, self.gameState.map.width, self.gameState.map.height)
+end
+
+-- Get battle UI (for input system)
+function RenderSystem:getBattleUI()
+    return self.battleUI
 end
 
 return RenderSystem

@@ -74,20 +74,24 @@ sudo apt-get install love
 sudo pacman -S love
 ```
 
-### 运行游戏
+### Running the Game
 
-在项目根目录执行：
-
+**macOS:**
 ```bash
-cd game
-love .
+# From project root
+open -a love game
+
+# Or use the quick run script
+./QUICK_RUN.sh
 ```
 
-或者直接：
-
+**Linux/Windows:**
 ```bash
+# From project root
 love game
 ```
+
+See `game/HOW_TO_RUN.md` for detailed instructions.
 
 ## 操作说明
 
@@ -102,16 +106,16 @@ love game
 - **Main View**:
   - Gray stone roads in grid pattern
   - Green grass areas between roads
-  - Knight character sprite (or blue circle if sprite not loaded)
+  - **Blue circle character** with white direction indicator
   - Yellow marker shows movement target
   - Yellow line shows movement path
 
 ## Assets
 
-The game includes:
-- **Knight sprite** (knight.png) - Swordsman character
-- **Town tileset** (town.png) - City environment
-- **Fallback**: Procedurally generated graphics if assets not found
+The game uses:
+- **Player Character**: Procedurally generated blue circle sprite
+- **Town tileset** (town.png) - City environment with roads
+- **Fallback**: All graphics can be procedurally generated
 
 For more assets, see `docs/ASSETS_GUIDE.md`.
 
