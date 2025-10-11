@@ -18,7 +18,7 @@ local BATTLE_STATE = {
     ESCAPED = "escaped"        -- Player escaped
 }
 
-function BattleSystem.new(player, audioSystem)
+function BattleSystem.new(player, audioSystem, animationManager)
     local self = setmetatable({}, BattleSystem)
 
     self.player = player
@@ -31,6 +31,10 @@ function BattleSystem.new(player, audioSystem)
     self.introTimer = 0
     self.actionTimer = 0
     self.isActive = false
+    self.autoBattle = false  -- Auto battle mode
+
+    -- Auto battle mode
+    self.autoBattle = false
 
     -- Animation system
     self.animation = BattleAnimation.new()
@@ -38,18 +42,28 @@ function BattleSystem.new(player, audioSystem)
     -- Audio system
     self.audioSystem = audioSystem
 
+    -- Animation manager for breathing effects
+    self.animationManager = animationManager
+
     return self
 end
 
 -- Start a new battle
 function BattleSystem:startBattle(enemyCount)
     enemyCount = enemyCount or 1
-    
+
     -- Generate enemies
     self.enemies = {}
     for i = 1, math.min(enemyCount, 3) do
         local enemyType = Enemy.getRandomType()
-        table.insert(self.enemies, Enemy.new(enemyType))
+        local enemy = Enemy.new(enemyType)
+
+        -- Set animation for enemy
+        if self.animationManager then
+            enemy:setAnimationManager(self.animationManager, "enemy_" .. i)
+        end
+
+        table.insert(self.enemies, enemy)
     end
     
     -- Reset battle state
@@ -102,10 +116,23 @@ function BattleSystem:update(dt)
     -- Update animations
     self.animation:update(dt)
 
+    -- Update enemy breathing animations
+    if self.animationManager then
+        for i, enemy in ipairs(self.enemies) do
+            if enemy:isAlive() and enemy.animationId then
+                self.animationManager:updateEntity(enemy.animationId, dt, false)
+            end
+        end
+    end
+
     if self.state == BATTLE_STATE.INTRO then
         self.introTimer = self.introTimer - dt
         if self.introTimer <= 0 then
             self.state = BATTLE_STATE.PLAYER_TURN
+            -- Auto execute if auto battle is on
+            if self.autoBattle then
+                self:autoExecutePlayerAction()
+            end
         end
     elseif self.state == BATTLE_STATE.EXECUTING then
         -- Wait for animations to finish
@@ -176,8 +203,11 @@ function BattleSystem:executePlayerAction()
             -- Add attack animation
             local w, h = love.graphics.getDimensions()
             local playerX, playerY = w * 0.75, h * 0.7
-            local targetX = w * 0.25 + (targetIndex - 1) * 120
-            local targetY = h * 0.35
+            -- Diagonal positioning: left-bottom to right-top
+            local baseX = w * 0.2
+            local baseY = h * 0.6
+            local targetX = baseX + (targetIndex - 1) * 100
+            local targetY = baseY - (targetIndex - 1) * 80
 
             -- Play attack sound
             if self.audioSystem then
@@ -247,8 +277,11 @@ function BattleSystem:executeNextEnemyAttack()
             if action == "attack" then
                 -- Add enemy attack animation
                 local w, h = love.graphics.getDimensions()
-                local enemyX = w * 0.25 + (self.currentEnemyIndex - 1) * 120
-                local enemyY = h * 0.35
+                -- Diagonal positioning: left-bottom to right-top
+                local baseX = w * 0.2
+                local baseY = h * 0.6
+                local enemyX = baseX + (self.currentEnemyIndex - 1) * 100
+                local enemyY = baseY - (self.currentEnemyIndex - 1) * 80
                 local playerX, playerY = w * 0.75, h * 0.7
 
                 -- Play attack sound
@@ -314,6 +347,11 @@ function BattleSystem:nextTurn()
         self.turn = self.turn + 1
         self.state = BATTLE_STATE.PLAYER_TURN
 
+        -- Auto execute if auto battle is on
+        if self.autoBattle then
+            self:autoExecutePlayerAction()
+        end
+
         -- Check if player defeated
         if not self.player:isAlive() then
             self:endBattle(BATTLE_STATE.DEFEAT)
@@ -369,6 +407,49 @@ end
 -- Get animation system
 function BattleSystem:getAnimation()
     return self.animation
+end
+
+-- Toggle auto battle
+function BattleSystem:toggleAutoBattle()
+    self.autoBattle = not self.autoBattle
+    if self.autoBattle then
+        self:addLog("Auto battle enabled!")
+        -- If currently player's turn, auto execute
+        if self.state == BATTLE_STATE.PLAYER_TURN then
+            self:autoExecutePlayerAction()
+        end
+    else
+        self:addLog("Auto battle disabled!")
+    end
+    return self.autoBattle
+end
+
+-- Check if auto battle is on
+function BattleSystem:isAutoBattle()
+    return self.autoBattle
+end
+
+-- Auto execute player action (simple AI)
+function BattleSystem:autoExecutePlayerAction()
+    if self.state ~= BATTLE_STATE.PLAYER_TURN then
+        return
+    end
+
+    -- Simple AI: always attack the first alive enemy
+    local aliveEnemies = self:getAliveEnemies()
+    if #aliveEnemies > 0 then
+        -- Find first alive enemy
+        for i, enemy in ipairs(self.enemies) do
+            if enemy:isAlive() then
+                self.selectedTarget = i
+                break
+            end
+        end
+
+        -- Execute attack
+        self.selectedAction = "attack"
+        self:executePlayerAction()
+    end
 end
 
 -- Export battle states

@@ -15,7 +15,8 @@ function BattleUI.new()
         {name = "Attack", key = "attack"},
         {name = "Defend", key = "defend"},
         {name = "Item", key = "item"},
-        {name = "Escape", key = "escape"}
+        {name = "Escape", key = "escape"},
+        {name = "Auto", key = "auto"}  -- Auto battle
     }
     self.selectedAction = 1
     self.selectedEnemy = 1
@@ -65,9 +66,13 @@ function BattleUI:draw(battleSystem, player)
         end
     end
 
+    -- Draw enemies diagonally from bottom-left to top-right
     for i, enemy in ipairs(enemies) do
-        local x = w * 0.25 + (i - 1) * 120
-        local y = h * 0.35
+        -- Diagonal positioning: left-bottom to right-top
+        local baseX = w * 0.2
+        local baseY = h * 0.6
+        local x = baseX + (i - 1) * 100  -- Move right
+        local y = baseY - (i - 1) * 80   -- Move up
         self:drawEnemy(enemy, x, y, i == self.selectedEnemy)
     end
     
@@ -121,30 +126,44 @@ function BattleUI:drawEnemy(enemy, x, y, isSelected)
         love.graphics.circle("fill", x, y, 18)
         return
     end
-    
+
+    -- Get animation transform
+    local offsetX, offsetY, rotation, scaleX, scaleY = 0, 0, 0, 1, 1
+    if enemy.animationManager and enemy.animationId then
+        offsetX, offsetY, rotation, scaleX, scaleY = enemy.animationManager:getTransform(enemy.animationId)
+    end
+
     -- Draw shadow
     love.graphics.setColor(0, 0, 0, 0.3)
-    love.graphics.ellipse("fill", x, y + 35, 20, 8)
-    
+    love.graphics.ellipse("fill", x + offsetX, y + offsetY + 35, 20 * scaleX, 8)
+
+    -- Apply transform for enemy body
+    love.graphics.push()
+    love.graphics.translate(x + offsetX, y + offsetY)
+    love.graphics.rotate(rotation)
+    love.graphics.scale(scaleX, scaleY)
+
     -- Draw enemy body
     love.graphics.setColor(enemy.color)
-    love.graphics.circle("fill", x, y, 18)
-    
+    love.graphics.circle("fill", 0, 0, 18)
+
     -- Draw eyes
     love.graphics.setColor(1, 0, 0)
-    love.graphics.circle("fill", x - 6, y - 4, 3)
-    love.graphics.circle("fill", x + 6, y - 4, 3)
-    
-    -- Draw selection indicator
+    love.graphics.circle("fill", -6, -4, 3)
+    love.graphics.circle("fill", 6, -4, 3)
+
+    love.graphics.pop()
+
+    -- Draw selection indicator (not affected by breathing)
     if isSelected then
         love.graphics.setColor(self.colors.selected)
         love.graphics.setLineWidth(3)
-        love.graphics.circle("line", x, y, 25)
+        love.graphics.circle("line", x + offsetX, y + offsetY, 25)
         love.graphics.setLineWidth(1)
     end
-    
+
     -- Draw HP bar above enemy
-    self:drawHPBar(enemy, x - 30, y - 35, 60, 6)
+    self:drawHPBar(enemy, x + offsetX - 30, y + offsetY - 35, 60, 6)
 end
 
 -- Draw HP bar
@@ -216,16 +235,23 @@ function BattleUI:drawActionMenu(battleSystem, x, y)
     -- Action buttons
     for i, action in ipairs(self.actions) do
         local btnY = y + 30 + (i - 1) * 30
-        
+
         -- Highlight selected
         if i == self.selectedAction then
             love.graphics.setColor(self.colors.selected)
             love.graphics.rectangle("fill", x + 5, btnY, 190, 25, 3, 3)
         end
-        
+
         -- Action text
         love.graphics.setColor(self.colors.text)
-        love.graphics.print(action.name, x + 15, btnY + 5)
+        local actionText = action.name
+
+        -- Show auto battle status
+        if action.key == "auto" and battleSystem:isAutoBattle() then
+            actionText = actionText .. " [ON]"
+        end
+
+        love.graphics.print(actionText, x + 15, btnY + 5)
     end
 end
 

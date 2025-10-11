@@ -73,7 +73,20 @@ function Enemy.new(enemyType)
     -- Battle state
     self.isDefending = false
 
+    -- Animation manager (will be set externally)
+    self.animationManager = nil
+    self.animationId = nil  -- Will be set when added to battle
+
     return self
+end
+
+-- Set animation manager
+function Enemy:setAnimationManager(animManager, animId)
+    self.animationManager = animManager
+    self.animationId = animId
+    if animManager and animId then
+        animManager:createAnimationSet(animId)
+    end
 end
 
 -- Take damage

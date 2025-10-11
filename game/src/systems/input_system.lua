@@ -40,8 +40,11 @@ function InputSystem:mousepressed(x, y, button)
 
                 for i, enemy in ipairs(enemies) do
                     if enemy:isAlive() then
-                        local enemyX = w * 0.25 + (i - 1) * 120
-                        local enemyY = h * 0.35
+                        -- Diagonal positioning: left-bottom to right-top
+                        local baseX = w * 0.2
+                        local baseY = h * 0.6
+                        local enemyX = baseX + (i - 1) * 100
+                        local enemyY = baseY - (i - 1) * 80
                         local radius = 25
 
                         local dx = x - enemyX
@@ -82,8 +85,14 @@ function InputSystem:keypressed(key)
             elseif key == "return" or key == "space" then
                 -- Confirm action
                 local action = self.battleUI:getSelectedAction()
-                local targetIndex = self.battleUI:getSelectedEnemy()
-                battleSystem:selectAction(action, targetIndex)
+
+                -- Check if auto battle selected
+                if action == "auto" then
+                    battleSystem:toggleAutoBattle()
+                else
+                    local targetIndex = self.battleUI:getSelectedEnemy()
+                    battleSystem:selectAction(action, targetIndex)
+                end
             end
         elseif state == "victory" or state == "defeat" or state == "escaped" then
             -- Press any key to continue

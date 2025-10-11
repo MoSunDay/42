@@ -55,8 +55,13 @@ function GameState:initializeWorld(character)
     -- 创建地图
     self.map = Map.new(2000, 2000)
 
+    -- Create animation manager
+    local AnimationManager = require("src.animations.animation_manager")
+    self.animationManager = AnimationManager.new()
+
     -- 创建玩家（使用角色数据）
     self.player = Player.new(character.x, character.y, self.assetManager)
+    self.player:setAnimationManager(self.animationManager)
 
     -- Sync player stats with character data
     self.player.level = character.level
@@ -84,7 +89,7 @@ function GameState:initializeWorld(character)
     self.audioSystem:playBGM("exploration")
 
     -- Battle system
-    self.battleSystem = BattleSystem.new(self.player, self.audioSystem)
+    self.battleSystem = BattleSystem.new(self.player, self.audioSystem, self.animationManager)
 
     -- Switch to exploration mode
     self.mode = GAME_MODE.EXPLORATION

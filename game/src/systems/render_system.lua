@@ -44,6 +44,14 @@ end
 
 -- Render exploration mode
 function RenderSystem:renderExploration()
+    -- Check if world is initialized
+    if not self.gameState.camera or not self.gameState.map or not self.gameState.player then
+        -- World not ready yet, show loading
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.printf("Loading world...", 0, love.graphics.getHeight() / 2, love.graphics.getWidth(), "center")
+        return
+    end
+
     -- 应用相机变换
     self.gameState.camera:apply()
 

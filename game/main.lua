@@ -2,7 +2,7 @@
 -- Top-down combat game MVP v1
 
 -- Add src directory to Lua path
-package.path = package.path .. ";src/?.lua;src/core/?.lua;src/entities/?.lua;src/systems/?.lua;src/ui/?.lua;account/?.lua;map/?.lua;map/maps/?.lua;map/minimap/?.lua"
+package.path = package.path .. ";src/?.lua;src/core/?.lua;src/entities/?.lua;src/systems/?.lua;src/ui/?.lua;src/animations/?.lua;account/?.lua;map/?.lua;map/maps/?.lua;map/minimap/?.lua;npcs/?.lua"
 
 -- Core modules
 local GameState = require("core.game_state")
