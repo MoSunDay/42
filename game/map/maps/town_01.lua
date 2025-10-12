@@ -7,15 +7,18 @@ return {
     width = 3200,
     height = 2400,
     tileSize = 64,
-    
-    -- Background color (grass green)
+
+    -- Season (spring, summer, autumn, winter)
+    season = "spring",
+
+    -- Background color (grass green for spring)
     backgroundColor = {0.3, 0.6, 0.35},
     
-    -- Spawn points
+    -- Spawn points (safe locations away from buildings)
     spawnPoints = {
-        {x = 1600, y = 1200, name = "Main Gate"},
-        {x = 800, y = 600, name = "North District"},
-        {x = 2400, y = 1800, name = "South District"},
+        {x = 1600, y = 800, name = "Main Gate"},  -- North of Town Hall
+        {x = 500, y = 300, name = "North District"},  -- Northwest corner
+        {x = 2800, y = 2000, name = "South District"},  -- Southeast area
     },
     
     -- Buildings (for rendering and collision)

@@ -40,9 +40,15 @@ function Player.new(x, y, assetManager)
     self.mapWidth = 2000
     self.mapHeight = 2000
 
+    -- 碰撞半径
+    self.collisionRadius = 16
+
     -- 资源管理器
     self.assetManager = assetManager
     self.sprite = assetManager:getImage("player")
+
+    -- 碰撞系统（将在setCollisionSystem中设置）
+    self.collisionSystem = nil
 
     -- Battle stats (base stats, before equipment bonuses)
     self.baseHp = 100
@@ -90,11 +96,21 @@ function Player:setMapBounds(width, height)
     self.mapHeight = height
 end
 
--- 设置移动目标（带边界检查）
+-- 设置碰撞系统
+function Player:setCollisionSystem(collisionSystem)
+    self.collisionSystem = collisionSystem
+end
+
+-- 设置移动目标（带碰撞检查）
 function Player:moveTo(x, y)
+    if self.collisionSystem then
+        -- Get closest walkable position
+        x, y = self.collisionSystem:getClosestWalkable(x, y, self.x, self.y, self.collisionRadius)
+    end
+
     -- 限制目标位置在地图边界内
-    self.targetX = math.max(self.width/2, math.min(x, self.mapWidth - self.width/2))
-    self.targetY = math.max(self.height/2, math.min(y, self.mapHeight - self.height/2))
+    self.targetX = math.max(self.collisionRadius, math.min(x, self.mapWidth - self.collisionRadius))
+    self.targetY = math.max(self.collisionRadius, math.min(y, self.mapHeight - self.collisionRadius))
 
     self.isMoving = true
 
@@ -171,12 +187,32 @@ function Player:update(dt)
         moveDistance = distance
     end
 
-    self.x = self.x + dirX * moveDistance
-    self.y = self.y + dirY * moveDistance
+    local newX = self.x + dirX * moveDistance
+    local newY = self.y + dirY * moveDistance
+
+    -- 碰撞检测
+    if self.collisionSystem then
+        local canMove, validX, validY = self.collisionSystem:canMove(
+            self.x, self.y, newX, newY, self.collisionRadius
+        )
+
+        if canMove then
+            self.x = validX
+            self.y = validY
+        else
+            -- 如果不能移动到目标位置，停止移动
+            self.x = validX
+            self.y = validY
+            self.isMoving = false
+        end
+    else
+        self.x = newX
+        self.y = newY
+    end
 
     -- 确保玩家不会超出地图边界
-    self.x = math.max(self.width/2, math.min(self.x, self.mapWidth - self.width/2))
-    self.y = math.max(self.height/2, math.min(self.y, self.mapHeight - self.height/2))
+    self.x = math.max(self.collisionRadius, math.min(self.x, self.mapWidth - self.collisionRadius))
+    self.y = math.max(self.collisionRadius, math.min(self.y, self.mapHeight - self.collisionRadius))
 
     -- 更新动画
     self.animationTime = self.animationTime + dt

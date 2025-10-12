@@ -11,6 +11,7 @@ local AudioSystem = require("systems.audio_system")
 local EquipmentSystem = require("systems.equipment_system")
 local PartySystem = require("src.systems.party_system")
 local ChatSystem = require("src.systems.chat_system")
+local CollisionSystem = require("src.systems.collision_system")
 local AccountManager = require("account.account_manager")
 local LoginUI = require("account.login_ui")
 local CharacterSelectUI = require("account.character_select_ui")
@@ -110,6 +111,10 @@ function GameState:initializeWorld(character)
 
     -- 设置玩家的地图边界
     self.player:setMapBounds(self.map.width, self.map.height)
+
+    -- 创建碰撞系统
+    self.collisionSystem = CollisionSystem.new(self.map)
+    self.player:setCollisionSystem(self.collisionSystem)
 
     -- 创建相机
     self.camera = Camera.new()

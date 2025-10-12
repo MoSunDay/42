@@ -1,0 +1,215 @@
+-- collision_system.lua - Collision detection system
+-- 碰撞检测系统
+
+local CollisionSystem = {}
+CollisionSystem.__index = CollisionSystem
+
+function CollisionSystem.new(map)
+    local self = setmetatable({}, CollisionSystem)
+    
+    self.map = map
+    
+    return self
+end
+
+-- Check if a point is walkable
+function CollisionSystem:isWalkable(x, y)
+    -- Check map boundaries
+    if x < 0 or x > self.map.width or y < 0 or y > self.map.height then
+        return false
+    end
+    
+    -- Check buildings collision
+    if self:checkBuildingCollision(x, y) then
+        return false
+    end
+    
+    -- Check collision map if exists
+    if self.map.collisionMap and #self.map.collisionMap > 0 then
+        local tileX = math.floor(x / self.map.tileSize)
+        local tileY = math.floor(y / self.map.tileSize)
+        
+        if self.map.collisionMap[tileY] and self.map.collisionMap[tileY][tileX] then
+            return false
+        end
+    end
+    
+    return true
+end
+
+-- Check collision with buildings
+function CollisionSystem:checkBuildingCollision(x, y, radius)
+    radius = radius or 16  -- Default player radius
+    
+    for _, building in ipairs(self.map.buildings or {}) do
+        -- Check if point is inside building (with radius)
+        if x + radius > building.x and 
+           x - radius < building.x + building.width and
+           y + radius > building.y and 
+           y - radius < building.y + building.height then
+            return true
+        end
+    end
+    
+    return false
+end
+
+-- Check if a rectangle collides with buildings
+function CollisionSystem:checkRectCollision(x, y, width, height)
+    for _, building in ipairs(self.map.buildings or {}) do
+        -- AABB collision detection
+        if x < building.x + building.width and
+           x + width > building.x and
+           y < building.y + building.height and
+           y + height > building.y then
+            return true
+        end
+    end
+    
+    return false
+end
+
+-- Get valid position (adjust position if colliding)
+function CollisionSystem:getValidPosition(x, y, radius)
+    radius = radius or 16
+    
+    -- Check map boundaries
+    x = math.max(radius, math.min(x, self.map.width - radius))
+    y = math.max(radius, math.min(y, self.map.height - radius))
+    
+    -- If position is valid, return it
+    if self:isWalkable(x, y) then
+        return x, y
+    end
+    
+    -- Try to find nearby valid position
+    local searchRadius = 32
+    local step = 8
+    
+    for r = step, searchRadius, step do
+        for angle = 0, math.pi * 2, math.pi / 8 do
+            local testX = x + math.cos(angle) * r
+            local testY = y + math.sin(angle) * r
+            
+            if self:isWalkable(testX, testY) then
+                return testX, testY
+            end
+        end
+    end
+    
+    -- If no valid position found, return original (clamped to boundaries)
+    return x, y
+end
+
+-- Check if movement from (x1, y1) to (x2, y2) is valid
+function CollisionSystem:canMove(x1, y1, x2, y2, radius)
+    radius = radius or 16
+    
+    -- Check destination
+    if not self:isWalkable(x2, y2) then
+        return false, x1, y1
+    end
+    
+    -- Simple raycast check (sample points along the path)
+    local dx = x2 - x1
+    local dy = y2 - y1
+    local distance = math.sqrt(dx * dx + dy * dy)
+    
+    if distance < 1 then
+        return true, x2, y2
+    end
+    
+    local steps = math.ceil(distance / 8)  -- Check every 8 pixels
+    
+    for i = 0, steps do
+        local t = i / steps
+        local checkX = x1 + dx * t
+        local checkY = y1 + dy * t
+        
+        if not self:isWalkable(checkX, checkY) then
+            -- Find last valid position
+            if i > 0 then
+                t = (i - 1) / steps
+                return false, x1 + dx * t, y1 + dy * t
+            else
+                return false, x1, y1
+            end
+        end
+    end
+    
+    return true, x2, y2
+end
+
+-- Get closest walkable position to target
+function CollisionSystem:getClosestWalkable(targetX, targetY, fromX, fromY, radius)
+    radius = radius or 16
+    
+    -- If target is walkable, return it
+    if self:isWalkable(targetX, targetY) then
+        return targetX, targetY
+    end
+    
+    -- Find closest walkable position
+    local dx = targetX - fromX
+    local dy = targetY - fromY
+    local distance = math.sqrt(dx * dx + dy * dy)
+    
+    if distance < 1 then
+        return fromX, fromY
+    end
+    
+    -- Binary search along the line
+    local low = 0
+    local high = 1
+    local bestT = 0
+    
+    for i = 1, 10 do  -- 10 iterations should be enough
+        local mid = (low + high) / 2
+        local testX = fromX + dx * mid
+        local testY = fromY + dy * mid
+        
+        if self:isWalkable(testX, testY) then
+            bestT = mid
+            low = mid
+        else
+            high = mid
+        end
+    end
+    
+    return fromX + dx * bestT, fromY + dy * bestT
+end
+
+-- Check if a circle collides with any obstacle
+function CollisionSystem:checkCircleCollision(x, y, radius)
+    -- Check map boundaries
+    if x - radius < 0 or x + radius > self.map.width or
+       y - radius < 0 or y + radius > self.map.height then
+        return true
+    end
+    
+    -- Check buildings
+    for _, building in ipairs(self.map.buildings or {}) do
+        -- Find closest point on rectangle to circle center
+        local closestX = math.max(building.x, math.min(x, building.x + building.width))
+        local closestY = math.max(building.y, math.min(y, building.y + building.height))
+        
+        -- Calculate distance
+        local dx = x - closestX
+        local dy = y - closestY
+        local distanceSquared = dx * dx + dy * dy
+        
+        if distanceSquared < radius * radius then
+            return true
+        end
+    end
+    
+    return false
+end
+
+-- Update map reference
+function CollisionSystem:setMap(map)
+    self.map = map
+end
+
+return CollisionSystem
+

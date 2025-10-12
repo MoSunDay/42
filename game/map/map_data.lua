@@ -13,7 +13,13 @@ function MapData.new(config)
     self.name = config.name or "Unnamed Map"
     self.width = config.width or 2000
     self.height = config.height or 2000
-    
+
+    -- Season (spring, summer, autumn, winter)
+    self.season = config.season or "spring"
+
+    -- Season zones (for multi-season maps like Four Seasons City)
+    self.seasonZones = config.seasonZones or {}
+
     -- Tile data
     self.tileSize = config.tileSize or 32
     self.tiles = config.tiles or {}
@@ -142,64 +148,106 @@ function MapData:draw(camera)
     local startY = math.max(0, math.floor(camY / self.tileSize) - 1)
     local endY = math.min(tilesY - 1, math.floor((camY + viewHeight) / self.tileSize) + 1)
 
-    -- Enhanced color palette
-    local roadColor1 = {0.45, 0.45, 0.48}
-    local roadColor2 = {0.42, 0.42, 0.45}
-    local roadLine = {0.35, 0.35, 0.38}
-    local grassColor1 = {0.25, 0.55, 0.25}
-    local grassColor2 = {0.22, 0.50, 0.22}
-    local grassDark = {0.18, 0.45, 0.18}
-    local grassLight = {0.28, 0.60, 0.28}
-
-    -- Draw tiles with enhanced visuals
+    -- Draw tiles with seasonal themes
     for y = startY, endY do
         for x = startX, endX do
             local px = x * self.tileSize
             local py = y * self.tileSize
 
+            -- Determine season for this tile (check season zones)
+            local tileSeason = season
+            if #self.seasonZones > 0 then
+                for _, zone in ipairs(self.seasonZones) do
+                    if px >= zone.x and px < zone.x + zone.width and
+                       py >= zone.y and py < zone.y + zone.height then
+                        tileSeason = zone.season
+                        break
+                    end
+                end
+            end
+
+            -- Get theme for this tile's season
+            local tileTheme = self:getSeasonTheme(tileSeason)
+
             -- Create road pattern (every 5 tiles)
             local isRoad = (x % 5 == 0 or y % 5 == 0)
 
             if isRoad then
-                -- Draw road with texture effect
+                -- Draw road with subtle texture
                 local colorIndex = (x + y) % 2
                 if colorIndex == 0 then
-                    love.graphics.setColor(roadColor1)
+                    love.graphics.setColor(tileTheme.road1)
                 else
-                    love.graphics.setColor(roadColor2)
+                    love.graphics.setColor(tileTheme.road2)
                 end
                 love.graphics.rectangle("fill", px, py, self.tileSize, self.tileSize)
 
-                -- Add road markings
-                love.graphics.setColor(roadLine)
+                -- Add road center line (dashed)
+                love.graphics.setColor(tileTheme.roadLine)
                 if x % 5 == 0 then
-                    -- Vertical road
-                    love.graphics.rectangle("fill", px + self.tileSize * 0.45, py, self.tileSize * 0.1, self.tileSize)
+                    -- Vertical road - dashed line
+                    for dy = 0, self.tileSize, 20 do
+                        if math.floor((py + dy) / 20) % 2 == 0 then
+                            love.graphics.rectangle("fill", px + self.tileSize * 0.47, py + dy, self.tileSize * 0.06, 10)
+                        end
+                    end
                 else
-                    -- Horizontal road
-                    love.graphics.rectangle("fill", px, py + self.tileSize * 0.45, self.tileSize, self.tileSize * 0.1)
+                    -- Horizontal road - dashed line
+                    for dx = 0, self.tileSize, 20 do
+                        if math.floor((px + dx) / 20) % 2 == 0 then
+                            love.graphics.rectangle("fill", px + dx, py + self.tileSize * 0.47, 10, self.tileSize * 0.06)
+                        end
+                    end
                 end
             else
-                -- Draw grass with variation
+                -- Draw grass with natural variation
                 local noise = (math.sin(x * 0.5) + math.cos(y * 0.7)) * 0.5
                 local colorIndex = (x + y) % 2
 
                 if noise > 0.3 then
-                    love.graphics.setColor(grassLight)
+                    love.graphics.setColor(tileTheme.grass3)
                 elseif noise < -0.3 then
-                    love.graphics.setColor(grassDark)
+                    love.graphics.setColor(tileTheme.grass4)
                 elseif colorIndex == 0 then
-                    love.graphics.setColor(grassColor1)
+                    love.graphics.setColor(tileTheme.grass1)
                 else
-                    love.graphics.setColor(grassColor2)
+                    love.graphics.setColor(tileTheme.grass2)
                 end
                 love.graphics.rectangle("fill", px, py, self.tileSize, self.tileSize)
 
-                -- Add grass details (small dots)
-                if (x + y * 7) % 3 == 0 then
-                    love.graphics.setColor(grassDark[1], grassDark[2], grassDark[3], 0.3)
-                    love.graphics.circle("fill", px + self.tileSize * 0.3, py + self.tileSize * 0.3, 2)
-                    love.graphics.circle("fill", px + self.tileSize * 0.7, py + self.tileSize * 0.6, 2)
+                -- Add seasonal decorations
+                if tileSeason == "spring" then
+                    -- Spring flowers
+                    if (x * 7 + y * 11) % 15 == 0 then
+                        local flowerColors = {tileTheme.flower1, tileTheme.flower2, tileTheme.flower3}
+                        local flowerColor = flowerColors[((x + y) % 3) + 1]
+                        love.graphics.setColor(flowerColor[1], flowerColor[2], flowerColor[3], 0.8)
+                        love.graphics.circle("fill", px + self.tileSize * 0.3, py + self.tileSize * 0.4, 3)
+                        love.graphics.circle("fill", px + self.tileSize * 0.7, py + self.tileSize * 0.6, 3)
+                    end
+                elseif tileSeason == "summer" then
+                    -- Summer grass details
+                    if (x + y * 7) % 4 == 0 then
+                        love.graphics.setColor(tileTheme.grass4[1], tileTheme.grass4[2], tileTheme.grass4[3], 0.4)
+                        love.graphics.circle("fill", px + self.tileSize * 0.3, py + self.tileSize * 0.3, 2)
+                        love.graphics.circle("fill", px + self.tileSize * 0.7, py + self.tileSize * 0.7, 2)
+                    end
+                elseif tileSeason == "autumn" then
+                    -- Autumn leaves
+                    if (x * 5 + y * 9) % 12 == 0 then
+                        local leafColors = {tileTheme.flower1, tileTheme.flower2, tileTheme.flower3}
+                        local leafColor = leafColors[((x + y) % 3) + 1]
+                        love.graphics.setColor(leafColor[1], leafColor[2], leafColor[3], 0.7)
+                        love.graphics.circle("fill", px + self.tileSize * 0.4, py + self.tileSize * 0.5, 2.5)
+                        love.graphics.circle("fill", px + self.tileSize * 0.6, py + self.tileSize * 0.3, 2.5)
+                    end
+                elseif tileSeason == "winter" then
+                    -- Winter snow patches
+                    if (x * 3 + y * 13) % 10 == 0 then
+                        love.graphics.setColor(1, 1, 1, 0.3)
+                        love.graphics.circle("fill", px + self.tileSize * 0.3, py + self.tileSize * 0.3, 4)
+                        love.graphics.circle("fill", px + self.tileSize * 0.7, py + self.tileSize * 0.6, 3)
+                    end
                 end
             end
         end
@@ -249,23 +297,13 @@ function MapData:draw(camera)
         ::continue::
     end
 
-    -- Draw subtle grid lines only on roads
-    love.graphics.setColor(0.35, 0.35, 0.38, 0.3)
-    for x = startX, endX do
-        if x % 5 == 0 then
-            local px = x * self.tileSize
-            love.graphics.line(px, startY * self.tileSize, px, (endY + 1) * self.tileSize)
-        end
-    end
-    for y = startY, endY do
-        if y % 5 == 0 then
-            local py = y * self.tileSize
-            love.graphics.line(startX * self.tileSize, py, (endX + 1) * self.tileSize, py)
-        end
-    end
+    -- Draw map border with seasonal color
+    local borderColor = season == "winter" and {0.6, 0.65, 0.7} or
+                       season == "autumn" and {0.6, 0.4, 0.2} or
+                       season == "summer" and {0.4, 0.5, 0.3} or
+                       {0.5, 0.6, 0.4}  -- spring
 
-    -- Draw map border
-    love.graphics.setColor(0.5, 0.4, 0.25)
+    love.graphics.setColor(borderColor)
     love.graphics.setLineWidth(8)
     love.graphics.rectangle("line", 0, 0, self.width, self.height)
     love.graphics.setLineWidth(1)

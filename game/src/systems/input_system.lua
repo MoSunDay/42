@@ -32,9 +32,7 @@ function InputSystem:mousepressed(x, y, button)
 
         -- Check if fullscreen map is open
         if self.fullscreenMap:isMapOpen() then
-            local worldX, worldY = self.fullscreenMap:mousepressed(x, y, button,
-                                                                   self.gameState.map.width,
-                                                                   self.gameState.map.height)
+            local worldX, worldY = self.fullscreenMap:mousepressed(x, y, button, self.gameState.map)
             if worldX and worldY then
                 -- Navigate to clicked position
                 self.gameState:movePlayerTo(worldX, worldY)
