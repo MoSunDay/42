@@ -341,8 +341,8 @@ function GameState:sendChatMessage(text)
         local character = AccountManager.getCurrentCharacter()
         local senderName = character and character.characterName or "Player"
 
-        self.chatSystem:sendMessage(senderName, text,
-                                    self.player.x, self.player.y,
+        -- Pass player entity as owner so bubble follows the player
+        self.chatSystem:sendMessage(senderName, text, self.player,
                                     character and character.avatarColor or {1, 1, 1})
     end
 end

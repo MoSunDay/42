@@ -6,10 +6,11 @@ BattleLog.__index = BattleLog
 
 function BattleLog.new()
     local self = setmetatable({}, BattleLog)
-    
+
     self.messages = {}
-    self.maxMessages = 5
-    
+    self.maxMessages = 1000  -- Save last 1000 messages
+    self.scrollOffset = 0  -- Scroll position
+
     return self
 end
 
@@ -31,6 +32,22 @@ end
 -- Clear the log
 function BattleLog:clear()
     self.messages = {}
+    self.scrollOffset = 0
+end
+
+-- Get scroll offset
+function BattleLog:getScrollOffset()
+    return self.scrollOffset
+end
+
+-- Set scroll offset
+function BattleLog:setScrollOffset(offset)
+    self.scrollOffset = offset
+end
+
+-- Scroll by delta
+function BattleLog:scroll(delta)
+    self.scrollOffset = self.scrollOffset + delta
 end
 
 return BattleLog
