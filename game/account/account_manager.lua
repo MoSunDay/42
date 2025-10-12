@@ -75,6 +75,9 @@ function AccountManager.createDefaultAccounts()
         attack = 40,
         defense = 15,
         avatarColor = {1.0, 0.3, 0.3},  -- Red
+        mapId = "four_seasons_city",  -- Use Four Seasons City
+        x = 2400,  -- Center of the city
+        y = 2400,
     })
     char3.id = "char_admin_002"
     char3.appearanceId = "red_warrior"

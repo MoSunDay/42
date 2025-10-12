@@ -124,7 +124,7 @@ end
 -- 渲染UI
 function RenderSystem:renderUI()
     local playerX, playerY = self.gameState:getPlayerPosition()
-    self.hud:draw(playerX, playerY, self.gameState.map.width, self.gameState.map.height)
+    self.hud:draw(playerX, playerY, self.gameState.map)
 
     -- Draw character info panel
     local AccountManager = require("account.account_manager")
@@ -148,14 +148,7 @@ function RenderSystem:renderUI()
 
     -- Draw fullscreen map if open (on top of everything)
     if self.fullscreenMap:isMapOpen() then
-        -- Get minimap data
-        local MapManager = require("map.map_manager")
-        local minimapData = MapManager.getMinimap("town_01")
-
-        self.fullscreenMap:draw(playerX, playerY,
-                               self.gameState.map.width,
-                               self.gameState.map.height,
-                               minimapData)
+        self.fullscreenMap:draw(playerX, playerY, self.gameState.map)
     end
 
     -- Draw unified menu if open (on top of everything)
