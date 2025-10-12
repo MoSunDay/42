@@ -80,41 +80,39 @@ function EncounterZone:update(dt)
     end
 end
 
--- Draw the visible monster
+-- Draw the visible monster (in world space, camera will transform)
 function EncounterZone:draw(camera)
     if not self.isActive then
         return
     end
 
-    -- Get screen position
-    local screenX, screenY = camera:toScreen(self.x, self.y)
-
     -- Breathing animation
     local breathe = math.sin(self.animationTime * 2) * 2
     local size = self.radius + breathe
 
+    -- Draw in world coordinates (camera will handle transformation)
     -- Draw shadow
     love.graphics.setColor(0, 0, 0, 0.3)
-    love.graphics.ellipse("fill", screenX, screenY + size + 5, size * 0.8, size * 0.3)
+    love.graphics.ellipse("fill", self.x, self.y + size + 5, size * 0.8, size * 0.3)
 
     -- Draw monster body
     love.graphics.setColor(self.color[1], self.color[2], self.color[3], 0.9)
-    love.graphics.circle("fill", screenX, screenY, size)
+    love.graphics.circle("fill", self.x, self.y, size)
 
     -- Draw eyes (simple)
     love.graphics.setColor(1, 1, 1)
-    love.graphics.circle("fill", screenX - size * 0.3, screenY - size * 0.2, size * 0.2)
-    love.graphics.circle("fill", screenX + size * 0.3, screenY - size * 0.2, size * 0.2)
+    love.graphics.circle("fill", self.x - size * 0.3, self.y - size * 0.2, size * 0.2)
+    love.graphics.circle("fill", self.x + size * 0.3, self.y - size * 0.2, size * 0.2)
 
     -- Draw pupils
     love.graphics.setColor(0, 0, 0)
-    love.graphics.circle("fill", screenX - size * 0.3, screenY - size * 0.2, size * 0.1)
-    love.graphics.circle("fill", screenX + size * 0.3, screenY - size * 0.2, size * 0.1)
+    love.graphics.circle("fill", self.x - size * 0.3, self.y - size * 0.2, size * 0.1)
+    love.graphics.circle("fill", self.x + size * 0.3, self.y - size * 0.2, size * 0.1)
 
     -- Draw border
     love.graphics.setColor(self.color[1] * 0.7, self.color[2] * 0.7, self.color[3] * 0.7)
     love.graphics.setLineWidth(2)
-    love.graphics.circle("line", screenX, screenY, size)
+    love.graphics.circle("line", self.x, self.y, size)
     love.graphics.setLineWidth(1)
 end
 

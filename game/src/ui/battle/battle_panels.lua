@@ -69,21 +69,69 @@ end
 
 -- Draw battle log
 function BattlePanels.drawBattleLog(colors, battleSystem, x, y)
-    local messages = battleSystem:getLog()
-    
+    local battleLog = battleSystem.battleLog
+    local messages = battleLog:getMessages()
+
     -- Panel background
     love.graphics.setColor(colors.panel)
     love.graphics.rectangle("fill", x, y, 400, 120, 5, 5)
-    
+
     -- Title
     love.graphics.setColor(colors.text)
     love.graphics.print("Battle Log", x + 10, y + 10)
-    
-    -- Messages (show last 4)
-    for i = 1, math.min(4, #messages) do
+
+    -- Calculate scroll parameters
+    local lineHeight = 20
+    local viewHeight = 80  -- Height of visible area
+    local contentHeight = #messages * lineHeight
+
+    -- Clamp scroll offset
+    local scrollOffset = battleLog:getScrollOffset()
+    local maxScroll = math.max(0, contentHeight - viewHeight)
+    scrollOffset = math.max(0, math.min(scrollOffset, maxScroll))
+    battleLog:setScrollOffset(scrollOffset)
+
+    -- Enable scissor to clip messages
+    love.graphics.setScissor(x + 10, y + 30, 380, viewHeight)
+
+    -- Draw messages with scroll offset
+    local messageY = y + 30 + scrollOffset
+    for i = 1, #messages do
         local msg = messages[i]
-        love.graphics.print(msg, x + 10, y + 30 + (i - 1) * 20)
+
+        -- Only draw if in visible area
+        if messageY >= y + 30 - lineHeight and messageY <= y + 30 + viewHeight then
+            love.graphics.setColor(colors.text)
+            love.graphics.print(msg, x + 10, messageY)
+        end
+
+        messageY = messageY + lineHeight
     end
+
+    -- Disable scissor
+    love.graphics.setScissor()
+
+    -- Draw scrollbar if needed
+    if contentHeight > viewHeight then
+        BattlePanels.drawScrollbar(colors, x + 385, y + 30, viewHeight, contentHeight, scrollOffset)
+    end
+end
+
+-- Draw scrollbar
+function BattlePanels.drawScrollbar(colors, x, y, viewHeight, contentHeight, scrollOffset)
+    local scrollbarWidth = 5
+
+    -- Scrollbar background
+    love.graphics.setColor(0.2, 0.2, 0.25, 0.5)
+    love.graphics.rectangle("fill", x, y, scrollbarWidth, viewHeight)
+
+    -- Scrollbar thumb
+    local thumbHeight = math.max(20, (viewHeight / contentHeight) * viewHeight)
+    local maxScroll = contentHeight - viewHeight
+    local thumbY = y + (scrollOffset / maxScroll) * (viewHeight - thumbHeight)
+
+    love.graphics.setColor(0.4, 0.6, 1.0, 0.8)
+    love.graphics.rectangle("fill", x, thumbY, scrollbarWidth, thumbHeight, 2, 2)
 end
 
 return BattlePanels

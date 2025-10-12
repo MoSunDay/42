@@ -101,8 +101,8 @@ end
 
 -- 渲染世界空间对象
 function RenderSystem:renderWorld()
-    -- 绘制地图
-    self.gameState.map:draw()
+    -- 绘制地图（传入camera用于视口裁剪）
+    self.gameState.map:draw(self.gameState.camera)
 
     -- 绘制可见怪物（明雷）
     if self.gameState.encounterZones then

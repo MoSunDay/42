@@ -49,6 +49,15 @@ function InputSystem:mousepressed(x, y, button)
             return
         end
 
+        -- Check if clicked on chat input
+        local chatUI = self.renderSystem:getChatUI()
+        local chatSystem = self.gameState:getChatSystem()
+        if chatUI and chatSystem then
+            if chatUI:mousepressed(x, y, button, chatSystem) then
+                return
+            end
+        end
+
         if button == 1 then -- Left click
             -- Convert screen coordinates to world coordinates
             local worldX, worldY = self.gameState.camera:toWorld(x, y)
@@ -65,7 +74,21 @@ function InputSystem:mousepressed(x, y, button)
             local state = battleSystem:getState()
 
             if state == "player" then
-                -- Check if clicked on an enemy
+                -- First check if clicked on action menu
+                local action = self.battleUI:mousepressed(x, y, button, battleSystem)
+                if action then
+                    print("Clicked action: " .. action)
+                    -- Handle the action like keyboard input
+                    if action == "auto" then
+                        battleSystem:toggleAutoBattle()
+                    else
+                        local targetIndex = self.battleUI:getSelectedEnemy()
+                        battleSystem:selectAction(action, targetIndex)
+                    end
+                    return
+                end
+
+                -- Then check if clicked on an enemy
                 local enemies = battleSystem:getEnemies()
                 local w, h = love.graphics.getDimensions()
 
@@ -188,6 +211,25 @@ function InputSystem:keypressed(key)
             if key == "return" or key == "space" then
                 self.gameState:endBattle()
             end
+        end
+    end
+end
+
+-- Handle mouse wheel scroll
+function InputSystem:wheelmoved(x, y)
+    local mode = self.gameState:getMode()
+
+    if mode == "exploration" then
+        -- Scroll chat window
+        local chatUI = self.renderSystem:getChatUI()
+        if chatUI then
+            chatUI:mousescroll(x, y)
+        end
+    elseif mode == "battle" then
+        -- Scroll battle log
+        local battleSystem = self.gameState:getBattleSystem()
+        if battleSystem and battleSystem.battleLog then
+            battleSystem.battleLog:scroll(-y * 20)
         end
     end
 end

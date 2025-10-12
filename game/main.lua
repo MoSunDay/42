@@ -102,3 +102,10 @@ function love.mousepressed(x, y, button)
     end
 end
 
+function love.wheelmoved(x, y)
+    -- Handle mouse wheel scroll
+    if game.inputSystem then
+        game.inputSystem:wheelmoved(x, y)
+    end
+end
+
