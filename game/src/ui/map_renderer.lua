@@ -44,19 +44,10 @@ function MapRenderer.render(map, renderX, renderY, renderWidth, renderHeight, pl
             local bx, by = worldToRender(building.x, building.y)
             local bw = building.width * scaleX
             local bh = building.height * scaleY
-            
-            -- Building shadow
-            love.graphics.setColor(0, 0, 0, 0.3)
-            love.graphics.rectangle("fill", bx + 2, by + 2, bw, bh, 2, 2)
-            
-            -- Building body
+
+            -- Building body (solid, no transparency)
             love.graphics.setColor(building.color or {0.7, 0.5, 0.3})
-            love.graphics.rectangle("fill", bx, by, bw, bh, 2, 2)
-            
-            -- Building outline
-            love.graphics.setColor(0, 0, 0, 0.5)
-            love.graphics.setLineWidth(1)
-            love.graphics.rectangle("line", bx, by, bw, bh, 2, 2)
+            love.graphics.rectangle("fill", bx, by, bw, bh)
         end
     end
     
@@ -109,26 +100,34 @@ end
 
 -- Render map tiles (grass, roads, seasonal decorations)
 function MapRenderer.renderTiles(map, renderX, renderY, renderWidth, renderHeight, scaleX, scaleY)
-    -- Calculate how many tiles to render
-    local tilesX = math.floor(map.width / map.tileSize)
-    local tilesY = math.floor(map.height / map.tileSize)
-    
-    -- Render tile size in screen space
-    local tileSizeX = map.tileSize * scaleX
-    local tileSizeY = map.tileSize * scaleY
-    
     -- Get season theme
     local season = map.season or "spring"
     local theme = map.getSeasonTheme and map:getSeasonTheme(season) or MapRenderer.getDefaultTheme(season)
-    
+
+    -- Compute scaled tile size
+    local tileSizeX = map.tileSize * scaleX
+    local tileSizeY = map.tileSize * scaleY
+
+    -- Draw all tiles at any scale (quantize to pixels to avoid gaps)
+    local tilesX = math.floor(map.width / map.tileSize)
+    local tilesY = math.floor(map.height / map.tileSize)
+
     -- Draw all tiles
     for y = 0, tilesY - 1 do
         for x = 0, tilesX - 1 do
-            local px = renderX + x * tileSizeX
-            local py = renderY + y * tileSizeY
+            -- Quantize positions and sizes to prevent 1px gaps at edges
+            local px0 = renderX + math.floor(x * tileSizeX + 0.5)
+            local py0 = renderY + math.floor(y * tileSizeY + 0.5)
+            local px1 = renderX + math.floor((x + 1) * tileSizeX + 0.5)
+            local py1 = renderY + math.floor((y + 1) * tileSizeY + 0.5)
+            local px = px0
+            local py = py0
+            local w = math.max(1, px1 - px0)
+            local h = math.max(1, py1 - py0)
+
             local worldX = x * map.tileSize
             local worldY = y * map.tileSize
-            
+
             -- Determine season for this tile (check season zones)
             local tileSeason = season
             if map.seasonZones and #map.seasonZones > 0 then
@@ -140,13 +139,13 @@ function MapRenderer.renderTiles(map, renderX, renderY, renderWidth, renderHeigh
                     end
                 end
             end
-            
+
             -- Get theme for this tile's season
             local tileTheme = map.getSeasonTheme and map:getSeasonTheme(tileSeason) or MapRenderer.getDefaultTheme(tileSeason)
-            
+
             -- Create road pattern (every 5 tiles)
             local isRoad = (x % 5 == 0 or y % 5 == 0)
-            
+
             if isRoad then
                 -- Draw road
                 local colorIndex = (x + y) % 2
@@ -160,7 +159,7 @@ function MapRenderer.renderTiles(map, renderX, renderY, renderWidth, renderHeigh
                 -- Draw grass
                 local noise = (math.sin(x * 0.5) + math.cos(y * 0.7)) * 0.5
                 local colorIndex = (x + y) % 2
-                
+
                 if noise > 0.3 then
                     love.graphics.setColor(tileTheme.grass3 or {0.4, 0.7, 0.4})
                 elseif noise < -0.3 then
@@ -170,10 +169,10 @@ function MapRenderer.renderTiles(map, renderX, renderY, renderWidth, renderHeigh
                 else
                     love.graphics.setColor(tileTheme.grass2 or {0.3, 0.6, 0.3})
                 end
-                love.graphics.rectangle("fill", px, py, tileSizeX, tileSizeY)
-                
+                love.graphics.rectangle("fill", px, py, w, h)
+
                 -- Add seasonal decorations (only if tile is large enough)
-                if tileSizeX > 2 and tileSizeY > 2 then
+                if tileSizeX > 5 and tileSizeY > 5 then
                     if tileSeason == "spring" and (x * 7 + y * 11) % 15 == 0 then
                         -- Spring flowers
                         local flowerColors = tileTheme.flower1 and {tileTheme.flower1, tileTheme.flower2, tileTheme.flower3} or {{1, 0.4, 0.6}, {0.9, 0.7, 0.3}, {0.6, 0.4, 0.9}}

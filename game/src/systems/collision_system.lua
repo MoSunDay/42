@@ -72,31 +72,37 @@ end
 -- Get valid position (adjust position if colliding)
 function CollisionSystem:getValidPosition(x, y, radius)
     radius = radius or 16
-    
+
     -- Check map boundaries
     x = math.max(radius, math.min(x, self.map.width - radius))
     y = math.max(radius, math.min(y, self.map.height - radius))
-    
+
     -- If position is valid, return it
     if self:isWalkable(x, y) then
         return x, y
     end
-    
+
+    -- Check if inside a building, if so teleport to building edge
+    local building = self:getBuildingAt(x, y)
+    if building then
+        return self:teleportToBuildingEdge(x, y, building, radius)
+    end
+
     -- Try to find nearby valid position
     local searchRadius = 32
     local step = 8
-    
+
     for r = step, searchRadius, step do
         for angle = 0, math.pi * 2, math.pi / 8 do
             local testX = x + math.cos(angle) * r
             local testY = y + math.sin(angle) * r
-            
+
             if self:isWalkable(testX, testY) then
                 return testX, testY
             end
         end
     end
-    
+
     -- If no valid position found, return original (clamped to boundaries)
     return x, y
 end
@@ -209,6 +215,56 @@ end
 -- Update map reference
 function CollisionSystem:setMap(map)
     self.map = map
+end
+
+-- Get building at position
+function CollisionSystem:getBuildingAt(x, y)
+    if not self.map.buildings then
+        return nil
+    end
+
+    for _, building in ipairs(self.map.buildings) do
+        if x >= building.x and x <= building.x + building.width and
+           y >= building.y and y <= building.y + building.height then
+            return building
+        end
+    end
+
+    return nil
+end
+
+-- Teleport to building edge (find closest edge position)
+function CollisionSystem:teleportToBuildingEdge(x, y, building, radius)
+    radius = radius or 16
+    local margin = radius + 5  -- Extra margin from building edge
+
+    -- Calculate positions at each edge
+    local edges = {
+        {x = building.x - margin, y = y, name = "left"},  -- Left edge
+        {x = building.x + building.width + margin, y = y, name = "right"},  -- Right edge
+        {x = x, y = building.y - margin, name = "top"},  -- Top edge
+        {x = x, y = building.y + building.height + margin, name = "bottom"},  -- Bottom edge
+    }
+
+    -- Find closest valid edge
+    local closestDist = math.huge
+    local closestPos = {x = x, y = y}
+
+    for _, edge in ipairs(edges) do
+        -- Check if edge position is walkable
+        if self:isWalkable(edge.x, edge.y) then
+            local dist = math.sqrt((edge.x - x)^2 + (edge.y - y)^2)
+            if dist < closestDist then
+                closestDist = dist
+                closestPos = {x = edge.x, y = edge.y}
+            end
+        end
+    end
+
+    print(string.format("Teleported from building interior (%.0f, %.0f) to edge (%.0f, %.0f)",
+                       x, y, closestPos.x, closestPos.y))
+
+    return closestPos.x, closestPos.y
 end
 
 return CollisionSystem

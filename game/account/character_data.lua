@@ -11,8 +11,6 @@ function CharacterData.new(config)
     -- Basic info
     self.username = config.username or "Player"
     self.characterName = config.characterName or "Hero"
-    self.level = config.level or 1
-    self.exp = config.exp or 0
     self.gold = config.gold or 100
     
     -- Combat stats (气血、防御、攻击)
@@ -22,10 +20,10 @@ function CharacterData.new(config)
     self.defense = config.defense or 5
     self.speed = config.speed or 6
     
-    -- Position
+    -- Position (safe default spawn point)
     self.x = config.x or 1600
-    self.y = config.y or 1200
-    self.mapId = config.mapId or "town_01"
+    self.y = config.y or 1600  -- Village center, safe area
+    self.mapId = config.mapId or "newbie_village"
     
     -- Avatar (头像颜色)
     self.avatarColor = config.avatarColor or {0.3, 0.5, 1.0}  -- Blue
@@ -44,8 +42,6 @@ function CharacterData:toTable()
     return {
         username = self.username,
         characterName = self.characterName,
-        level = self.level,
-        exp = self.exp,
         gold = self.gold,
         hp = self.hp,
         maxHp = self.maxHp,
@@ -61,27 +57,7 @@ function CharacterData:toTable()
     }
 end
 
--- Level up
-function CharacterData:levelUp()
-    self.level = self.level + 1
-    self.maxHp = self.maxHp + 10
-    self.hp = self.maxHp
-    self.attack = self.attack + 2
-    self.defense = self.defense + 1
-    print(self.characterName .. " leveled up to " .. self.level .. "!")
-end
 
--- Gain experience
-function CharacterData:gainExp(amount)
-    self.exp = self.exp + amount
-    local expNeeded = self.level * 100
-    
-    while self.exp >= expNeeded do
-        self.exp = self.exp - expNeeded
-        self:levelUp()
-        expNeeded = self.level * 100
-    end
-end
 
 -- Gain gold
 function CharacterData:gainGold(amount)
@@ -109,8 +85,6 @@ end
 function CharacterData.createCharacter(name)
     return CharacterData.new({
         characterName = name,
-        level = 1,
-        exp = 0,
         gold = 100,
         hp = 100,
         maxHp = 100,
@@ -118,8 +92,8 @@ function CharacterData.createCharacter(name)
         defense = 5,
         speed = 6,
         x = 1600,
-        y = 1200,
-        mapId = "town_01",
+        y = 1600,
+        mapId = "newbie_village",
         avatarColor = {0.3, 0.5, 1.0}
     })
 end

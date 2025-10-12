@@ -124,11 +124,7 @@ function PartyUI:drawMember(member, x, y, isLeader)
     -- Member name
     love.graphics.setColor(self.colors.text)
     love.graphics.print(member.name, avatarX + avatarSize + 10, y + 8)
-    
-    -- Level
-    love.graphics.setColor(0.8, 0.8, 0.8)
-    love.graphics.print("Lv." .. member.level, avatarX + avatarSize + 10, y + 23)
-    
+
     -- HP bar
     local hpBarX = avatarX + avatarSize + 10
     local hpBarY = y + 38

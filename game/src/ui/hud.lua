@@ -23,6 +23,45 @@ function HUD.new(assetManager)
         padding = 10
     }
 
+    -- Bottom-right buttons
+    self.buttons = {
+        {
+            name = "Menu",
+            key = "menu",
+            x = self.screenWidth - 110,
+            y = self.screenHeight - 60,
+            width = 100,
+            height = 50,
+            color = {0.3, 0.5, 0.7},
+            hoverColor = {0.4, 0.6, 0.8},
+            icon = "M"
+        },
+        {
+            name = "Party",
+            key = "party",
+            x = self.screenWidth - 220,
+            y = self.screenHeight - 60,
+            width = 100,
+            height = 50,
+            color = {0.5, 0.3, 0.7},
+            hoverColor = {0.6, 0.4, 0.8},
+            icon = "P"
+        },
+        {
+            name = "Pet",
+            key = "pet",
+            x = self.screenWidth - 330,
+            y = self.screenHeight - 60,
+            width = 100,
+            height = 50,
+            color = {0.7, 0.5, 0.3},
+            hoverColor = {0.8, 0.6, 0.4},
+            icon = "🐾"
+        }
+    }
+
+    self.hoveredButton = nil
+
     -- Fonts
     self.font = assetManager:getFont("default")
     self.fontLarge = assetManager:getFont("large")
@@ -47,6 +86,9 @@ end
 function HUD:draw(playerX, playerY, map)
     -- Draw minimap with coordinates below
     self:drawMinimap(playerX, playerY, map)
+
+    -- Draw bottom-right buttons
+    self:drawButtons()
 end
 
 -- Draw minimap
@@ -110,6 +152,50 @@ end
 function HUD:showMinimapHint()
     self.minimapHintTimer = 2.0
     self.minimapHintAlpha = 1.0
+end
+
+-- Draw bottom-right buttons
+function HUD:drawButtons()
+    local mouseX, mouseY = love.mouse.getPosition()
+
+    for _, button in ipairs(self.buttons) do
+        -- Check if mouse is over button
+        local isHovered = mouseX >= button.x and mouseX <= button.x + button.width and
+                         mouseY >= button.y and mouseY <= button.y + button.height
+
+        -- Button background
+        if isHovered then
+            love.graphics.setColor(button.hoverColor)
+        else
+            love.graphics.setColor(button.color)
+        end
+        love.graphics.rectangle("fill", button.x, button.y, button.width, button.height, 5, 5)
+
+        -- Button border
+        love.graphics.setColor(1, 1, 1, 0.8)
+        love.graphics.setLineWidth(2)
+        love.graphics.rectangle("line", button.x, button.y, button.width, button.height, 5, 5)
+        love.graphics.setLineWidth(1)
+
+        -- Button text
+        love.graphics.setFont(self.font)
+        love.graphics.setColor(1, 1, 1)
+        local textWidth = self.font:getWidth(button.name)
+        love.graphics.print(button.name, button.x + (button.width - textWidth) / 2, button.y + 18)
+    end
+
+    love.graphics.setColor(1, 1, 1)
+end
+
+-- Check if mouse is over any button
+function HUD:isMouseOverButton(x, y)
+    for _, button in ipairs(self.buttons) do
+        if x >= button.x and x <= button.x + button.width and
+           y >= button.y and y <= button.y + button.height then
+            return button.key
+        end
+    end
+    return nil
 end
 
 return HUD

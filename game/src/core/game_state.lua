@@ -98,8 +98,6 @@ function GameState:initializeWorld(character)
     self.player:setEquipmentSystem(self.equipmentSystem)
 
     -- Sync player stats with character data
-    self.player.level = character.level
-    self.player.exp = character.exp
     self.player.gold = character.gold
     self.player.maxHp = character.maxHp
     self.player.hp = character.hp
@@ -115,6 +113,23 @@ function GameState:initializeWorld(character)
     -- 创建碰撞系统
     self.collisionSystem = CollisionSystem.new(self.map)
     self.player:setCollisionSystem(self.collisionSystem)
+
+    -- 验证并修正玩家位置（确保不在建筑内）
+    if not self.collisionSystem:isWalkable(self.player.x, self.player.y) then
+        print("Warning: Player spawned in non-walkable area, finding valid position...")
+        local validX, validY = self.collisionSystem:getValidPosition(
+            self.player.x, self.player.y, self.player.collisionRadius
+        )
+        self.player.x = validX
+        self.player.y = validY
+        self.player.targetX = validX
+        self.player.targetY = validY
+        print(string.format("Player position corrected to: (%.0f, %.0f)", validX, validY))
+
+        -- Update character data
+        character.x = validX
+        character.y = validY
+    end
 
     -- 创建相机
     self.camera = Camera.new()
@@ -138,7 +153,6 @@ function GameState:initializeWorld(character)
     local playerMember = PartySystem.createMemberData(
         character.id or "player1",
         character.characterName,
-        character.level,
         character.hp,
         character.maxHp,
         character.avatarColor
@@ -267,8 +281,9 @@ function GameState:endBattle()
         -- Give rewards
         local rewards = self.battleSystem:endBattle("victory")
         if rewards then
-            self.player:gainExp(rewards.exp)
+            -- Only give gold rewards (no exp since we removed level system)
             self.player:gainGold(rewards.gold)
+            print(string.format("Victory! Gained %d gold", rewards.gold))
         end
         -- Play victory sound
         self.audioSystem:playSFX("victory")
@@ -299,8 +314,6 @@ end
 function GameState:syncPlayerToCharacter()
     local character = AccountManager.getCurrentCharacter()
     if character and self.player then
-        character.level = self.player.level
-        character.exp = self.player.exp
         character.gold = self.player.gold
         character.hp = self.player.hp
         character.maxHp = self.player.maxHp
