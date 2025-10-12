@@ -253,7 +253,7 @@ function MapData:draw(camera)
         end
     end
 
-    -- Draw buildings with enhanced visuals
+    -- Draw buildings (MUST be after tiles to appear on top)
     for _, building in ipairs(self.buildings) do
         -- Check if building is in viewport
         if camera then
@@ -263,30 +263,9 @@ function MapData:draw(camera)
             end
         end
 
-        -- Building shadow
-        love.graphics.setColor(0, 0, 0, 0.3)
-        love.graphics.rectangle("fill", building.x + 5, building.y + 5, building.width, building.height, 5, 5)
-
-        -- Building body
-        love.graphics.setColor(building.color or {0.7, 0.5, 0.3})
-        love.graphics.rectangle("fill", building.x, building.y, building.width, building.height, 5, 5)
-
-        -- Building roof (darker top)
-        love.graphics.setColor(0.5, 0.3, 0.2)
-        love.graphics.rectangle("fill", building.x, building.y, building.width, 20, 5, 5)
-
-        -- Building windows
-        love.graphics.setColor(0.3, 0.4, 0.5, 0.7)
-        local windowSize = 15
-        local windowSpacing = 30
-        for wx = 1, math.floor(building.width / windowSpacing) - 1 do
-            for wy = 1, math.floor((building.height - 30) / windowSpacing) do
-                love.graphics.rectangle("fill",
-                    building.x + wx * windowSpacing,
-                    building.y + 25 + wy * windowSpacing,
-                    windowSize, windowSize, 2, 2)
-            end
-        end
+        -- Building body (solid, no transparency)
+        love.graphics.setColor(building.color[1], building.color[2], building.color[3])
+        love.graphics.rectangle("fill", building.x, building.y, building.width, building.height)
 
         -- Building border
         love.graphics.setColor(0.4, 0.25, 0.15)

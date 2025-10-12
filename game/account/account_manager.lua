@@ -31,14 +31,15 @@ function AccountManager.createDefaultAccounts()
     local char1 = CharacterData.new({
         username = "test",
         characterName = "Test Hero",
-        level = 5,
-        exp = 50,
         gold = 500,
         maxHp = 150,
         hp = 150,
         attack = 25,
         defense = 10,
         avatarColor = {0.3, 0.5, 1.0},  -- Blue
+        mapId = "newbie_village",
+        x = 1600,  -- Village center
+        y = 1600,
     })
     char1.id = "char_test_001"
     char1.appearanceId = "blue_hero"
@@ -52,14 +53,15 @@ function AccountManager.createDefaultAccounts()
     local char2 = CharacterData.new({
         username = "admin",
         characterName = "Admin",
-        level = 10,
-        exp = 0,
         gold = 9999,
         maxHp = 250,
         hp = 250,
         attack = 50,
         defense = 20,
         avatarColor = {1.0, 0.8, 0.2},  -- Gold
+        mapId = "newbie_village",
+        x = 1600,  -- Village center
+        y = 1600,
     })
     char2.id = "char_admin_001"
     char2.appearanceId = "yellow_mage"
@@ -67,8 +69,6 @@ function AccountManager.createDefaultAccounts()
     local char3 = CharacterData.new({
         username = "admin",
         characterName = "Warrior",
-        level = 8,
-        exp = 100,
         gold = 5000,
         maxHp = 200,
         hp = 200,
@@ -76,8 +76,8 @@ function AccountManager.createDefaultAccounts()
         defense = 15,
         avatarColor = {1.0, 0.3, 0.3},  -- Red
         mapId = "four_seasons_city",  -- Use Four Seasons City
-        x = 2400,  -- Center of the city
-        y = 2400,
+        x = 2400,  -- Safe spawn point
+        y = 2100,  -- North of monument
     })
     char3.id = "char_admin_002"
     char3.appearanceId = "red_warrior"
@@ -91,14 +91,15 @@ function AccountManager.createDefaultAccounts()
     local char4 = CharacterData.new({
         username = "player",
         characterName = "Brave Knight",
-        level = 1,
-        exp = 0,
         gold = 100,
         maxHp = 100,
         hp = 100,
         attack = 15,
         defense = 5,
         avatarColor = {0.8, 0.3, 0.3},  -- Red
+        mapId = "newbie_village",
+        x = 1600,  -- Village center
+        y = 1600,
     })
     char4.id = "char_player_001"
     char4.appearanceId = "orange_knight"
@@ -109,9 +110,9 @@ function AccountManager.createDefaultAccounts()
     }
     
     print("Created 3 default accounts:")
-    print("  - test/123 (Level 5)")
-    print("  - admin/admin (Level 10)")
-    print("  - player/pass (Level 1)")
+    print("  - test/123")
+    print("  - admin/admin")
+    print("  - player/pass")
 end
 
 -- Login (returns account, not character - character selection comes next)

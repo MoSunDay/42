@@ -75,6 +75,11 @@ function UnifiedMenu:switchTab(tabIndex)
     end
 end
 
+-- Alias for switchTab
+function UnifiedMenu:setTab(tabIndex)
+    self:switchTab(tabIndex)
+end
+
 -- Draw the menu
 function UnifiedMenu:draw(gameState)
     if not self.isOpen then
@@ -267,7 +272,6 @@ function UnifiedMenu:drawPartyTab(gameState, contentY, contentHeight)
         -- Member info
         love.graphics.setColor(self.colors.text)
         love.graphics.print(member.name, self.x + 90, y + 10)
-        love.graphics.print("Lv." .. member.level, self.x + 250, y + 10)
         
         -- HP bar
         local hpBarX = self.x + 90

@@ -102,14 +102,16 @@ function ChatUI:drawChatArea(chatSystem)
     -- Enable scissor to clip messages
     love.graphics.setScissor(self.x + 5, self.y + 25, self.width - 15, viewHeight)
 
-    -- Draw messages with scroll offset
-    local messageY = self.y + self.chatHeight - 10 + self.scrollOffset
+    -- Draw messages from bottom to top
+    -- Start from the bottom of the view area
+    local startY = self.y + 25 + viewHeight - lineHeight
+    local messageY = startY + self.scrollOffset
 
     for i = #allMessages, 1, -1 do
         local msg = allMessages[i]
 
         -- Only draw if in visible area
-        if messageY >= self.y + 25 - lineHeight and messageY <= self.y + self.chatHeight then
+        if messageY >= self.y + 25 - lineHeight and messageY <= self.y + 25 + viewHeight then
             -- Draw sender name
             love.graphics.setColor(self.colors.sender)
             local senderText = msg.sender .. ": "
@@ -117,7 +119,7 @@ function ChatUI:drawChatArea(chatSystem)
             love.graphics.print(senderText, self.x + 10, messageY)
 
             -- Draw message text
-            love.graphics.setColor(msg.color)
+            love.graphics.setColor(msg.color or {1, 1, 1})
             love.graphics.print(msg.text, self.x + 10 + senderWidth, messageY)
         end
 

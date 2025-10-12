@@ -141,11 +141,10 @@ function PartySystem.getMaxSize()
 end
 
 -- Create member data structure
-function PartySystem.createMemberData(id, name, level, hp, maxHp, avatarColor)
+function PartySystem.createMemberData(id, name, hp, maxHp, avatarColor)
     return {
         id = id,
         name = name,
-        level = level or 1,
         hp = hp or 100,
         maxHp = maxHp or 100,
         avatarColor = avatarColor or {0.2, 0.6, 1.0},

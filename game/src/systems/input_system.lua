@@ -47,6 +47,34 @@ function InputSystem:mousepressed(x, y, button)
             return
         end
 
+        -- Check if clicked on HUD buttons
+        if button == 1 then
+            local buttonKey = self.hud:isMouseOverButton(x, y)
+            if buttonKey then
+                if buttonKey == "menu" then
+                    local unifiedMenu = self.renderSystem:getUnifiedMenu()
+                    if unifiedMenu then
+                        unifiedMenu:toggle()
+                    end
+                    return
+                elseif buttonKey == "party" then
+                    local unifiedMenu = self.renderSystem:getUnifiedMenu()
+                    if unifiedMenu then
+                        unifiedMenu:open()
+                        unifiedMenu:setTab(3)  -- Party tab
+                    end
+                    return
+                elseif buttonKey == "pet" then
+                    local unifiedMenu = self.renderSystem:getUnifiedMenu()
+                    if unifiedMenu then
+                        unifiedMenu:open()
+                        unifiedMenu:setTab(4)  -- Pet tab
+                    end
+                    return
+                end
+            end
+        end
+
         -- Check if clicked on chat input
         local chatUI = self.renderSystem:getChatUI()
         local chatSystem = self.gameState:getChatSystem()

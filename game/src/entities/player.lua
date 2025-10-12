@@ -59,8 +59,6 @@ function Player.new(x, y, assetManager)
     self.baseDefense = 5
     self.defense = 5
     self.battleSpeed = 6
-    self.level = 1
-    self.exp = 0
     self.gold = 0
     self.isDefending = false
 
@@ -300,25 +298,8 @@ function Player:calculateDamage()
     return math.floor(self.attack * multiplier)
 end
 
-function Player:gainExp(amount)
-    self.exp = self.exp + amount
-    -- Simple level up (every 100 exp)
-    while self.exp >= 100 do
-        self.exp = self.exp - 100
-        self:levelUp()
-    end
-end
-
 function Player:gainGold(amount)
     self.gold = self.gold + amount
-end
-
-function Player:levelUp()
-    self.level = self.level + 1
-    self.maxHp = self.maxHp + 10
-    self.hp = self.maxHp
-    self.attack = self.attack + 2
-    self.defense = self.defense + 1
 end
 
 -- Set equipment system
