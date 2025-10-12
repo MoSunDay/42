@@ -2,23 +2,19 @@
 -- Manages battle flow, turns, and combat logic
 
 local Enemy = require("entities.enemy")
-local BattleAnimation = require("systems.battle_animation")
-local BattleLog = require("src.systems.battle_log")
-local BattleAI = require("src.systems.battle_ai")
+local BattleAnimation = require("src.systems.battle.battle_animation")
+local BattleLog = require("src.systems.battle.battle_log")
+local BattleAI = require("src.systems.battle.battle_ai")
+local BattleUtils = require("src.systems.battle.battle_utils")
+local BattleState = require("src.systems.battle.battle_state")
+local BattleTimer = require("src.systems.battle.battle_timer")
+local BattleExecutor = require("src.systems.battle.battle_executor")
 
 local BattleSystem = {}
 BattleSystem.__index = BattleSystem
 
--- Battle states
-local BATTLE_STATE = {
-    INTRO = "intro",           -- Battle start animation
-    PLAYER_TURN = "player",    -- Player choosing action
-    ENEMY_TURN = "enemy",      -- Enemy AI choosing
-    EXECUTING = "executing",   -- Executing actions
-    VICTORY = "victory",       -- Player won
-    DEFEAT = "defeat",         -- Player lost
-    ESCAPED = "escaped"        -- Player escaped
-}
+-- Use imported battle states
+local BATTLE_STATE = BattleState
 
 function BattleSystem.new(player, audioSystem, animationManager)
     local self = setmetatable({}, BattleSystem)
@@ -35,8 +31,8 @@ function BattleSystem.new(player, audioSystem, animationManager)
     self.isActive = false
     self.autoBattle = false  -- Auto battle mode
 
-    -- Auto battle mode
-    self.autoBattle = false
+    -- Turn timer (90 seconds per turn)
+    self.timer = BattleTimer.new(90.0)
 
     -- Animation system
     self.animation = BattleAnimation.new()
@@ -131,9 +127,20 @@ function BattleSystem:update(dt)
         self.introTimer = self.introTimer - dt
         if self.introTimer <= 0 then
             self.state = BATTLE_STATE.PLAYER_TURN
+            self.timer:reset()  -- Reset turn timer
             -- Auto execute if auto battle is on
             if self.autoBattle then
                 self:autoExecutePlayerAction()
+            end
+        end
+    elseif self.state == BATTLE_STATE.PLAYER_TURN then
+        -- Update turn timer
+        if not self.autoBattle then
+            local timeUp = self.timer:update(dt)
+            if timeUp then
+                -- Time's up! Auto-execute defend action
+                self:addLog("Time's up! Defending automatically...")
+                self:selectAction("defend", nil)
             end
         end
     elseif self.state == BATTLE_STATE.EXECUTING then
@@ -202,50 +209,13 @@ function BattleSystem:executePlayerAction()
 
     if action == "attack" then
         if target and target:isAlive() then
-            -- Add attack animation
-            local w, h = love.graphics.getDimensions()
-            local playerX, playerY = w * 0.75, h * 0.7
-            -- Diagonal positioning: left-bottom to right-top
-            local baseX = w * 0.2
-            local baseY = h * 0.6
-            local targetX = baseX + (targetIndex - 1) * 100
-            local targetY = baseY - (targetIndex - 1) * 80
-
-            -- Play attack sound
-            if self.audioSystem then
-                self.audioSystem:playSFX("attack")
-            end
-
-            self.animation:addAttackAnimation(playerX, playerY, targetX, targetY, function()
-                local damage = self.player:calculateDamage()
-                local actualDamage = target:takeDamage(damage)
-
-                -- Add damage number and flash
-                self.animation:addDamageNumber(targetX, targetY - 30, actualDamage, false)
-                self.animation:addHitFlash(targetX, targetY)
-
-                -- Play hit sound
-                if self.audioSystem then
-                    self.audioSystem:playSFX("hit")
-                end
-
-                self:addLog("You attack " .. target.name .. " for " .. actualDamage .. " damage!")
-
-                if not target:isAlive() then
-                    self:addLog(target.name .. " defeated!")
-                end
-            end)
+            BattleExecutor.executePlayerAttack(self, target, targetIndex)
         end
     elseif action == "defend" then
-        self.player.isDefending = true
-        self:addLog("You take a defensive stance!")
+        BattleExecutor.executePlayerDefend(self)
     elseif action == "escape" then
-        -- 50% chance to escape
-        if math.random() < 0.5 then
-            self:endBattle(BATTLE_STATE.ESCAPED)
-            return
-        else
-            self:addLog("Failed to escape!")
+        if BattleExecutor.executePlayerEscape(self, BATTLE_STATE) then
+            return  -- Successfully escaped
         end
     end
     
@@ -277,43 +247,9 @@ function BattleSystem:executeNextEnemyAttack()
             local action = BattleAI.enemyAction(enemy, self.player)
 
             if action == "attack" then
-                -- Add enemy attack animation
-                local w, h = love.graphics.getDimensions()
-                -- Diagonal positioning: left-bottom to right-top
-                local baseX = w * 0.2
-                local baseY = h * 0.6
-                local enemyX = baseX + (self.currentEnemyIndex - 1) * 100
-                local enemyY = baseY - (self.currentEnemyIndex - 1) * 80
-                local playerX, playerY = w * 0.75, h * 0.7
-
-                -- Play attack sound
-                if self.audioSystem then
-                    self.audioSystem:playSFX("attack")
-                end
-
-                self.animation:addAttackAnimation(enemyX, enemyY, playerX, playerY, function()
-                    local damage = enemy:calculateDamage()
-                    local actualDamage = self.player:takeDamage(damage)
-
-                    -- Add damage number and flash
-                    self.animation:addDamageNumber(playerX, playerY - 30, actualDamage, false)
-                    self.animation:addHitFlash(playerX, playerY)
-
-                    -- Play hit sound
-                    if self.audioSystem then
-                        self.audioSystem:playSFX("hit")
-                    end
-
-                    self:addLog(enemy.name .. " attacks you for " .. actualDamage .. " damage!")
-
-                    -- Check if player defeated
-                    if not self.player:isAlive() then
-                        self:endBattle(BATTLE_STATE.DEFEAT)
-                    end
-                end)
+                BattleExecutor.executeEnemyAttack(self, enemy, self.currentEnemyIndex)
             elseif action == "defend" then
-                enemy.isDefending = true
-                self:addLog(enemy.name .. " takes a defensive stance!")
+                BattleExecutor.executeEnemyDefend(self, enemy)
             end
 
             return  -- Wait for this enemy's animation to finish
@@ -349,6 +285,9 @@ function BattleSystem:nextTurn()
         self.turn = self.turn + 1
         self.state = BATTLE_STATE.PLAYER_TURN
 
+        -- Reset turn timer for new turn
+        self.timer:reset()
+
         -- Auto execute if auto battle is on
         if self.autoBattle then
             self:autoExecutePlayerAction()
@@ -364,12 +303,7 @@ end
 
 -- Check victory condition
 function BattleSystem:checkVictory()
-    for _, enemy in ipairs(self.enemies) do
-        if enemy:isAlive() then
-            return false
-        end
-    end
-    return true
+    return BattleUtils.checkVictory(self.enemies)
 end
 
 -- Add to battle log
@@ -394,13 +328,7 @@ end
 
 -- Get alive enemies
 function BattleSystem:getAliveEnemies()
-    local alive = {}
-    for _, enemy in ipairs(self.enemies) do
-        if enemy:isAlive() then
-            table.insert(alive, enemy)
-        end
-    end
-    return alive
+    return BattleUtils.getAliveEnemies(self.enemies)
 end
 
 -- Get animation system
@@ -445,6 +373,21 @@ end
 -- Get animation manager
 function BattleSystem:getAnimationManager()
     return self.animationManager
+end
+
+-- Get turn timer
+function BattleSystem:getTurnTimer()
+    return self.timer:getTime()
+end
+
+-- Get max turn time
+function BattleSystem:getMaxTurnTime()
+    return self.timer:getMaxTime()
+end
+
+-- Check if auto was triggered by timeout
+function BattleSystem:isAutoTriggeredByTimeout()
+    return self.timer:isAutoTriggered()
 end
 
 -- Export battle states

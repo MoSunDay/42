@@ -4,11 +4,15 @@
 local InputSystem = {}
 InputSystem.__index = InputSystem
 
-function InputSystem.new(gameState, battleUI)
+function InputSystem.new(gameState, renderSystem)
     local self = setmetatable({}, InputSystem)
 
     self.gameState = gameState
-    self.battleUI = battleUI
+    self.renderSystem = renderSystem
+    self.battleUI = renderSystem:getBattleUI()
+    self.fullscreenMap = renderSystem:getFullscreenMap()
+    self.hud = renderSystem:getHUD()
+    self.chatUI = renderSystem:getChatUI()
 
     return self
 end
@@ -18,6 +22,33 @@ function InputSystem:mousepressed(x, y, button)
     local mode = self.gameState:getMode()
 
     if mode == "exploration" then
+        -- Check if clicked on unified menu
+        local unifiedMenu = self.renderSystem:getUnifiedMenu()
+        if unifiedMenu and unifiedMenu:isMenuOpen() then
+            if unifiedMenu:mousepressed(x, y, button) then
+                return
+            end
+        end
+
+        -- Check if fullscreen map is open
+        if self.fullscreenMap:isMapOpen() then
+            local worldX, worldY = self.fullscreenMap:mousepressed(x, y, button,
+                                                                   self.gameState.map.width,
+                                                                   self.gameState.map.height)
+            if worldX and worldY then
+                -- Navigate to clicked position
+                self.gameState:movePlayerTo(worldX, worldY)
+                print(string.format("Navigate to: (%.0f, %.0f)", worldX, worldY))
+            end
+            return
+        end
+
+        -- Check if clicked on minimap
+        if button == 1 and self.hud:isMouseOverMinimap(x, y) then
+            self.fullscreenMap:open()
+            return
+        end
+
         if button == 1 then -- Left click
             -- Convert screen coordinates to world coordinates
             local worldX, worldY = self.gameState.camera:toWorld(x, y)
@@ -67,6 +98,64 @@ end
 -- Handle keyboard input
 function InputSystem:keypressed(key)
     local mode = self.gameState:getMode()
+
+    -- Handle unified menu (M key)
+    if mode == "exploration" then
+        local unifiedMenu = self.renderSystem:getUnifiedMenu()
+        if unifiedMenu then
+            if key == "m" then
+                unifiedMenu:toggle()
+                return
+            elseif unifiedMenu:isMenuOpen() then
+                -- Let menu handle the key
+                if unifiedMenu:keypressed(key) then
+                    return
+                end
+            end
+        end
+    end
+
+    -- Handle chat input in exploration mode
+    if mode == "exploration" then
+        local chatSystem = self.gameState:getChatSystem()
+
+        if chatSystem and chatSystem:isInputting() then
+            -- Chat is active
+            if key == "return" then
+                -- Send message
+                local text = chatSystem:endInput()
+                if text and text ~= "" then
+                    self.gameState:sendChatMessage(text)
+                end
+                return
+            elseif key == "escape" then
+                -- Cancel input
+                chatSystem:endInput()
+                return
+            elseif key == "backspace" then
+                chatSystem:removeInputChar()
+                return
+            end
+        else
+            -- Chat is not active
+            if key == "return" then
+                -- Start chat input
+                if chatSystem then
+                    chatSystem:startInput()
+                end
+                return
+            end
+        end
+
+        -- Handle Tab key for fullscreen map
+        if key == "tab" then
+            self.fullscreenMap:toggle()
+            return
+        elseif key == "escape" and self.fullscreenMap:isMapOpen() then
+            self.fullscreenMap:close()
+            return
+        end
+    end
 
     if mode == "battle" and self.battleUI then
         local battleSystem = self.gameState:getBattleSystem()
