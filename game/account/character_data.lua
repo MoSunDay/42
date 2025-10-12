@@ -105,5 +105,24 @@ function CharacterData:isAlive()
     return self.hp > 0
 end
 
+-- Helper function to create a new character with just a name
+function CharacterData.createCharacter(name)
+    return CharacterData.new({
+        characterName = name,
+        level = 1,
+        exp = 0,
+        gold = 100,
+        hp = 100,
+        maxHp = 100,
+        attack = 15,
+        defense = 5,
+        speed = 6,
+        x = 1600,
+        y = 1200,
+        mapId = "town_01",
+        avatarColor = {0.3, 0.5, 1.0}
+    })
+end
+
 return CharacterData
 

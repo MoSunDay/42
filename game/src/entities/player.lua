@@ -2,6 +2,7 @@
 -- 处理玩家的移动、动画和状态
 
 local AnimationManager = require("src.animations.animation_manager")
+local AppearanceSystem = require("src.systems.appearance_system")
 
 local Player = {}
 Player.__index = Player
@@ -64,6 +65,9 @@ function Player.new(x, y, assetManager)
     -- Equipment system (will be set by game state)
     self.equipmentSystem = nil
 
+    -- Appearance (unified avatar and sprite)
+    self.appearance = nil  -- Will be set from character data
+
     return self
 end
 
@@ -73,6 +77,11 @@ function Player:setAnimationManager(animManager)
     if animManager then
         animManager:createAnimationSet(self.animationId)
     end
+end
+
+-- Set appearance from character data
+function Player:setAppearance(character)
+    self.appearance = AppearanceSystem.createAppearance(character)
 end
 
 -- 设置地图边界
@@ -187,8 +196,10 @@ function Player:draw()
         offsetX, offsetY, rotation, scaleX, scaleY = self.animationManager:getTransform(self.animationId)
     end
 
-    -- 绘制玩家精灵
-    if self.sprite then
+    -- 绘制玩家精灵（使用统一外观系统）
+    if self.appearance then
+        AppearanceSystem.drawSprite(self.x, self.y, 16, self.appearance, offsetX, offsetY, scaleX, scaleY)
+    elseif self.sprite then
         love.graphics.push()
         love.graphics.translate(self.x + offsetX, self.y + offsetY)
         love.graphics.rotate(rotation)

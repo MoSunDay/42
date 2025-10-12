@@ -3,13 +3,17 @@
 
 local Player = require("entities.player")
 local Map = require("entities.map")
+local MapManager = require("map.map_manager")
 local Camera = require("core.camera")
 local EncounterZone = require("entities.encounter_zone")
-local BattleSystem = require("systems.battle_system")
+local BattleSystem = require("src.systems.battle.battle_system")
 local AudioSystem = require("systems.audio_system")
 local EquipmentSystem = require("systems.equipment_system")
+local PartySystem = require("src.systems.party_system")
+local ChatSystem = require("src.systems.chat_system")
 local AccountManager = require("account.account_manager")
 local LoginUI = require("account.login_ui")
+local CharacterSelectUI = require("account.character_select_ui")
 
 local GameState = {}
 GameState.__index = GameState
@@ -17,6 +21,7 @@ GameState.__index = GameState
 -- Game modes
 local GAME_MODE = {
     LOGIN = "login",
+    CHARACTER_SELECT = "character_select",
     EXPLORATION = "exploration",
     BATTLE = "battle"
 }
@@ -35,7 +40,13 @@ function GameState.new(assetManager)
     -- Login UI
     self.loginUI = LoginUI.new()
 
-    -- These will be initialized after login
+    -- Character select UI
+    self.characterSelectUI = CharacterSelectUI.new()
+
+    -- Current logged in username
+    self.currentUsername = nil
+
+    -- These will be initialized after character selection
     self.map = nil
     self.player = nil
     self.camera = nil
@@ -53,8 +64,19 @@ end
 function GameState:initializeWorld(character)
     print("Initializing game world for: " .. character.characterName)
 
-    -- 创建地图
-    self.map = Map.new(2000, 2000)
+    -- 加载地图（使用MapManager）
+    local mapId = character.mapId or "town_01"
+    local mapData = MapManager.loadMap(mapId)
+
+    if mapData then
+        -- 使用新地图系统
+        self.map = mapData
+        print("Loaded map: " .. mapData.name .. " (" .. mapData.width .. "x" .. mapData.height .. ")")
+    else
+        -- 回退到旧地图系统
+        print("Failed to load map '" .. mapId .. "', using fallback map")
+        self.map = Map.new(2000, 2000)
+    end
 
     -- Create animation manager
     local AnimationManager = require("src.animations.animation_manager")
@@ -63,6 +85,9 @@ function GameState:initializeWorld(character)
     -- 创建玩家（使用角色数据）
     self.player = Player.new(character.x, character.y, self.assetManager)
     self.player:setAnimationManager(self.animationManager)
+
+    -- Set player appearance (unified avatar and sprite)
+    self.player:setAppearance(character)
 
     -- Equipment system
     self.equipmentSystem = EquipmentSystem.new()
@@ -100,8 +125,32 @@ function GameState:initializeWorld(character)
     -- Battle system
     self.battleSystem = BattleSystem.new(self.player, self.audioSystem, self.animationManager)
 
+    -- Party system
+    self.partySystem = PartySystem.new()
+    self.partySystem:setPartyName("My Party")
+
+    -- Add current player to party
+    local playerMember = PartySystem.createMemberData(
+        character.id or "player1",
+        character.characterName,
+        character.level,
+        character.hp,
+        character.maxHp,
+        character.avatarColor
+    )
+    self.partySystem:addMember(playerMember)
+
+    -- Chat system
+    self.chatSystem = ChatSystem.new()
+
+    -- Send welcome message
+    self.chatSystem:addMessage("System", "Welcome to the game!", {0.4, 0.8, 1.0})
+
     -- Switch to exploration mode
     self.mode = GAME_MODE.EXPLORATION
+
+    -- Add safe period after login (no encounters for 3 seconds)
+    self.encounterSafeTimer = 3.0
 
     print("Game world initialized!")
 end
@@ -112,6 +161,8 @@ function GameState:update(dt)
     if self.mode == GAME_MODE.LOGIN then
         -- Update login UI
         self.loginUI:update(dt)
+    elseif self.mode == GAME_MODE.CHARACTER_SELECT then
+        -- Character select screen (no updates needed)
     elseif self.mode == GAME_MODE.EXPLORATION then
         -- 更新玩家
         self.player:update(dt)
@@ -119,8 +170,23 @@ function GameState:update(dt)
         -- 更新相机跟随玩家
         self.camera:follow(self.player.x, self.player.y, dt)
 
-        -- Check for encounter zones
-        self:checkEncounters()
+        -- Update encounter zones (visible monsters)
+        for _, zone in ipairs(self.encounterZones) do
+            zone:update(dt)
+        end
+
+        -- Update chat system
+        if self.chatSystem then
+            self.chatSystem:update(dt)
+        end
+
+        -- Update safe timer
+        if self.encounterSafeTimer and self.encounterSafeTimer > 0 then
+            self.encounterSafeTimer = self.encounterSafeTimer - dt
+        else
+            -- Check for encounter zones only after safe period
+            self:checkEncounters()
+        end
     elseif self.mode == GAME_MODE.BATTLE then
         -- Update battle system
         self.battleSystem:update(dt)
@@ -147,18 +213,23 @@ function GameState:generateEncounterZones(count)
     self.encounterZones = {}
 
     for i = 1, count do
-        local x = math.random(100, self.map.width - 100)
-        local y = math.random(100, self.map.height - 100)
-        local radius = math.random(30, 60)
+        local x = math.random(200, self.map.width - 200)
+        local y = math.random(200, self.map.height - 200)
+        local radius = math.random(25, 35)  -- Visible monster size
 
         table.insert(self.encounterZones, EncounterZone.new(x, y, radius))
     end
 
-    print("Generated " .. count .. " encounter zones")
+    print("Generated " .. count .. " visible encounter monsters (明雷)")
 end
 
 -- Check if player entered encounter zone
 function GameState:checkEncounters()
+    -- Skip if in safe period
+    if self.encounterSafeTimer and self.encounterSafeTimer > 0 then
+        return
+    end
+
     for _, zone in ipairs(self.encounterZones) do
         if zone:contains(self.player.x, self.player.y) then
             if zone:trigger() then
@@ -212,6 +283,9 @@ function GameState:endBattle()
     -- Return to exploration mode
     self.mode = GAME_MODE.EXPLORATION
 
+    -- Add safe period after battle (no encounters for 2 seconds)
+    self.encounterSafeTimer = 2.0
+
     -- Switch back to exploration music
     self.audioSystem:playBGM("exploration")
 end
@@ -250,38 +324,116 @@ function GameState:getAudioSystem()
     return self.audioSystem
 end
 
+-- Get party system
+function GameState:getPartySystem()
+    return self.partySystem
+end
+
+-- Get chat system
+function GameState:getChatSystem()
+    return self.chatSystem
+end
+
+-- Send chat message
+function GameState:sendChatMessage(text)
+    if self.chatSystem and self.player then
+        local AccountManager = require("account.account_manager")
+        local character = AccountManager.getCurrentCharacter()
+        local senderName = character and character.characterName or "Player"
+
+        self.chatSystem:sendMessage(senderName, text,
+                                    self.player.x, self.player.y,
+                                    character and character.avatarColor or {1, 1, 1})
+    end
+end
+
 -- Get login UI
 function GameState:getLoginUI()
     return self.loginUI
 end
 
--- Handle login text input
+-- Get character select UI
+function GameState:getCharacterSelectUI()
+    return self.characterSelectUI
+end
+
+-- Get current username
+function GameState:getCurrentUsername()
+    return self.currentUsername
+end
+
+-- Handle text input
 function GameState:textinput(text)
     if self.mode == GAME_MODE.LOGIN then
         self.loginUI:textinput(text)
+    elseif self.mode == GAME_MODE.CHARACTER_SELECT then
+        self.characterSelectUI:textinput(text)
     end
 end
 
--- Handle login key press
+-- Handle key press
 function GameState:keypressed(key)
     if self.mode == GAME_MODE.LOGIN then
-        local character = self.loginUI:keypressed(key)
+        local success, username = self.loginUI:keypressed(key)
+        if success then
+            -- Login successful, go to character select
+            self.currentUsername = username
+            self.mode = GAME_MODE.CHARACTER_SELECT
+        end
+    elseif self.mode == GAME_MODE.CHARACTER_SELECT then
+        local character = self.characterSelectUI:keypressed(key, AccountManager, self.currentUsername)
         if character then
-            -- Login successful, initialize world
+            -- Character selected, initialize world
+            AccountManager.selectCharacter(character)
             self:initializeWorld(character)
         end
     end
 end
 
--- Handle login mouse press
+-- Handle mouse press
 function GameState:mousepressed(x, y, button)
     if self.mode == GAME_MODE.LOGIN then
-        local character = self.loginUI:mousepressed(x, y, button)
+        local success, username = self.loginUI:mousepressed(x, y, button)
+        if success then
+            -- Login successful, go to character select
+            self.currentUsername = username
+            self.mode = GAME_MODE.CHARACTER_SELECT
+        end
+    elseif self.mode == GAME_MODE.CHARACTER_SELECT then
+        local character = self.characterSelectUI:mousepressed(x, y, button, AccountManager, self.currentUsername)
         if character then
-            -- Login successful, initialize world
+            -- Character selected, initialize world
+            AccountManager.selectCharacter(character)
             self:initializeWorld(character)
         end
+    elseif self.mode == GAME_MODE.BATTLE then
+        -- Handle battle UI mouse clicks
+        local battleUI = self.renderSystem.battleUI
+        local action = battleUI:mousepressed(x, y, button, self.battleSystem)
+
+        if action then
+            -- Execute the clicked action
+            if action == "attack" then
+                self.battleSystem:selectAction("attack", battleUI:getSelectedEnemy())
+            elseif action == "defend" then
+                self.battleSystem:selectAction("defend", nil)
+            elseif action == "escape" then
+                self.battleSystem:selectAction("escape", nil)
+            elseif action == "auto" then
+                self.battleSystem:toggleAutoBattle()
+            end
+        end
     end
+end
+
+-- Get equipment system
+function GameState:getEquipmentSystem()
+    return self.equipmentSystem
+end
+
+-- Get party system
+function GameState:getPartySystem()
+    return self.partySystem
 end
 
 -- Export game modes

@@ -237,13 +237,13 @@ end
 -- Attempt login
 function LoginUI:attemptLogin()
     local AccountManager = require("account.account_manager")
-    
+
     local success, result = AccountManager.login(self.username, self.password)
-    
+
     if success then
         print("Login successful!")
         self.isActive = false
-        return result  -- Return character data
+        return success, result  -- Return success and username
     else
         -- Show error
         self.errorMessage = result
@@ -253,7 +253,7 @@ function LoginUI:attemptLogin()
         self.password = ""
         self.passwordDisplay = ""
         
-        return nil
+        return false, nil
     end
 end
 

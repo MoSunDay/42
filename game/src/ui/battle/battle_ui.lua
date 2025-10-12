@@ -1,17 +1,19 @@
 -- battle_ui.lua - Battle UI rendering
 -- Displays battle scene, HP bars, action menu, and battle log
 
-local BattleBackground = require("src.ui.battle_background")
+local BattleBackground = require("src.ui.battle.battle_background")
+local BattleMenu = require("src.ui.battle.battle_menu")
+local BattlePanels = require("src.ui.battle.battle_panels")
 
 local BattleUI = {}
 BattleUI.__index = BattleUI
 
 function BattleUI.new()
     local self = setmetatable({}, BattleUI)
-    
+
     self.screenWidth = love.graphics.getWidth()
     self.screenHeight = love.graphics.getHeight()
-    
+
     -- Action menu
     self.actions = {
         {name = "Attack", key = "attack"},
@@ -22,6 +24,12 @@ function BattleUI.new()
     }
     self.selectedAction = 1
     self.selectedEnemy = 1
+
+    -- Menu position for mouse detection
+    self.menuX = 0
+    self.menuY = 0
+    self.menuWidth = 200
+    self.menuHeight = 0
     
     -- UI colors
     self.colors = {
@@ -74,9 +82,17 @@ function BattleUI:draw(battleSystem, player)
     end
     
     -- Draw UI panels
-    self:drawPlayerPanel(player, 20, h - 180)
-    self:drawActionMenu(battleSystem, w - 220, h - 180)
-    self:drawBattleLog(battleSystem, 20, 20)
+    BattlePanels.drawPlayerPanel(self.colors, player, 20, h - 180)
+
+    -- Draw action menu centered vertically
+    local menuHeight = 40 + #self.actions * 30
+    local menuY = (h - menuHeight) / 2
+    BattleMenu.draw(self, battleSystem, w - 220, menuY)
+
+    BattlePanels.drawBattleLog(self.colors, battleSystem, 20, 20)
+
+    -- Draw turn timer
+    BattleMenu.drawTimer(battleSystem, w / 2 - 100, 20)
     
     -- Draw turn indicator
     local state = battleSystem:getState()
@@ -174,118 +190,12 @@ function BattleUI:drawEnemy(enemy, x, y, isSelected)
     end
 
     -- Draw HP bar above enemy
-    self:drawHPBar(enemy, x + offsetX - 30, y + offsetY - 35, 60, 6)
+    BattlePanels.drawHPBar(self.colors, enemy, x + offsetX - 30, y + offsetY - 35, 60, 6)
 end
 
--- Draw HP bar
-function BattleUI:drawHPBar(entity, x, y, width, height)
-    local hpPercent = entity:getHPPercent()
-    
-    -- Background
-    love.graphics.setColor(0.2, 0.2, 0.2)
-    love.graphics.rectangle("fill", x, y, width, height)
-    
-    -- HP fill
-    local color = self.colors.hpGreen
-    if hpPercent < 0.3 then
-        color = self.colors.hpRed
-    elseif hpPercent < 0.6 then
-        color = self.colors.hpYellow
-    end
-    
-    love.graphics.setColor(color)
-    love.graphics.rectangle("fill", x, y, width * hpPercent, height)
-    
-    -- Border
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.setLineWidth(1)
-    love.graphics.rectangle("line", x, y, width, height)
-end
+-- (drawHPBar, drawPlayerPanel, drawActionMenu, drawBattleLog moved to BattlePanels and BattleMenu modules)
 
--- Draw player panel
-function BattleUI:drawPlayerPanel(player, x, y)
-    -- Panel background
-    love.graphics.setColor(self.colors.panel)
-    love.graphics.rectangle("fill", x, y, 300, 160, 5, 5)
-    
-    -- Player name
-    love.graphics.setColor(self.colors.text)
-    love.graphics.print("Player", x + 10, y + 10)
-    
-    -- HP
-    love.graphics.print("HP: " .. player.hp .. " / " .. player.maxHp, x + 10, y + 35)
-    self:drawHPBar(player, x + 10, y + 55, 280, 15)
-    
-    -- Stats
-    love.graphics.print("ATK: " .. player.attack, x + 10, y + 80)
-    love.graphics.print("DEF: " .. player.defense, x + 120, y + 80)
-    love.graphics.print("SPD: " .. player.speed, x + 230, y + 80)
-
-    -- Gold
-    love.graphics.print("Gold: " .. (player.gold or 0), x + 10, y + 105)
-end
-
--- Draw action menu
-function BattleUI:drawActionMenu(battleSystem, x, y)
-    local state = battleSystem:getState()
-    
-    -- Only show during player turn
-    if state ~= "player" then
-        return
-    end
-    
-    -- Panel background (dynamic height based on action count)
-    local menuHeight = 40 + #self.actions * 30
-    love.graphics.setColor(self.colors.panel)
-    love.graphics.rectangle("fill", x, y, 200, menuHeight, 5, 5)
-    
-    -- Title
-    love.graphics.setColor(self.colors.text)
-    love.graphics.print("Actions", x + 10, y + 10)
-    
-    -- Action buttons
-    for i, action in ipairs(self.actions) do
-        local btnY = y + 30 + (i - 1) * 30
-
-        -- Highlight selected
-        if i == self.selectedAction then
-            love.graphics.setColor(self.colors.selected)
-            love.graphics.rectangle("fill", x + 5, btnY, 190, 25, 3, 3)
-        end
-
-        -- Action text
-        love.graphics.setColor(self.colors.text)
-        local actionText = action.name
-
-        -- Show auto battle status
-        if action.key == "auto" and battleSystem:isAutoBattle() then
-            actionText = actionText .. " [ON]"
-        end
-
-        love.graphics.print(actionText, x + 15, btnY + 5)
-    end
-end
-
--- Draw battle log
-function BattleUI:drawBattleLog(battleSystem, x, y)
-    -- Panel background
-    love.graphics.setColor(self.colors.panel)
-    love.graphics.rectangle("fill", x, y, 500, 150, 5, 5)
-    
-    -- Title
-    love.graphics.setColor(self.colors.text)
-    love.graphics.print("Battle Log", x + 10, y + 10)
-    
-    -- Log messages
-    local log = battleSystem:getLog()
-    for i = math.max(1, #log - 5), #log do
-        local msg = log[i]
-        if msg then
-            local logY = y + 30 + (i - math.max(1, #log - 5)) * 20
-            love.graphics.print(msg, x + 10, logY)
-        end
-    end
-end
+-- (Methods moved to BattlePanels and BattleMenu modules)
 
 -- Draw turn indicator
 function BattleUI:drawTurnIndicator(state, x, y)
@@ -362,6 +272,11 @@ end
 -- Set selected enemy (for mouse click)
 function BattleUI:setSelectedEnemy(index)
     self.selectedEnemy = index
+end
+
+-- Handle mouse click on action menu (delegated to BattleMenu)
+function BattleUI:mousepressed(x, y, button, battleSystem)
+    return BattleMenu.mousepressed(self, x, y, button, battleSystem)
 end
 
 return BattleUI

@@ -1,42 +1,18 @@
 -- avatar_renderer.lua - Character avatar rendering
--- 角色头像渲染
+-- 角色头像渲染（使用统一外观系统）
+
+local AppearanceSystem = require("src.systems.appearance_system")
 
 local AvatarRenderer = {}
 
--- Draw character avatar (simple circle with color)
+-- Draw character avatar (uses unified appearance system)
 function AvatarRenderer.drawAvatar(x, y, size, character)
     if not character then
         return
     end
-    
-    local color = character.avatarColor or {0.3, 0.5, 1.0}
-    
-    -- Outer circle (border)
-    love.graphics.setColor(0.2, 0.2, 0.2)
-    love.graphics.circle("fill", x, y, size + 3)
-    
-    -- Main circle (avatar)
-    love.graphics.setColor(color)
-    love.graphics.circle("fill", x, y, size)
-    
-    -- Highlight
-    love.graphics.setColor(1, 1, 1, 0.3)
-    love.graphics.circle("fill", x - size * 0.3, y - size * 0.3, size * 0.3)
-    
-    -- Eyes
-    love.graphics.setColor(0.1, 0.1, 0.1)
-    love.graphics.circle("fill", x - size * 0.25, y - size * 0.1, size * 0.15)
-    love.graphics.circle("fill", x + size * 0.25, y - size * 0.1, size * 0.15)
-    
-    -- Eye shine
-    love.graphics.setColor(1, 1, 1, 0.8)
-    love.graphics.circle("fill", x - size * 0.25 + 2, y - size * 0.1 - 2, size * 0.06)
-    love.graphics.circle("fill", x + size * 0.25 + 2, y - size * 0.1 - 2, size * 0.06)
-    
-    -- Smile
-    love.graphics.setColor(0.1, 0.1, 0.1)
-    love.graphics.setLineWidth(2)
-    love.graphics.arc("line", "open", x, y + size * 0.1, size * 0.4, 0.3, math.pi - 0.3)
+
+    local appearance = AppearanceSystem.createAppearance(character)
+    AppearanceSystem.drawAvatar(x, y, size, appearance)
 end
 
 -- Draw character info panel
