@@ -132,25 +132,13 @@ function MapData:draw(camera)
     love.graphics.setColor(self.backgroundColor)
     love.graphics.rectangle("fill", 0, 0, self.width, self.height)
 
-    -- Get camera viewport for culling
-    local camX, camY = 0, 0
-    local viewWidth, viewHeight = love.graphics.getDimensions()
-    if camera then
-        camX, camY = camera.x - viewWidth / 2, camera.y - viewHeight / 2
-    end
-
-    -- Calculate visible tile range
+    -- Calculate tile count
     local tilesX = math.floor(self.width / self.tileSize)
     local tilesY = math.floor(self.height / self.tileSize)
 
-    local startX = math.max(0, math.floor(camX / self.tileSize) - 1)
-    local endX = math.min(tilesX - 1, math.floor((camX + viewWidth) / self.tileSize) + 1)
-    local startY = math.max(0, math.floor(camY / self.tileSize) - 1)
-    local endY = math.min(tilesY - 1, math.floor((camY + viewHeight) / self.tileSize) + 1)
-
-    -- Draw tiles with seasonal themes
-    for y = startY, endY do
-        for x = startX, endX do
+    -- Draw ALL tiles (no viewport culling for now to ensure complete rendering)
+    for y = 0, tilesY - 1 do
+        for x = 0, tilesX - 1 do
             local px = x * self.tileSize
             local py = y * self.tileSize
 
@@ -255,25 +243,9 @@ function MapData:draw(camera)
 
     -- Draw buildings (MUST be after tiles to appear on top)
     for _, building in ipairs(self.buildings) do
-        -- Check if building is in viewport
-        if camera then
-            if building.x + building.width < camX or building.x > camX + viewWidth or
-               building.y + building.height < camY or building.y > camY + viewHeight then
-                goto continue
-            end
-        end
-
         -- Building body (solid, no transparency)
         love.graphics.setColor(building.color[1], building.color[2], building.color[3])
         love.graphics.rectangle("fill", building.x, building.y, building.width, building.height)
-
-        -- Building border
-        love.graphics.setColor(0.4, 0.25, 0.15)
-        love.graphics.setLineWidth(3)
-        love.graphics.rectangle("line", building.x, building.y, building.width, building.height, 5, 5)
-        love.graphics.setLineWidth(1)
-
-        ::continue::
     end
 
     -- Draw map border with seasonal color
