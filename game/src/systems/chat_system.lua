@@ -30,14 +30,15 @@ function ChatSystem:addMessage(sender, text, color)
         color = color or {1, 1, 1},
         timestamp = love.timer.getTime()
     }
-    
-    table.insert(self.messages, 1, message)
-    
-    -- Keep only max messages
+
+    -- Add message to the end (newest at bottom)
+    table.insert(self.messages, message)
+
+    -- Keep only max messages (remove oldest from beginning)
     while #self.messages > self.maxMessages do
-        table.remove(self.messages)
+        table.remove(self.messages, 1)
     end
-    
+
     return message
 end
 

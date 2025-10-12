@@ -42,10 +42,11 @@ function ChatUI.new(assetManager)
     
     -- Visibility
     self.isVisible = true
-    
+
     -- Scroll offset
     self.scrollOffset = 0
-    
+    self.manuallyScrolled = false  -- Auto-scroll to bottom by default
+
     return self
 end
 
@@ -95,19 +96,26 @@ function ChatUI:drawChatArea(chatSystem)
     local contentHeight = #allMessages * lineHeight
     local viewHeight = self.chatHeight - 30
 
-    -- Clamp scroll offset
+    -- Calculate max scroll (to show bottom messages)
     local maxScroll = math.max(0, contentHeight - viewHeight)
+
+    -- Auto-scroll to bottom if not manually scrolled
+    if not self.manuallyScrolled then
+        self.scrollOffset = maxScroll
+    end
+
+    -- Clamp scroll offset
     self.scrollOffset = math.max(0, math.min(self.scrollOffset, maxScroll))
 
     -- Enable scissor to clip messages
     love.graphics.setScissor(self.x + 5, self.y + 25, self.width - 15, viewHeight)
 
-    -- Draw messages from bottom to top
-    -- Start from the bottom of the view area
-    local startY = self.y + 25 + viewHeight - lineHeight
-    local messageY = startY + self.scrollOffset
+    -- Draw messages from top to bottom (oldest to newest)
+    -- Start from the top of the view area
+    local startY = self.y + 25
+    local messageY = startY - self.scrollOffset
 
-    for i = #allMessages, 1, -1 do
+    for i = 1, #allMessages do
         local msg = allMessages[i]
 
         -- Only draw if in visible area
@@ -123,7 +131,7 @@ function ChatUI:drawChatArea(chatSystem)
             love.graphics.print(msg.text, self.x + 10 + senderWidth, messageY)
         end
 
-        messageY = messageY - lineHeight
+        messageY = messageY + lineHeight
     end
 
     -- Disable scissor
