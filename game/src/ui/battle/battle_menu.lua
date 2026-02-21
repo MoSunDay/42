@@ -2,6 +2,7 @@
 -- Handles menu display, mouse clicks, and timer display
 
 local Theme = require("src.ui.theme")
+local Components = require("src.ui.components")
 
 local BattleMenu = {}
 
@@ -16,8 +17,7 @@ function BattleMenu.draw(battleUI, battleSystem, x, y)
     battleUI.menuY = y
     battleUI.menuHeight = 40 + #battleUI.actions * 30
     
-    love.graphics.setColor(battleUI.colors.panel)
-    love.graphics.rectangle("fill", x, y, battleUI.menuWidth, battleUI.menuHeight, 5, 5)
+    Components.drawPanelSimple(x, y, battleUI.menuWidth, battleUI.menuHeight, 5)
     
     love.graphics.setColor(battleUI.colors.text)
     love.graphics.print("Actions", x + 10, y + 10)
@@ -75,7 +75,6 @@ function BattleMenu.mousepressed(battleUI, x, y, button, battleSystem)
     return nil
 end
 
--- Draw turn timer
 function BattleMenu.drawTimer(battleSystem, x, y)
     local state = battleSystem:getState()
     if state ~= "player" then
@@ -89,23 +88,10 @@ function BattleMenu.drawTimer(battleSystem, x, y)
         return
     end
     
-    love.graphics.setColor(Theme.colors.panelDark[1], Theme.colors.panelDark[2], Theme.colors.panelDark[3], 0.9)
-    love.graphics.rectangle("fill", x, y, 200, 40, 5, 5)
+    Components.drawPanelSimple(x, y, 200, 40, 5)
     
     local timeRatio = turnTimer / maxTime
-    local barWidth = 180 * timeRatio
-    
-    local timerColor
-    if timeRatio > 0.5 then
-        timerColor = Theme.colors.hp.high
-    elseif timeRatio > 0.25 then
-        timerColor = Theme.colors.hp.medium
-    else
-        timerColor = Theme.colors.hp.low
-    end
-    
-    love.graphics.setColor(timerColor)
-    love.graphics.rectangle("fill", x + 10, y + 10, barWidth, 20, 3, 3)
+    Components.drawHPBar(x + 10, y + 10, 180, 20, timeRatio, nil)
     
     love.graphics.setColor(Theme.colors.text)
     love.graphics.printf(string.format("%.1fs", turnTimer), x, y + 12, 200, "center")
