@@ -17,10 +17,11 @@ BattleSystem.__index = BattleSystem
 -- Use imported battle states
 local BATTLE_STATE = BattleState
 
-function BattleSystem.new(player, audioSystem, animationManager, assetManager)
+function BattleSystem.new(player, audioSystem, animationManager, assetManager, companionSystem)
     local self = setmetatable({}, BattleSystem)
 
     self.player = player
+    self.companionSystem = companionSystem
     self.enemies = {}
     self.state = BATTLE_STATE.INTRO
     self.turn = 1
@@ -45,15 +46,27 @@ function BattleSystem.new(player, audioSystem, animationManager, assetManager)
     return self
 end
 
+function BattleSystem:getPartySize()
+    local size = 1
+    if self.companionSystem then
+        size = size + self.companionSystem:getPartySize()
+    end
+    return size
+end
+
 -- Start a new battle
 function BattleSystem:startBattle(enemyCount)
     enemyCount = enemyCount or 1
+    
+    local partySize = self:getPartySize()
 
     -- Generate enemies
     self.enemies = {}
     for i = 1, math.min(enemyCount, 3) do
         local enemyType = Enemy.getRandomType()
         local enemy = Enemy.new(enemyType, self.assetManager)
+        
+        enemy:scaleForPartySize(partySize)
 
         -- Set animation for enemy
         if self.animationManager then
@@ -88,10 +101,17 @@ function BattleSystem:endBattle(result)
         for _, enemy in ipairs(self.enemies) do
             totalGold = totalGold + enemy.gold
             
-            local drops = SpiritCrystalSystem.generateDrop(enemy.tier)
-            for i = 1, enemy.crystalBonus or 1 do
-                for _, drop in ipairs(drops) do
-                    table.insert(allCrystals, drop)
+            local preferredType = SpiritCrystalSystem.getPreferredCrystalType(enemy)
+            local drops = SpiritCrystalSystem.generateDrop(enemy.tier, preferredType)
+            for _, drop in ipairs(drops) do
+                table.insert(allCrystals, drop)
+            end
+            
+            local bonusDrops = enemy.crystalBonus or 0
+            for i = 1, bonusDrops do
+                local bonusDrop = SpiritCrystalSystem.generateDrop(enemy.tier, preferredType)
+                if #bonusDrop > 0 then
+                    table.insert(allCrystals, bonusDrop[1])
                 end
             end
         end

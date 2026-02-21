@@ -1,6 +1,6 @@
 # Entities Module Summary
 
-> Last updated: e0b0fcb - Enhanced enemy AI and battle integration
+> Last updated: 0b5db5a - UI components + NPC expansion
 
 ## Purpose
 Game entities: player, enemies, maps, and encounter zones.

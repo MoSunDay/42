@@ -10,7 +10,7 @@ local MAX_DEF_PERCENT = 50
 local SLOT_CRYSTAL_MAP = {
     weapon = SpiritCrystalSystem.TYPES.CRIMSON,
     hat = SpiritCrystalSystem.TYPES.AZURE,
-    clothes = SpiritCrystalSystem.TYPES.AZURE,
+    clothes = SpiritCrystalSystem.TYPES.EMERALD,
     shoes = SpiritCrystalSystem.TYPES.GOLDEN,
     necklace = SpiritCrystalSystem.TYPES.VIOLET
 }

@@ -180,7 +180,7 @@ function GameState:initializeWorld(character)
     self.audioSystem:playBGM("exploration")
 
     -- Battle system
-    self.battleSystem = BattleSystem.new(self.player, self.audioSystem, self.animationManager, self.assetManager)
+    self.battleSystem = BattleSystem.new(self.player, self.audioSystem, self.animationManager, self.assetManager, self.companionSystem)
 
     -- Party system
     self.partySystem = PartySystem.new()

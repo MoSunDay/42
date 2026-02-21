@@ -1,6 +1,6 @@
 # Tools Module Summary
 
-> Last updated: e0b0fcb - Added sound generation script
+> Last updated: 0b5db5a - UI components + NPC expansion
 
 ## Purpose
 Development utilities and asset generation.

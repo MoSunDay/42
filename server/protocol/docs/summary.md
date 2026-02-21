@@ -1,6 +1,6 @@
 # Protocol Module Summary
 
-> Last updated: TBD (commit on first change)
+> Last updated: 0b5db5a - UI components + NPC expansion
 
 ## Purpose
 Reliable UDP (RUDP) protocol for game communication.

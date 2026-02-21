@@ -1,6 +1,6 @@
 # Systems Module Summary
 
-> Last updated: e0b0fcb - Phase 5 Character animation + new systems
+> Last updated: 0b5db5a - UI components + NPC expansion
 
 ## Purpose
 Game systems for battle, party, chat, inventory, equipment, collision, audio, companions, and spirit crystals.

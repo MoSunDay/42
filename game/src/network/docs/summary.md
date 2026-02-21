@@ -1,6 +1,6 @@
 # Network Module Summary
 
-> Last updated: TBD (commit on first change)
+> Last updated: 0b5db5a - UI components + NPC expansion
 
 ## Purpose
 Client-side network communication using reliable UDP (RUDP).

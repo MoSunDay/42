@@ -18,37 +18,43 @@ local COMPANION_TEMPLATES = {
         id = "warrior",
         name = "战士",
         description = "攻防平衡的战斗伙伴",
-        statModifiers = { hp = 1.1, attack = 1.0, defense = 1.2, speed = 0.9, crit = 0.8, eva = 0.8 }
+        statModifiers = { hp = 1.1, attack = 1.0, defense = 1.2, speed = 0.9, crit = 0.8, eva = 0.8 },
+        defaultEquipment = { weapon = "iron_sword", hat = "leather_cap", clothes = "leather_vest" }
     },
     {
         id = "berserker",
         name = "狂战士",
         description = "高攻击低防御的输出伙伴",
-        statModifiers = { hp = 0.9, attack = 1.3, defense = 0.7, speed = 1.0, crit = 1.2, eva = 0.9 }
+        statModifiers = { hp = 0.9, attack = 1.3, defense = 0.7, speed = 1.0, crit = 1.2, eva = 0.9 },
+        defaultEquipment = { weapon = "assassin_dagger", clothes = "cloth_shirt", shoes = "sandals" }
     },
     {
         id = "guardian",
         name = "守护者",
         description = "高防御低攻击的坦克伙伴",
-        statModifiers = { hp = 1.3, attack = 0.7, defense = 1.4, speed = 0.7, crit = 0.6, eva = 0.7 }
+        statModifiers = { hp = 1.3, attack = 0.7, defense = 1.4, speed = 0.7, crit = 0.6, eva = 0.7 },
+        defaultEquipment = { weapon = "wooden_sword", hat = "iron_helmet", clothes = "chain_mail", shoes = "iron_boots" }
     },
     {
         id = "assassin",
         name = "刺客",
         description = "高暴击高闪避的敏捷伙伴",
-        statModifiers = { hp = 0.8, attack = 1.1, defense = 0.8, speed = 1.2, crit = 1.5, eva = 1.3 }
+        statModifiers = { hp = 0.8, attack = 1.1, defense = 0.8, speed = 1.2, crit = 1.5, eva = 1.3 },
+        defaultEquipment = { weapon = "assassin_dagger", hat = "hood_of_shadows", clothes = "shadow_cloak", shoes = "shadow_step" }
     },
     {
         id = "mage",
         name = "法师",
         description = "高攻击低生命的魔法伙伴",
-        statModifiers = { hp = 0.7, attack = 1.4, defense = 0.6, speed = 1.0, crit = 1.1, eva = 1.0 }
+        statModifiers = { hp = 0.7, attack = 1.4, defense = 0.6, speed = 1.0, crit = 1.1, eva = 1.0 },
+        defaultEquipment = { weapon = "flame_blade", clothes = "wizard_robe", shoes = "sandals", necklace = "copper_necklace" }
     },
     {
         id = "paladin",
         name = "圣骑士",
         description = "平衡型辅助伙伴",
-        statModifiers = { hp = 1.2, attack = 0.9, defense = 1.1, speed = 0.9, crit = 0.9, eva = 1.0 }
+        statModifiers = { hp = 1.2, attack = 0.9, defense = 1.1, speed = 0.9, crit = 0.9, eva = 1.0 },
+        defaultEquipment = { weapon = "steel_sword", hat = "iron_helmet", clothes = "plate_armor", shoes = "greaves_of_might", necklace = "silver_necklace" }
     }
 }
 
@@ -102,11 +108,12 @@ local function createCompanion(template, index)
         },
         
         inParty = false,
-        slot = nil
+        slot = nil,
+        defaultEquipment = template.defaultEquipment or {}
     }
 end
 
-function CompanionSystem:recruit(templateId)
+function CompanionSystem:recruit(templateId, itemDatabase)
     if #self.companions >= CompanionSystem.MAX_COMPANIONS then
         return false, "伙伴数量已达上限"
     end
@@ -124,6 +131,17 @@ function CompanionSystem:recruit(templateId)
     end
     
     local companion = createCompanion(template, #self.companions + 1)
+    
+    if itemDatabase and template.defaultEquipment then
+        for slot, itemId in pairs(template.defaultEquipment) do
+            local item = itemDatabase.getItem(itemId)
+            if item then
+                companion.equipment[slot] = item
+            end
+        end
+    end
+    
+    self:updateCompanionStats(companion)
     table.insert(self.companions, companion)
     
     return true, companion
@@ -229,7 +247,7 @@ function CompanionSystem:updateCompanionStats(companion)
     local crystalTypeMap = {
         weapon = "crimson",
         hat = "azure",
-        clothes = "azure",
+        clothes = "emerald",
         shoes = "golden",
         necklace = "violet"
     }
@@ -266,9 +284,10 @@ function CompanionSystem:equipItem(companionId, slot, item)
     local companion = self:getCompanion(companionId)
     if not companion then return false, "伙伴未找到" end
     
+    local oldItem = companion.equipment[slot]
     companion.equipment[slot] = item
     self:updateCompanionStats(companion)
-    return true
+    return true, oldItem
 end
 
 function CompanionSystem:unequipItem(companionId, slot)
@@ -435,6 +454,29 @@ function CompanionSystem:deserialize(data, itemDatabase)
             end
         end
     end
+end
+
+function CompanionSystem:getCompanionEquipmentInfo(companionId)
+    local companion = self:getCompanion(companionId)
+    if not companion then return nil end
+    
+    local info = {}
+    for slot, item in pairs(companion.equipment) do
+        if item then
+            info[slot] = {
+                id = item.id,
+                name = item.name,
+                enhanceLevel = companion.enhanceLevels[slot] or 0
+            }
+        else
+            info[slot] = nil
+        end
+    end
+    return info
+end
+
+function CompanionSystem:getEquipmentSlots()
+    return {"weapon", "hat", "clothes", "shoes", "necklace"}
 end
 
 CompanionSystem.TEMPLATES = COMPANION_TEMPLATES

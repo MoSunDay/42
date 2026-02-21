@@ -1,6 +1,6 @@
 # Battle System Module Summary
 
-> Last updated: TBD (commit on first change)
+> Last updated: 0b5db5a - UI components + NPC expansion
 
 ## Purpose
 Turn-based combat system with AI, animations, and turn timer.
