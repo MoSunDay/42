@@ -214,12 +214,14 @@ function AssetManager:loadEnemySprites()
                 local animDirs = love.filesystem.getDirectoryItems(animPath)
                 for _, animName in ipairs(animDirs) do
                     local animFullPath = animPath .. "/" .. animName
-                    if love.filesystem.getInfo(animFullPath) == "directory" then
+                    local animInfo = love.filesystem.getInfo(animFullPath)
+                    if animInfo and animInfo.type == "directory" then
                         self.enemySprites[enemyId].animations[animName] = {}
                         local directionDirs = love.filesystem.getDirectoryItems(animFullPath)
                         for _, dirName in ipairs(directionDirs) do
                             local dirPath = animFullPath .. "/" .. dirName
-                            if love.filesystem.getInfo(dirPath) == "directory" then
+                            local dirInfo = love.filesystem.getInfo(dirPath)
+                            if dirInfo and dirInfo.type == "directory" then
                                 self.enemySprites[enemyId].animations[animName][dirName] = {}
                                 local frames = love.filesystem.getDirectoryItems(dirPath)
                                 table.sort(frames)
@@ -286,12 +288,14 @@ function AssetManager:NPCSprites()
                 local animDirs = love.filesystem.getDirectoryItems(animPath)
                 for _, animName in ipairs(animDirs) do
                     local animFullPath = animPath .. "/" .. animName
-                    if love.filesystem.getInfo(animFullPath) == "directory" then
+                    local animInfo = love.filesystem.getInfo(animFullPath)
+                    if animInfo and animInfo.type == "directory" then
                         self.npcSprites[npcId].animations[animName] = {}
                         local directionDirs = love.filesystem.getDirectoryItems(animFullPath)
                         for _, dirName in ipairs(directionDirs) do
                             local dirPath = animFullPath .. "/" .. dirName
-                            if love.filesystem.getInfo(dirPath) == "directory" then
+                            local dirInfo = love.filesystem.getInfo(dirPath)
+                            if dirInfo and dirInfo.type == "directory" then
                                 self.npcSprites[npcId].animations[animName][dirName] = {}
                                 local frames = love.filesystem.getDirectoryItems(dirPath)
                                 table.sort(frames)
