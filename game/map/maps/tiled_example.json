@@ -1,0 +1,271 @@
+{
+  "compressionlevel": -1,
+  "height": 25,
+  "infinite": false,
+  "layers": [
+    {
+      "data": [
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1,
+        1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1,
+        1, 2, 2, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 2, 2, 2, 1,
+        1, 2, 2, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 2, 2, 2, 1,
+        1, 2, 2, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 2, 2, 2, 1,
+        1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1,
+        1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1,
+        1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1,
+        1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1,
+        1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1,
+        1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1,
+        1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1,
+        1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1,
+        1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1,
+        1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1,
+        1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1,
+        1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1,
+        1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1,
+        1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1,
+        1, 2, 2, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 2, 2, 2, 1,
+        1, 2, 2, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 2, 2, 2, 1,
+        1, 2, 2, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 2, 2, 2, 1,
+        1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+      ],
+      "height": 25,
+      "id": 1,
+      "name": "ground",
+      "opacity": 1,
+      "type": "tilelayer",
+      "visible": true,
+      "width": 25,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "draworder": "topdown",
+      "id": 2,
+      "name": "collision",
+      "objects": [
+        {
+          "height": 32,
+          "id": 1,
+          "name": "wall_left",
+          "rotation": 0,
+          "type": "collision",
+          "visible": true,
+          "width": 32,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "height": 32,
+          "id": 2,
+          "name": "wall_right",
+          "rotation": 0,
+          "type": "collision",
+          "visible": true,
+          "width": 32,
+          "x": 768,
+          "y": 0
+        },
+        {
+          "height": 96,
+          "id": 3,
+          "name": "water_left",
+          "rotation": 0,
+          "type": "collision",
+          "visible": true,
+          "width": 96,
+          "x": 96,
+          "y": 96
+        },
+        {
+          "height": 96,
+          "id": 4,
+          "name": "water_right",
+          "rotation": 0,
+          "type": "collision",
+          "visible": true,
+          "width": 96,
+          "x": 576,
+          "y": 96
+        }
+      ],
+      "opacity": 1,
+      "type": "objectgroup",
+      "visible": true,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "draworder": "topdown",
+      "id": 3,
+      "name": "spawn",
+      "objects": [
+        {
+          "height": 32,
+          "id": 5,
+          "name": "player_spawn",
+          "point": true,
+          "rotation": 0,
+          "type": "spawn",
+          "visible": true,
+          "width": 32,
+          "x": 400,
+          "y": 400
+        }
+      ],
+      "opacity": 1,
+      "type": "objectgroup",
+      "visible": true,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "draworder": "topdown",
+      "id": 4,
+      "name": "npcs",
+      "objects": [
+        {
+          "height": 32,
+          "id": 6,
+          "name": "village_elder",
+          "rotation": 0,
+          "type": "npc",
+          "visible": true,
+          "width": 32,
+          "x": 256,
+          "y": 352,
+          "properties": {
+            "dialog": "Welcome to our village!",
+            "sprite": "elder"
+          }
+        },
+        {
+          "height": 32,
+          "id": 7,
+          "name": "shopkeeper",
+          "rotation": 0,
+          "type": "npc",
+          "visible": true,
+          "width": 32,
+          "x": 512,
+          "y": 352,
+          "properties": {
+            "dialog": "What would you like to buy?",
+            "sprite": "shopkeeper"
+          }
+        }
+      ],
+      "opacity": 1,
+      "type": "objectgroup",
+      "visible": true,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "draworder": "topdown",
+      "id": 5,
+      "name": "encounter",
+      "objects": [
+        {
+          "height": 128,
+          "id": 8,
+          "name": "monster_zone",
+          "rotation": 0,
+          "type": "encounter",
+          "visible": true,
+          "width": 256,
+          "x": 288,
+          "y": 576,
+          "properties": {
+            "monsters": "slime,goblin",
+            "rate": 0.1
+          }
+        }
+      ],
+      "opacity": 1,
+      "type": "objectgroup",
+      "visible": true,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "draworder": "topdown",
+      "id": 6,
+      "name": "teleport",
+      "objects": [
+        {
+          "height": 32,
+          "id": 9,
+          "name": "to_forest",
+          "rotation": 0,
+          "type": "teleport",
+          "visible": true,
+          "width": 64,
+          "x": 368,
+          "y": 736,
+          "properties": {
+            "dest_map": "spring_forest",
+            "dest_x": 400,
+            "dest_y": 100
+          }
+        }
+      ],
+      "opacity": 1,
+      "type": "objectgroup",
+      "visible": true,
+      "x": 0,
+      "y": 0
+    }
+  ],
+  "nextlayerid": 7,
+  "nextobjectid": 10,
+  "orientation": "orthogonal",
+  "properties": {
+    "name": "Tiled Example Village",
+    "season": "spring"
+  },
+  "renderorder": "right-down",
+  "tiledversion": "1.10.2",
+  "tileheight": 32,
+  "tilesets": [
+    {
+      "columns": 3,
+      "firstgid": 1,
+      "image": "",
+      "imageheight": 32,
+      "imagewidth": 96,
+      "margin": 0,
+      "name": "basic_tiles",
+      "spacing": 0,
+      "tilecount": 3,
+      "tileheight": 32,
+      "tilewidth": 32,
+      "tiles": [
+        {
+          "id": 0,
+          "properties": {
+            "type": "border"
+          }
+        },
+        {
+          "id": 1,
+          "properties": {
+            "type": "grass"
+          }
+        },
+        {
+          "id": 2,
+          "properties": {
+            "type": "water"
+          }
+        }
+      ]
+    }
+  ],
+  "tilewidth": 32,
+  "type": "map",
+  "version": "1.10",
+  "width": 25
+}
