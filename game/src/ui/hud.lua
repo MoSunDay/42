@@ -155,34 +155,14 @@ function HUD:showMinimapHint()
     self.minimapHintAlpha = 1.0
 end
 
--- Draw bottom-right buttons
 function HUD:drawButtons()
     local mouseX, mouseY = love.mouse.getPosition()
 
     for _, button in ipairs(self.buttons) do
-        -- Check if mouse is over button
         local isHovered = mouseX >= button.x and mouseX <= button.x + button.width and
                          mouseY >= button.y and mouseY <= button.y + button.height
 
-        -- Button background
-        if isHovered then
-            love.graphics.setColor(button.hoverColor)
-        else
-            love.graphics.setColor(button.color)
-        end
-        love.graphics.rectangle("fill", button.x, button.y, button.width, button.height, 5, 5)
-
-        -- Button border
-        love.graphics.setColor(1, 1, 1, 0.8)
-        love.graphics.setLineWidth(2)
-        love.graphics.rectangle("line", button.x, button.y, button.width, button.height, 5, 5)
-        love.graphics.setLineWidth(1)
-
-        -- Button text
-        love.graphics.setFont(self.font)
-        love.graphics.setColor(1, 1, 1)
-        local textWidth = self.font:getWidth(button.name)
-        love.graphics.print(button.name, button.x + (button.width - textWidth) / 2, button.y + 18)
+        Components.drawButtonSimple(button.x, button.y, button.width, button.height, button.name, isHovered, false, self.font)
     end
 
     love.graphics.setColor(1, 1, 1)

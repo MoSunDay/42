@@ -4,6 +4,7 @@
 local ItemDatabase = require("src.systems.item_database")
 local InventoryUI = require("src.ui.inventory_ui")
 local Theme = require("src.ui.theme")
+local Components = require("src.ui.components")
 
 local UnifiedMenu = {}
 UnifiedMenu.__index = UnifiedMenu
@@ -99,16 +100,9 @@ function UnifiedMenu:draw(gameState)
         return
     end
     
-    love.graphics.setColor(0, 0, 0, 0.5)
-    love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
+    Components.drawOverlay(love.graphics.getWidth(), love.graphics.getHeight(), 0.5)
     
-    love.graphics.setColor(self.colors.background)
-    love.graphics.rectangle("fill", self.x, self.y, self.width, self.height, 10, 10)
-    
-    love.graphics.setColor(self.colors.border)
-    love.graphics.setLineWidth(3)
-    love.graphics.rectangle("line", self.x, self.y, self.width, self.height, 10, 10)
-    love.graphics.setLineWidth(1)
+    Components.drawPanelSimple(self.x, self.y, self.width, self.height, 10)
     
     self:drawTabs()
     
@@ -133,21 +127,7 @@ function UnifiedMenu:drawTabs()
         local tabX = self.x + (i - 1) * self.tabWidth
         local tabY = self.y
         
-        if i == self.currentTab then
-            love.graphics.setColor(self.colors.tabActive)
-        else
-            love.graphics.setColor(self.colors.tabInactive)
-        end
-        love.graphics.rectangle("fill", tabX, tabY, self.tabWidth, self.tabHeight, 5, 5)
-        
-        love.graphics.setColor(self.colors.border)
-        love.graphics.setLineWidth(2)
-        love.graphics.rectangle("line", tabX, tabY, self.tabWidth, self.tabHeight, 5, 5)
-        love.graphics.setLineWidth(1)
-        
-        love.graphics.setFont(self.font)
-        love.graphics.setColor(self.colors.text)
-        love.graphics.printf(tab.name, tabX, tabY + 12, self.tabWidth, "center")
+        Components.drawTab(tabX, tabY, self.tabWidth, self.tabHeight, tab.name, i == self.currentTab, self.assetManager, self.font)
     end
 end
 
@@ -195,10 +175,7 @@ function UnifiedMenu:drawEquipmentTab(gameState, contentY, contentHeight)
     
     love.graphics.setFont(self.font)
     
-    love.graphics.setColor(self.colors.panel)
-    love.graphics.rectangle("fill", leftPanelX, slotY - 10, leftPanelWidth, #slots * (slotHeight + 5) + 20, 5, 5)
-    love.graphics.setColor(self.colors.border)
-    love.graphics.rectangle("line", leftPanelX, slotY - 10, leftPanelWidth, #slots * (slotHeight + 5) + 20, 5, 5)
+    Components.drawPanelSimple(leftPanelX, slotY - 10, leftPanelWidth, #slots * (slotHeight + 5) + 20, 5)
     
     for i, slotInfo in ipairs(slots) do
         local y = slotY + (i - 1) * (slotHeight + 5)
@@ -212,10 +189,7 @@ function UnifiedMenu:drawEquipmentTab(gameState, contentY, contentHeight)
     local rightPanelX = self.x + leftPanelWidth + 40
     local rightPanelWidth = self.width - leftPanelWidth - 60
     
-    love.graphics.setColor(self.colors.panel)
-    love.graphics.rectangle("fill", rightPanelX, contentY + 50, rightPanelWidth, contentHeight - 60, 5, 5)
-    love.graphics.setColor(self.colors.border)
-    love.graphics.rectangle("line", rightPanelX, contentY + 50, rightPanelWidth, contentHeight - 60, 5, 5)
+    Components.drawPanelSimple(rightPanelX, contentY + 50, rightPanelWidth, contentHeight - 60, 5)
     
     love.graphics.setColor(self.colors.text)
     love.graphics.print("Inventory", rightPanelX + 10, contentY + 60)
@@ -274,10 +248,7 @@ function UnifiedMenu:drawTotalStats(equipmentSystem, x, y, width)
     local stats = equipmentSystem:getTotalStats()
     local defPercent = equipmentSystem:getDefensePercent()
     
-    love.graphics.setColor(self.colors.panel)
-    love.graphics.rectangle("fill", x, y, width, 80, 5, 5)
-    love.graphics.setColor(self.colors.border)
-    love.graphics.rectangle("line", x, y, width, 80, 5, 5)
+    Components.drawPanelSimple(x, y, width, 80, 5)
     
     love.graphics.setColor(self.colors.text)
     love.graphics.print("Equipment Bonus:", x + 10, y + 8)
@@ -340,20 +311,14 @@ function UnifiedMenu:drawItemsTab(gameState, contentY, contentHeight)
     local gridWidth = self.width - 250
     local gridHeight = contentHeight - 100
     
-    love.graphics.setColor(self.colors.panel)
-    love.graphics.rectangle("fill", gridX, gridY, gridWidth, gridHeight, 5, 5)
-    love.graphics.setColor(self.colors.border)
-    love.graphics.rectangle("line", gridX, gridY, gridWidth, gridHeight, 5, 5)
+    Components.drawPanelSimple(gridX, gridY, gridWidth, gridHeight, 5)
     
     self.inventoryUI:draw(inventorySystem, gridX, gridY + 10, gridWidth, gridHeight - 20)
     
     local detailX = gridX + gridWidth + 10
     local detailWidth = self.width - gridWidth - 40
     
-    love.graphics.setColor(self.colors.panel)
-    love.graphics.rectangle("fill", detailX, gridY, detailWidth, gridHeight, 5, 5)
-    love.graphics.setColor(self.colors.border)
-    love.graphics.rectangle("line", detailX, gridY, detailWidth, gridHeight, 5, 5)
+    Components.drawPanelSimple(detailX, gridY, detailWidth, gridHeight, 5)
     
     self.inventoryUI:drawItemDetail(inventorySystem, detailX + 10, gridY + 10, detailWidth - 20, gridHeight - 60)
     
@@ -374,18 +339,7 @@ function UnifiedMenu:drawItemsTab(gameState, contentY, contentHeight)
 end
 
 function UnifiedMenu:drawButton(text, x, y, width, height, isHovered)
-    if isHovered then
-        love.graphics.setColor(self.colors.buttonHover)
-    else
-        love.graphics.setColor(self.colors.button)
-    end
-    love.graphics.rectangle("fill", x, y, width, height, 5, 5)
-    
-    love.graphics.setColor(self.colors.border)
-    love.graphics.rectangle("line", x, y, width, height, 5, 5)
-    
-    love.graphics.setColor(self.colors.text)
-    love.graphics.printf(text, x, y + (height - 18) / 2, width, "center")
+    Components.drawButtonSimple(x, y, width, height, text, isHovered, false, self.font)
 end
 
 function UnifiedMenu:drawPartyTab(gameState, contentY, contentHeight)
