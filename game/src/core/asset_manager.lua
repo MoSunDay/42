@@ -418,8 +418,36 @@ end
 
 -- 加载音效
 function AssetManager:loadSounds()
-    -- 音效加载（暂时为空）
-    print("  - Sounds loaded (none yet)")
+    local loadedCount = 0
+    
+    local soundCategories = {
+        {name = "combat", path = self.paths.sounds .. "sfx/combat/"},
+        {name = "ui", path = self.paths.sounds .. "sfx/ui/"},
+        {name = "character", path = self.paths.sounds .. "sfx/character/"},
+        {name = "bgm", path = self.paths.sounds .. "bgm/"},
+        {name = "seasonal", path = self.paths.sounds .. "bgm/seasonal/"}
+    }
+    
+    for _, category in ipairs(soundCategories) do
+        if love.filesystem.getInfo(category.path) then
+            local files = love.filesystem.getDirectoryItems(category.path)
+            for _, filename in ipairs(files) do
+                if filename:match("%.ogg$") or filename:match("%.wav$") or filename:match("%.mp3$") then
+                    local soundName = filename:gsub("%.[^.]+$", "")
+                    local soundPath = category.path .. filename
+                    local sourceType = (category.name == "bgm" or category.name == "seasonal") and "stream" or "static"
+                    local success, source = pcall(love.audio.newSource, soundPath, sourceType)
+                    if success then
+                        local key = category.name .. "_" .. soundName
+                        self.sounds[key] = source
+                        loadedCount = loadedCount + 1
+                    end
+                end
+            end
+        end
+    end
+    
+    print("  - Sounds loaded: " .. loadedCount .. " files")
 end
 
 -- 程序生成玩家精灵

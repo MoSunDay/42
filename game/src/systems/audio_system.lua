@@ -6,42 +6,111 @@ local EnhancedAudio = require("src.systems.enhanced_audio")
 local AudioSystem = {}
 AudioSystem.__index = AudioSystem
 
+local SFX_PATHS = {
+    combat = {
+        attack = {"assets/sounds/sfx/combat/attack.ogg", "assets/sounds/sfx/combat/attack.wav"},
+        hit = {"assets/sounds/sfx/combat/hit.ogg", "assets/sounds/sfx/combat/hit.wav"},
+        critical = {"assets/sounds/sfx/combat/critical.ogg", "assets/sounds/sfx/combat/critical.wav"},
+        block = {"assets/sounds/sfx/combat/block.ogg", "assets/sounds/sfx/combat/block.wav"},
+        dodge = {"assets/sounds/sfx/combat/dodge.ogg", "assets/sounds/sfx/combat/dodge.wav"},
+        skill = {"assets/sounds/sfx/combat/skill.ogg", "assets/sounds/sfx/combat/skill.wav"},
+        victory = {"assets/sounds/sfx/combat/victory.ogg", "assets/sounds/sfx/combat/victory.wav"},
+        defeat = {"assets/sounds/sfx/combat/defeat.ogg", "assets/sounds/sfx/combat/defeat.wav"}
+    },
+    ui = {
+        click = {"assets/sounds/sfx/ui/click.ogg", "assets/sounds/sfx/ui/click.wav"},
+        hover = {"assets/sounds/sfx/ui/hover.ogg", "assets/sounds/sfx/ui/hover.wav"},
+        open = {"assets/sounds/sfx/ui/open.ogg", "assets/sounds/sfx/ui/open.wav"},
+        close = {"assets/sounds/sfx/ui/close.ogg", "assets/sounds/sfx/ui/close.wav"},
+        pickup = {"assets/sounds/sfx/ui/pickup.ogg", "assets/sounds/sfx/ui/pickup.wav"},
+        equip = {"assets/sounds/sfx/ui/equip.ogg", "assets/sounds/sfx/ui/equip.wav"},
+        levelup = {"assets/sounds/sfx/ui/levelup.ogg", "assets/sounds/sfx/ui/levelup.wav"}
+    },
+    character = {
+        hurt = {"assets/sounds/sfx/character/hurt.ogg", "assets/sounds/sfx/character/hurt.wav"},
+        death = {"assets/sounds/sfx/character/death.ogg", "assets/sounds/sfx/character/death.wav"}
+    }
+}
+
+local BGM_PATHS = {
+    exploration = {"assets/sounds/bgm/exploration.ogg", "assets/sounds/bgm/exploration.wav"},
+    battle = {"assets/sounds/bgm/battle.ogg", "assets/sounds/bgm/battle.wav"},
+    town = {"assets/sounds/bgm/town.ogg", "assets/sounds/bgm/town.wav"},
+    spring = {"assets/sounds/bgm/seasonal/spring.ogg", "assets/sounds/bgm/seasonal/spring.wav"},
+    summer = {"assets/sounds/bgm/seasonal/summer.ogg", "assets/sounds/bgm/seasonal/summer.wav"},
+    autumn = {"assets/sounds/bgm/seasonal/autumn.ogg", "assets/sounds/bgm/seasonal/autumn.wav"},
+    winter = {"assets/sounds/bgm/seasonal/winter.ogg", "assets/sounds/bgm/seasonal/winter.wav"}
+}
+
 function AudioSystem.new()
     local self = setmetatable({}, AudioSystem)
 
-    -- Music
     self.bgm = nil
     self.bgmVolume = 0.3
     self.currentTheme = nil
-
-    -- Sound effects
     self.sfx = {}
     self.sfxVolume = 0.7
+    self.loadedFiles = { sfx = {}, bgm = {} }
 
-    -- Generate procedural sounds
-    self:generateSounds()
+    self:loadSoundFiles()
 
     return self
 end
 
--- Generate procedural sound effects
-function AudioSystem:generateSounds()
-    -- We'll use simple beep sounds for now
-    -- In a real game, you'd load actual sound files
+function AudioSystem:loadSoundFiles()
+    local loadedCount = 0
     
-    -- Attack sound (simple beep)
-    self.sfx.attack = self:createBeep(0.1, 440)  -- A4 note
+    for category, sounds in pairs(SFX_PATHS) do
+        for name, paths in pairs(sounds) do
+            for _, path in ipairs(paths) do
+                if love.filesystem.getInfo(path) then
+                    local success, source = pcall(love.audio.newSource, path, "static")
+                    if success then
+                        self.sfx[name] = source
+                        self.loadedFiles.sfx[name] = true
+                        loadedCount = loadedCount + 1
+                        break
+                    end
+                end
+            end
+        end
+    end
     
-    -- Hit sound
-    self.sfx.hit = self:createBeep(0.08, 220)  -- A3 note
+    self:generateFallbackSounds()
     
-    -- Victory sound
-    self.sfx.victory = self:createBeep(0.3, 523)  -- C5 note
+    if loadedCount > 0 then
+        print("  - Loaded " .. loadedCount .. " sound files")
+    else
+        print("  - No sound files found, using procedural sounds")
+    end
+end
+
+function AudioSystem:generateFallbackSounds()
+    local defaults = {
+        attack = {0.1, 440},
+        hit = {0.08, 220},
+        critical = {0.15, 880},
+        block = {0.1, 330},
+        dodge = {0.08, 550},
+        skill = {0.2, 660},
+        victory = {0.3, 523},
+        defeat = {0.5, 165},
+        click = {0.05, 600},
+        hover = {0.03, 800},
+        open = {0.1, 500},
+        close = {0.08, 400},
+        pickup = {0.1, 700},
+        equip = {0.15, 450},
+        levelup = {0.4, 880},
+        hurt = {0.15, 200},
+        death = {0.5, 150}
+    }
     
-    -- Defeat sound
-    self.sfx.defeat = self:createBeep(0.5, 165)  -- E3 note
-    
-    print("  - Generated procedural sound effects")
+    for name, params in pairs(defaults) do
+        if not self.sfx[name] then
+            self.sfx[name] = self:createBeep(params[1], params[2])
+        end
+    end
 end
 
 -- Create a simple beep sound
@@ -61,26 +130,31 @@ function AudioSystem:createBeep(duration, frequency)
     return love.audio.newSource(soundData, "static")
 end
 
--- Play background music
 function AudioSystem:playBGM(mode)
-    -- Don't restart if already playing same theme
     if self.currentTheme == mode and self.bgm and self.bgm:isPlaying() then
         return
     end
 
-    -- Stop current music
     if self.bgm then
         self.bgm:stop()
     end
 
-    -- Generate enhanced background music
-    if mode == "battle" then
-        self.bgm = EnhancedAudio.generateBattleBGM(8.0)
-    elseif mode == "spring" or mode == "summer" or mode == "autumn" or mode == "winter" then
-        self.bgm = EnhancedAudio.generateSeasonalBGM(mode, 8.0)
-    else
-        -- Default exploration music
-        self.bgm = EnhancedAudio.generateBGM("exploration", 8.0)
+    local bgmPaths = BGM_PATHS[mode]
+    if bgmPaths then
+        for _, path in ipairs(bgmPaths) do
+            if love.filesystem.getInfo(path) then
+                local success, source = pcall(love.audio.newSource, path, "stream")
+                if success then
+                    self.bgm = source
+                    self.loadedFiles.bgm[mode] = true
+                    break
+                end
+            end
+        end
+    end
+    
+    if not self.bgm then
+        self.bgm = self:generateProceduralBGM(mode)
     end
 
     if self.bgm then
@@ -88,6 +162,16 @@ function AudioSystem:playBGM(mode)
         self.bgm:setVolume(self.bgmVolume)
         self.bgm:play()
         self.currentTheme = mode
+    end
+end
+
+function AudioSystem:generateProceduralBGM(mode)
+    if mode == "battle" then
+        return EnhancedAudio.generateBattleBGM(8.0)
+    elseif mode == "spring" or mode == "summer" or mode == "autumn" or mode == "winter" then
+        return EnhancedAudio.generateSeasonalBGM(mode, 8.0)
+    else
+        return EnhancedAudio.generateBGM("exploration", 8.0)
     end
 end
 
