@@ -2,6 +2,7 @@
 -- Display chat box in bottom-left corner
 
 local Theme = require("src.ui.theme")
+local Components = require("src.ui.components")
 
 local ChatUI = {}
 ChatUI.__index = ChatUI
@@ -69,31 +70,19 @@ end
 
 -- Draw chat message area
 function ChatUI:drawChatArea(chatSystem)
-    -- Panel background
-    love.graphics.setColor(self.colors.panel)
-    love.graphics.rectangle("fill", self.x, self.y, self.width, self.chatHeight, 5, 5)
+    Components.drawPanelSimple(self.x, self.y, self.width, self.chatHeight, 5)
 
-    -- Panel border
-    love.graphics.setColor(self.colors.border)
-    love.graphics.setLineWidth(2)
-    love.graphics.rectangle("line", self.x, self.y, self.width, self.chatHeight, 5, 5)
-    love.graphics.setLineWidth(1)
-
-    -- Title
     love.graphics.setFont(self.font)
     love.graphics.setColor(self.colors.text)
     love.graphics.print("Chat", self.x + 10, self.y + 5)
 
-    -- Get all messages
     local allMessages = chatSystem:getMessages()
     local lineHeight = 16
     local contentHeight = #allMessages * lineHeight
     local viewHeight = self.chatHeight - 30
 
-    -- Calculate max scroll (to show bottom messages)
     local maxScroll = math.max(0, contentHeight - viewHeight)
 
-    -- Auto-scroll to bottom if not manually scrolled
     if not self.manuallyScrolled then
         self.scrollOffset = maxScroll
     end
@@ -159,11 +148,25 @@ end
 function ChatUI:drawInputArea(chatSystem)
     local isActive = chatSystem:isInputting()
     
+    Components.drawInput(self.x, self.inputY, self.width, self.inputHeight, isActive, self.assetManager)
+    
+    love.graphics.setFont(self.font)
+    love.graphics.setColor(self.colors.text)
+    
+    local displayText = chatSystem:getInputText()
     if isActive then
-        love.graphics.setColor(self.colors.inputActive)
+        if math.floor(love.timer.getTime() * 2) % 2 == 0 then
+            displayText = displayText .. "|"
+        end
     else
-        love.graphics.setColor(self.colors.inputBg)
+        if displayText == "" then
+            love.graphics.setColor(self.colors.textHint)
+            displayText = "Press ENTER to chat..."
+        end
     end
+    
+    love.graphics.print(displayText, self.x + 10, self.inputY + 12)
+end
     love.graphics.rectangle("fill", self.x, self.inputY, self.width, self.inputHeight, 5, 5)
     
     if isActive then

@@ -1,18 +1,15 @@
 -- pet_ui.lua - Pet UI for battle display
 -- Shows pet status and renders pet in battle
 
+local Theme = require("src.ui.theme")
+
 local PetUI = {}
 PetUI.__index = PetUI
 
 function PetUI.new()
     local self = setmetatable({}, PetUI)
     
-    self.colors = {
-        panel = {0.2, 0.2, 0.25, 0.9},
-        text = {1, 1, 1},
-        hpBar = {0.3, 0.9, 0.4},
-        hpBarBg = {0.2, 0.2, 0.25}
-    }
+    self.colors = Theme.colors.pet
     
     return self
 end
@@ -54,56 +51,45 @@ function PetUI:drawPet(pet, playerX, playerY, animationManager)
     self:drawPetHPBar(pet, petX, petY - pet.size - 15)
 end
 
--- Draw pet HP bar
 function PetUI:drawPetHPBar(pet, x, y)
     local barWidth = 50
     local barHeight = 6
     
-    -- Background
     love.graphics.setColor(self.colors.hpBarBg)
     love.graphics.rectangle("fill", x - barWidth/2, y, barWidth, barHeight, 2, 2)
     
-    -- HP fill
     local hpPercent = pet.hp / pet.maxHp
-    love.graphics.setColor(self.colors.hpBar)
+    love.graphics.setColor(Theme.getHpColor(hpPercent))
     love.graphics.rectangle("fill", x - barWidth/2, y, barWidth * hpPercent, barHeight, 2, 2)
     
-    -- Border
-    love.graphics.setColor(0.4, 0.4, 0.5)
+    love.graphics.setColor(Theme.colors.borderDim)
     love.graphics.setLineWidth(1)
     love.graphics.rectangle("line", x - barWidth/2, y, barWidth, barHeight, 2, 2)
 end
 
--- Draw pet panel (in exploration mode)
 function PetUI:drawPetPanel(pet, x, y, width, height)
     if not pet then
         return
     end
     
-    -- Panel background
     love.graphics.setColor(self.colors.panel)
     love.graphics.rectangle("fill", x, y, width, height, 5, 5)
     
-    -- Border
-    love.graphics.setColor(0.4, 0.6, 1.0)
+    love.graphics.setColor(Theme.colors.border)
     love.graphics.setLineWidth(2)
     love.graphics.rectangle("line", x, y, width, height, 5, 5)
     love.graphics.setLineWidth(1)
     
-    -- Pet icon
     love.graphics.setColor(pet.color)
     love.graphics.circle("fill", x + 25, y + 25, 15)
     
-    -- Pet name
     love.graphics.setColor(self.colors.text)
     love.graphics.print(pet.name, x + 50, y + 10)
     
-    -- HP
-    love.graphics.setColor(0.9, 0.3, 0.3)
+    love.graphics.setColor(Theme.colors.error)
     love.graphics.print("HP: " .. pet.hp .. "/" .. pet.maxHp, x + 50, y + 30)
     
-    -- Stats
-    love.graphics.setColor(0.7, 0.7, 0.7)
+    love.graphics.setColor(Theme.colors.textDim)
     love.graphics.print("ATK:" .. pet.attack .. " DEF:" .. pet.defense, x + 10, y + 55)
 end
 
