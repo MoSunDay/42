@@ -2,55 +2,31 @@
 -- Handles rendering of information panels
 
 local Theme = require("src.ui.theme")
+local Components = require("src.ui.components")
 
 local BattlePanels = {}
 
 function BattlePanels.drawHPBar(colors, entity, x, y, width, height)
     local hpPercent = entity:getHPPercent()
-    
-    love.graphics.setColor(0.12, 0.12, 0.12)
-    love.graphics.rectangle("fill", x, y, width, height)
-    
-    local color = Theme.colors.hp.high
-    if hpPercent < 0.3 then
-        color = Theme.colors.hp.low
-    elseif hpPercent < 0.6 then
-        color = Theme.colors.hp.medium
-    end
-    
-    love.graphics.setColor(color)
-    love.graphics.rectangle("fill", x, y, width * hpPercent, height)
-    
-    love.graphics.setColor(Theme.colors.border)
-    love.graphics.setLineWidth(1)
-    love.graphics.rectangle("line", x, y, width, height)
+    Components.drawHPBar(x, y, width, height, hpPercent, nil)
 end
 
--- Draw player panel
 function BattlePanels.drawPlayerPanel(colors, player, x, y)
-    -- Panel background
-    love.graphics.setColor(colors.panel)
-    love.graphics.rectangle("fill", x, y, 300, 160, 5, 5)
+    Components.drawPanelSimple(x, y, 300, 160, 5)
     
-    -- Player name
     love.graphics.setColor(colors.text)
     love.graphics.print("Player", x + 10, y + 10)
     
-    -- HP
     love.graphics.print("HP: " .. player.hp .. " / " .. player.maxHp, x + 10, y + 35)
     
-    -- HP bar
     BattlePanels.drawHPBar(colors, player, x + 10, y + 55, 280, 15)
     
-    -- Stats
     love.graphics.print("ATK: " .. player.attack, x + 10, y + 80)
     love.graphics.print("DEF: " .. player.defense, x + 120, y + 80)
     love.graphics.print("SPD: " .. player.speed, x + 230, y + 80)
 
-    -- Gold
     love.graphics.print("Gold: " .. (player.gold or 0), x + 10, y + 105)
     
-    -- Equipment info
     if player.equipment then
         local equipCount = 0
         for _, item in pairs(player.equipment) do
@@ -59,45 +35,35 @@ function BattlePanels.drawPlayerPanel(colors, player, x, y)
         love.graphics.print("Equipment: " .. equipCount .. "/3", x + 10, y + 130)
     end
     
-    -- Pet info
     if player.pet then
         love.graphics.print("Pet: " .. player.pet.name, x + 150, y + 130)
     end
 end
 
--- Draw battle log
 function BattlePanels.drawBattleLog(colors, battleSystem, x, y)
     local battleLog = battleSystem.battleLog
     local messages = battleLog:getMessages()
 
-    -- Panel background
-    love.graphics.setColor(colors.panel)
-    love.graphics.rectangle("fill", x, y, 400, 120, 5, 5)
+    Components.drawPanelSimple(x, y, 400, 120, 5)
 
-    -- Title
     love.graphics.setColor(colors.text)
     love.graphics.print("Battle Log", x + 10, y + 10)
 
-    -- Calculate scroll parameters
     local lineHeight = 20
-    local viewHeight = 80  -- Height of visible area
+    local viewHeight = 80
     local contentHeight = #messages * lineHeight
 
-    -- Clamp scroll offset
     local scrollOffset = battleLog:getScrollOffset()
     local maxScroll = math.max(0, contentHeight - viewHeight)
     scrollOffset = math.max(0, math.min(scrollOffset, maxScroll))
     battleLog:setScrollOffset(scrollOffset)
 
-    -- Enable scissor to clip messages
     love.graphics.setScissor(x + 10, y + 30, 380, viewHeight)
 
-    -- Draw messages with scroll offset
     local messageY = y + 30 + scrollOffset
     for i = 1, #messages do
         local msg = messages[i]
 
-        -- Only draw if in visible area
         if messageY >= y + 30 - lineHeight and messageY <= y + 30 + viewHeight then
             love.graphics.setColor(colors.text)
             love.graphics.print(msg, x + 10, messageY)
@@ -106,10 +72,8 @@ function BattlePanels.drawBattleLog(colors, battleSystem, x, y)
         messageY = messageY + lineHeight
     end
 
-    -- Disable scissor
     love.graphics.setScissor()
 
-    -- Draw scrollbar if needed
     if contentHeight > viewHeight then
         BattlePanels.drawScrollbar(colors, x + 385, y + 30, viewHeight, contentHeight, scrollOffset)
     end

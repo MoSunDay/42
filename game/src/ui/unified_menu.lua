@@ -364,8 +364,7 @@ function UnifiedMenu:drawPartyTab(gameState, contentY, contentHeight)
     for i, member in ipairs(members) do
         local y = memberY + (i - 1) * 70
         
-        love.graphics.setColor(self.colors.panel)
-        love.graphics.rectangle("fill", self.x + 50, y, self.width - 100, 60, 5, 5)
+        Components.drawPanelSimple(self.x + 50, y, self.width - 100, 60, 5)
         
         if i == partySystem.leaderIndex then
             love.graphics.setColor(1, 0.8, 0.2)
@@ -380,12 +379,8 @@ function UnifiedMenu:drawPartyTab(gameState, contentY, contentHeight)
         local hpBarW = 200
         local hpBarH = 12
         
-        love.graphics.setColor(0.2, 0.2, 0.25)
-        love.graphics.rectangle("fill", hpBarX, hpBarY, hpBarW, hpBarH, 3, 3)
-        
         local hpPercent = member.hp / member.maxHp
-        love.graphics.setColor(0.2, 0.8, 0.3)
-        love.graphics.rectangle("fill", hpBarX, hpBarY, hpBarW * hpPercent, hpBarH, 3, 3)
+        Components.drawHPBar(hpBarX, hpBarY, hpBarW, hpBarH, hpPercent, self.assetManager)
         
         love.graphics.setColor(self.colors.text)
         love.graphics.print(member.hp .. "/" .. member.maxHp, hpBarX + hpBarW + 10, hpBarY)
