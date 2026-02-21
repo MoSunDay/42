@@ -1,6 +1,6 @@
 # Animations Module Summary
 
-> Last updated: TBD (commit on first change)
+> Last updated: 0b5db5a - UI components + NPC expansion
 
 ## Purpose
 Animation effects for characters and enemies.

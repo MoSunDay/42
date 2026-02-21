@@ -1,6 +1,6 @@
 # Tests Module Summary
 
-> Last updated: e0b0fcb - Added 5 new test files
+> Last updated: 0b5db5a - UI components + NPC expansion
 
 ## Purpose
 Unit tests for game client and server.

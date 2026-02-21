@@ -1,6 +1,6 @@
 # Game Client Module Summary
 
-> Last updated: e0b0fcb - Tests, docs, and new systems
+> Last updated: 0b5db5a - UI components + NPC expansion
 
 ## Purpose
 LÖVE 2D game client for turn-based RPG with top-down exploration and combat.

@@ -195,34 +195,61 @@ function SpiritCrystalSystem:getEnhancementBonus(crystalType, level)
     local baseValues = {
         attack = 2,
         defense = 2,
-        hp = 10,
-        crit = 0.5,
-        eva = 0.5
+        hp = 15,
+        crit = 1.5,
+        eva = 1.5
     }
     
     local stat = CRYSTAL_DATA[crystalType] and CRYSTAL_DATA[crystalType].stat
     if not stat then return 0 end
     
     local base = baseValues[stat] or 1
-    return math.floor(base * level * (1 + level * 0.1))
+    
+    if stat == "crit" or stat == "eva" then
+        return math.floor(base * level * (1 + level * 0.08))
+    else
+        return math.floor(base * level * (1 + level * 0.1))
+    end
 end
 
-function SpiritCrystalSystem.generateDrop(enemyTier)
-    local dropCount = math.min(enemyTier, 2)
+function SpiritCrystalSystem.getPreferredCrystalType(enemy)
+    if not enemy then return nil end
+    
+    local stats = {
+        {type = "crimson", value = (enemy.attack or 0) / 20},
+        {type = "azure", value = (enemy.defense or 0) / 10 + (enemy.defPercent or 0) / 20},
+        {type = "emerald", value = (enemy.maxHp or 0) / 300},
+        {type = "violet", value = (enemy.crit or 0) / 10},
+        {type = "golden", value = (enemy.eva or 0) / 8}
+    }
+    
+    table.sort(stats, function(a, b) return a.value > b.value end)
+    
+    return stats[1].type
+end
+
+function SpiritCrystalSystem.generateDrop(enemyTier, preferredType)
+    local dropCount = enemyTier
     local drops = {}
     
     local tierWeights = {
-        [1] = {80, 18, 2, 0},
-        [2] = {60, 30, 8, 2},
-        [3] = {40, 35, 20, 5},
-        [4] = {20, 35, 35, 10}
+        [1] = {70, 22, 7, 1},
+        [2] = {50, 35, 12, 3},
+        [3] = {30, 35, 25, 10},
+        [4] = {15, 25, 40, 20}
     }
     
     local weights = tierWeights[enemyTier] or tierWeights[1]
     
     for i = 1, dropCount do
-        local crystalTypes = {"crimson", "azure", "emerald", "violet", "golden"}
-        local crystalType = crystalTypes[math.random(#crystalTypes)]
+        local crystalType
+        
+        if preferredType and math.random(100) <= 35 then
+            crystalType = preferredType
+        else
+            local crystalTypes = {"crimson", "azure", "emerald", "violet", "golden"}
+            crystalType = crystalTypes[math.random(#crystalTypes)]
+        end
         
         local tierRoll = math.random(100)
         local tierSum = 0

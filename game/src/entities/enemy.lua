@@ -13,7 +13,7 @@ local ENEMY_TYPES = {
         speed = 3,
         crit = 2, eva = 0,
         gold = 8,
-        crystalBonus = 1,
+        crystalBonus = 0,
         color = {0.2, 0.8, 0.3}
     },
     goblin = {
@@ -25,7 +25,7 @@ local ENEMY_TYPES = {
         speed = 5,
         crit = 5, eva = 3,
         gold = 12,
-        crystalBonus = 1,
+        crystalBonus = 0,
         color = {0.6, 0.4, 0.2}
     },
     skeleton = {
@@ -37,7 +37,7 @@ local ENEMY_TYPES = {
         speed = 4,
         crit = 8, eva = 2,
         gold = 10,
-        crystalBonus = 1,
+        crystalBonus = 0,
         color = {0.9, 0.9, 0.9}
     },
     bat = {
@@ -49,7 +49,7 @@ local ENEMY_TYPES = {
         speed = 8,
         crit = 3, eva = 12,
         gold = 6,
-        crystalBonus = 1,
+        crystalBonus = 0,
         color = {0.3, 0.2, 0.4}
     },
     wolf = {
@@ -61,7 +61,7 @@ local ENEMY_TYPES = {
         speed = 7,
         crit = 10, eva = 5,
         gold = 15,
-        crystalBonus = 1,
+        crystalBonus = 0,
         color = {0.5, 0.5, 0.5}
     },
     
@@ -74,7 +74,7 @@ local ENEMY_TYPES = {
         speed = 4,
         crit = 5, eva = 2,
         gold = 25,
-        crystalBonus = 2,
+        crystalBonus = 1,
         color = {0.3, 0.6, 0.3}
     },
     skeleton_knight = {
@@ -86,7 +86,7 @@ local ENEMY_TYPES = {
         speed = 5,
         crit = 12, eva = 3,
         gold = 30,
-        crystalBonus = 2,
+        crystalBonus = 1,
         color = {0.7, 0.7, 0.8}
     },
     dire_wolf = {
@@ -98,7 +98,7 @@ local ENEMY_TYPES = {
         speed = 9,
         crit = 15, eva = 10,
         gold = 22,
-        crystalBonus = 2,
+        crystalBonus = 1,
         color = {0.4, 0.4, 0.5}
     },
     dark_mage = {
@@ -110,7 +110,7 @@ local ENEMY_TYPES = {
         speed = 5,
         crit = 18, eva = 6,
         gold = 35,
-        crystalBonus = 2,
+        crystalBonus = 1,
         color = {0.4, 0.2, 0.6}
     },
     harpy = {
@@ -122,7 +122,7 @@ local ENEMY_TYPES = {
         speed = 10,
         crit = 10, eva = 15,
         gold = 28,
-        crystalBonus = 2,
+        crystalBonus = 1,
         color = {0.8, 0.6, 0.8}
     },
     
@@ -135,7 +135,7 @@ local ENEMY_TYPES = {
         speed = 4,
         crit = 8, eva = 3,
         gold = 70,
-        crystalBonus = 3,
+        crystalBonus = 2,
         multiTarget = true,
         color = {0.2, 0.5, 0.2}
     },
@@ -148,7 +148,7 @@ local ENEMY_TYPES = {
         speed = 8,
         crit = 18, eva = 15,
         gold = 85,
-        crystalBonus = 3,
+        crystalBonus = 2,
         multiTarget = true,
         color = {0.5, 0.1, 0.2}
     },
@@ -161,7 +161,7 @@ local ENEMY_TYPES = {
         speed = 2,
         crit = 3, eva = 0,
         gold = 100,
-        crystalBonus = 3,
+        crystalBonus = 2,
         color = {0.5, 0.5, 0.5}
     },
     demon = {
@@ -173,7 +173,7 @@ local ENEMY_TYPES = {
         speed = 6,
         crit = 15, eva = 10,
         gold = 120,
-        crystalBonus = 3,
+        crystalBonus = 2,
         multiTarget = true,
         color = {0.8, 0.2, 0.2}
     },
@@ -186,7 +186,7 @@ local ENEMY_TYPES = {
         speed = 7,
         crit = 20, eva = 12,
         gold = 90,
-        crystalBonus = 3,
+        crystalBonus = 2,
         multiTarget = true,
         color = {0.3, 0.7, 0.9}
     },
@@ -200,7 +200,7 @@ local ENEMY_TYPES = {
         speed = 5,
         crit = 12, eva = 8,
         gold = 200,
-        crystalBonus = 5,
+        crystalBonus = 3,
         multiTarget = true,
         boss = true,
         color = {0.8, 0.5, 0.1}
@@ -214,7 +214,7 @@ local ENEMY_TYPES = {
         speed = 6,
         crit = 25, eva = 12,
         gold = 250,
-        crystalBonus = 5,
+        crystalBonus = 3,
         multiTarget = true,
         boss = true,
         color = {0.2, 0.1, 0.3}
@@ -228,7 +228,7 @@ local ENEMY_TYPES = {
         speed = 9,
         crit = 18, eva = 18,
         gold = 220,
-        crystalBonus = 5,
+        crystalBonus = 3,
         multiTarget = true,
         boss = true,
         color = {0.5, 0.1, 0.5}
@@ -242,7 +242,7 @@ local ENEMY_TYPES = {
         speed = 3,
         crit = 5, eva = 0,
         gold = 280,
-        crystalBonus = 5,
+        crystalBonus = 3,
         multiTarget = true,
         boss = true,
         color = {0.9, 0.8, 0.6}
@@ -443,6 +443,27 @@ end
 
 function Enemy.getTypesByTierList(tier)
     return TYPES_BY_TIER[tier] or {}
+end
+
+function Enemy:scaleForPartySize(partySize)
+    if not partySize or partySize <= 1 then return end
+    
+    local baseMultiplier = 1.0
+    local perMemberBonus = 0.18
+    local maxMultiplier = 2.8
+    
+    local multiplier = math.min(maxMultiplier, baseMultiplier + perMemberBonus * (partySize - 1))
+    
+    local oldMaxHp = self.maxHp
+    self.maxHp = math.floor(self.maxHp * multiplier)
+    self.hp = self.maxHp
+    self.hpRatio = multiplier
+    
+    self.gold = math.floor(self.gold * multiplier)
+    
+    if partySize >= 5 then
+        self.crystalBonus = self.crystalBonus + 1
+    end
 end
 
 return Enemy

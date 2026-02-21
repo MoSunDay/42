@@ -1,6 +1,6 @@
 # Core Module Summary
 
-> Last updated: e0b0fcb - Sound loading integration
+> Last updated: 0b5db5a - UI components + NPC expansion
 
 ## Purpose
 Core game systems: state management, camera, and asset loading.
