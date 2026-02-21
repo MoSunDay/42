@@ -1,5 +1,5 @@
 -- map_manager.lua - Map management system
--- 地图管理系统，支持Lua和Tiled格式地图
+-- 地图管理系统，支持Lua、Tiled XML/JSON格式地图，支持STI库
 
 local MapData = require("map.map_data")
 local TiledLoader = require("map.tiled_loader")
@@ -17,6 +17,7 @@ MapManager.tileAnimator = nil
 MapManager.autotile = nil
 MapManager.particleSystem = nil
 MapManager.debugMode = false
+MapManager.useSTI = false
 
 function MapManager.init()
     MapManager.tilesetManager = TilesetManager.new()
@@ -37,7 +38,13 @@ function MapManager.loadMap(mapId, useTiled)
     local map = nil
     
     if useTiled then
-        map = MapManager.loadTiledMap(mapId)
+        if MapManager.useSTI and TiledLoader.isSTIAvailable() then
+            map = MapManager.loadWithSTI(mapId)
+        end
+        
+        if not map then
+            map = MapManager.loadTiledMap(mapId)
+        end
     end
     
     if not map then
@@ -80,16 +87,30 @@ function MapManager.loadLuaMap(mapId)
 end
 
 function MapManager.loadTiledMap(mapId)
+    local jsonPath = "map/maps/" .. mapId .. ".json"
     local tmxPath = "map/maps/" .. mapId .. ".tmx"
+    local map = nil
     
-    if not love.filesystem.getInfo(tmxPath) then
+    if love.filesystem.getInfo(jsonPath) then
+        map = TiledLoader.load(jsonPath)
+        if map and MapManager.debugMode then
+            print("[MapManager] Loaded JSON map: " .. jsonPath)
+        end
+    end
+    
+    if not map and love.filesystem.getInfo(tmxPath) then
+        map = TiledLoader.load(tmxPath)
+        if map and MapManager.debugMode then
+            print("[MapManager] Loaded TMX map: " .. tmxPath)
+        end
+    end
+    
+    if not map then
         if MapManager.debugMode then
-            print("[MapManager] Tiled map not found: " .. tmxPath)
+            print("[MapManager] Tiled map not found: " .. mapId .. " (tried .json and .tmx)")
         end
         return nil
     end
-    
-    local map = TiledLoader.load(tmxPath)
     
     if map and MapManager.autotile then
         if map.layers then
@@ -104,6 +125,36 @@ function MapManager.loadTiledMap(mapId)
     end
     
     return map
+end
+
+function MapManager.loadWithSTI(mapId)
+    local jsonPath = "map/maps/" .. mapId .. ".json"
+    local tmxPath = "map/maps/" .. mapId .. ".tmx"
+    
+    if love.filesystem.getInfo(jsonPath) then
+        local map = TiledLoader.loadWithSTI(jsonPath)
+        if map and MapManager.debugMode then
+            print("[MapManager] Loaded with STI: " .. jsonPath)
+        end
+        return map
+    end
+    
+    if love.filesystem.getInfo(tmxPath) then
+        local map = TiledLoader.loadWithSTI(tmxPath)
+        if map and MapManager.debugMode then
+            print("[MapManager] Loaded with STI: " .. tmxPath)
+        end
+        return map
+    end
+    
+    return nil
+end
+
+function MapManager.setUseSTI(enabled)
+    MapManager.useSTI = enabled and TiledLoader.isSTIAvailable()
+    if MapManager.debugMode then
+        print("[MapManager] STI mode: " .. tostring(MapManager.useSTI))
+    end
 end
 
 function MapManager.getMinimap(mapId)
@@ -196,14 +247,29 @@ function MapManager.setParticlesEnabled(enabled)
     end
 end
 
-function MapManager.exportToTiled(mapId, outputPath)
+function MapManager.exportToTiled(mapId, outputPath, format)
     local map = MapManager.loadedMaps[mapId]
     if not map then
         return false
     end
     
-    local content = TiledLoader.exportToTMX(map, outputPath)
-    return content ~= nil
+    format = format or "json"
+    
+    if format == "json" then
+        local content = TiledLoader.exportToJSON(map, outputPath)
+        return content ~= nil
+    else
+        local content = TiledLoader.exportToTMX(map, outputPath)
+        return content ~= nil
+    end
+end
+
+function MapManager.getSupportedFormats()
+    return TiledLoader.getSupportedFormats()
+end
+
+function MapManager.isSTIAvailable()
+    return TiledLoader.isSTIAvailable()
 end
 
 function MapManager.getMapInfo(mapId)
