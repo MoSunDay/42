@@ -4,6 +4,7 @@
 local AvatarRenderer = require("account.avatar_renderer")
 local AppearanceSystem = require("src.systems.appearance_system")
 local Theme = require("src.ui.theme")
+local Components = require("src.ui.components")
 
 local CharacterSelectUI = {}
 CharacterSelectUI.__index = CharacterSelectUI
@@ -96,87 +97,62 @@ function CharacterSelectUI:isNameTaken(name, accountManager, username)
     return false
 end
 
--- Draw character selection screen
 function CharacterSelectUI:drawSelectScreen(accountManager, username)
     local w, h = love.graphics.getDimensions()
 
-    -- Title
     love.graphics.setColor(1, 1, 1)
     love.graphics.printf("Select Character", 0, 50, w, "center")
 
-    -- Get account characters
     local account = accountManager.getAccount(username)
     local characters = (account and account.characters) or {}
     
-    -- Character list
     local startY = 120
     for i, char in ipairs(characters) do
         local y = startY + (i - 1) * 80
         local isSelected = (i == self.selectedCharIndex)
         
-        -- Character panel
         if isSelected then
-            love.graphics.setColor(0.3, 0.5, 0.7, 0.3)
+            Components.drawPanelSimple(w/2 - 250, y, 500, 70, 5)
+            love.graphics.setColor(self.colors.selected[1], self.colors.selected[2], self.colors.selected[3], 0.3)
+            love.graphics.rectangle("fill", w/2 - 250, y, 500, 70, 5, 5)
         else
             love.graphics.setColor(0.2, 0.2, 0.2, 0.3)
+            love.graphics.rectangle("fill", w/2 - 250, y, 500, 70, 5, 5)
         end
-        love.graphics.rectangle("fill", w/2 - 250, y, 500, 70, 5, 5)
         
-        -- Avatar
         AvatarRenderer.drawAvatar(w/2 - 200, y + 35, 25, char)
 
-        -- Character info
         love.graphics.setColor(1, 1, 1)
         love.graphics.print(char.characterName or char.name or "Unknown", w/2 - 150, y + 15)
         love.graphics.print(string.format("HP: %d/%d", char.hp, char.maxHp), w/2 - 150, y + 35)
         love.graphics.print(string.format("Gold: %d", char.gold), w/2 - 150, y + 50)
         
-        -- ID (small text)
         love.graphics.setColor(0.7, 0.7, 0.7)
         love.graphics.print("ID: " .. (char.id or "N/A"), w/2 + 50, y + 50)
     end
     
-    -- Buttons
     local buttonY = h - 150
     
-    -- Select button
     if #characters > 0 then
-        love.graphics.setColor(0.2, 0.6, 0.3)
-        love.graphics.rectangle("fill", w/2 - 220, buttonY, self.buttonWidth, self.buttonHeight, 5, 5)
-        love.graphics.setColor(1, 1, 1)
-        love.graphics.printf("Select", w/2 - 220, buttonY + 12, self.buttonWidth, "center")
+        Components.drawButtonSimple(w/2 - 220, buttonY, self.buttonWidth, self.buttonHeight, "Select", false, false, love.graphics.getFont())
     end
     
-    -- Create new button
-    love.graphics.setColor(0.3, 0.5, 0.7)
-    love.graphics.rectangle("fill", w/2 + 20, buttonY, self.buttonWidth, self.buttonHeight, 5, 5)
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.printf("Create New", w/2 + 20, buttonY + 12, self.buttonWidth, "center")
+    Components.drawButtonSimple(w/2 + 20, buttonY, self.buttonWidth, self.buttonHeight, "Create New", false, false, love.graphics.getFont())
     
-    -- Instructions
     love.graphics.setColor(0.7, 0.7, 0.7)
     love.graphics.printf("Use UP/DOWN to select, ENTER to confirm", 0, h - 50, w, "center")
 end
 
--- Draw character creation screen
 function CharacterSelectUI:drawCreateScreen()
     local w, h = love.graphics.getDimensions()
     
-    -- Title
     love.graphics.setColor(1, 1, 1)
     love.graphics.printf("Create New Character", 0, 50, w, "center")
     
-    -- Name input
     love.graphics.setColor(0.7, 0.7, 0.7)
     love.graphics.print("Character Name:", w/2 - 200, 120)
     
-    -- Name input box
-    if self.nameInputActive then
-        love.graphics.setColor(0.3, 0.5, 0.7, 0.5)
-    else
-        love.graphics.setColor(0.2, 0.2, 0.2, 0.5)
-    end
-    love.graphics.rectangle("fill", w/2 - 200, 145, 400, 35, 5, 5)
+    Components.drawInput(w/2 - 200, 145, 400, 35, self.nameInputActive, nil)
     
     love.graphics.setColor(1, 1, 1)
     local displayName = self.newCharName
@@ -185,17 +161,14 @@ function CharacterSelectUI:drawCreateScreen()
     end
     love.graphics.print(displayName, w/2 - 190, 152)
     
-    -- Error message
     if self.errorMessage ~= "" then
         love.graphics.setColor(1, 0.3, 0.3)
         love.graphics.printf(self.errorMessage, 0, 190, w, "center")
     end
     
-    -- Appearance selection
     love.graphics.setColor(0.7, 0.7, 0.7)
     love.graphics.print("Select Appearance:", w/2 - 200, 230)
     
-    -- Appearance grid (2 rows x 4 columns)
     local gridStartX = w/2 - 250
     local gridStartY = 260
     local cellWidth = 125
@@ -209,39 +182,32 @@ function CharacterSelectUI:drawCreateScreen()
         
         local isSelected = (i == self.selectedAppearanceIndex)
         
-        -- Cell background
         if isSelected then
-            love.graphics.setColor(0.3, 0.5, 0.7, 0.5)
+            Components.drawPanelSimple(x, y, 115, 90, 5)
+            love.graphics.setColor(self.colors.selected[1], self.colors.selected[2], self.colors.selected[3], 0.3)
+            love.graphics.rectangle("fill", x, y, 115, 90, 5, 5)
         else
             love.graphics.setColor(0.2, 0.2, 0.2, 0.3)
+            love.graphics.rectangle("fill", x, y, 115, 90, 5, 5)
         end
-        love.graphics.rectangle("fill", x, y, 115, 90, 5, 5)
         
-        -- Preview avatar
         local preset = AppearanceSystem.getPreset(appearance.id)
         AppearanceSystem.drawAvatar(x + 57, y + 35, 20, preset)
         
-        -- Name
         love.graphics.setColor(1, 1, 1)
         love.graphics.printf(appearance.name, x, y + 65, 115, "center")
     end
     
-    -- Buttons
     local buttonY = h - 150
     
-    -- Create button
-    love.graphics.setColor(0.2, 0.6, 0.3)
-    love.graphics.rectangle("fill", w/2 - 220, buttonY, self.buttonWidth, self.buttonHeight, 5, 5)
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.printf("Create", w/2 - 220, buttonY + 12, self.buttonWidth, "center")
+    Components.drawButtonSimple(w/2 - 220, buttonY, self.buttonWidth, self.buttonHeight, "Create", false, false, love.graphics.getFont())
     
-    -- Cancel button
+    local font = love.graphics.getFont()
     love.graphics.setColor(0.6, 0.3, 0.3)
     love.graphics.rectangle("fill", w/2 + 20, buttonY, self.buttonWidth, self.buttonHeight, 5, 5)
     love.graphics.setColor(1, 1, 1)
     love.graphics.printf("Cancel", w/2 + 20, buttonY + 12, self.buttonWidth, "center")
     
-    -- Instructions
     love.graphics.setColor(0.7, 0.7, 0.7)
     love.graphics.printf("Click name field to type, use arrow keys to select appearance", 0, h - 50, w, "center")
 end

@@ -248,7 +248,7 @@ function LoginUI:drawButton(text, rect, disabled, hover, submitting)
     end
     
     Components.drawButtonSimple(rect.x, rect.y, rect.width, rect.height, 
-        not submitting and hover, submitting, self.normalFont)
+        nil, not submitting and hover, submitting, self.normalFont)
     
     love.graphics.setFont(self.normalFont)
     if submitting then

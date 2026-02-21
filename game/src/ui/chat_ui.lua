@@ -167,38 +167,7 @@ function ChatUI:drawInputArea(chatSystem)
     
     love.graphics.print(displayText, self.x + 10, self.inputY + 12)
 end
-    love.graphics.rectangle("fill", self.x, self.inputY, self.width, self.inputHeight, 5, 5)
-    
-    if isActive then
-        love.graphics.setColor(self.colors.inputBorderActive)
-    else
-        love.graphics.setColor(self.colors.inputBorderInactive)
-    end
-    love.graphics.setLineWidth(2)
-    love.graphics.rectangle("line", self.x, self.inputY, self.width, self.inputHeight, 5, 5)
-    love.graphics.setLineWidth(1)
-    
-    love.graphics.setFont(self.font)
-    love.graphics.setColor(self.colors.text)
-    
-    local displayText = chatSystem:getInputText()
-    if isActive then
-        if math.floor(love.timer.getTime() * 2) % 2 == 0 then
-            displayText = displayText .. "|"
-        end
-    else
-        if displayText == "" then
-            love.graphics.setColor(self.colors.textHint)
-            displayText = "Press ENTER to chat..."
-        end
-    end
-    
-    love.graphics.print(displayText, self.x + 10, self.inputY + 12)
-    
-    love.graphics.setColor(1, 1, 1)
-end
 
--- Check if mouse is over chat UI
 function ChatUI:isMouseOver(x, y)
     if not self.isVisible then
         return false

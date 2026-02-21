@@ -3,6 +3,7 @@
 
 local ItemDatabase = require("src.systems.item_database")
 local Theme = require("src.ui.theme")
+local Components = require("src.ui.components")
 
 local InventoryUI = {}
 InventoryUI.__index = InventoryUI
@@ -71,21 +72,8 @@ function InventoryUI:draw(inventorySystem, x, y, width, height)
     end
 end
 
--- Draw single slot
 function InventoryUI:drawSlot(slotIndex, item, x, y, isHovered, isSelected)
-    local bgColor = self.colors.slot
-    if isSelected then
-        bgColor = self.colors.slotSelected
-    elseif isHovered then
-        bgColor = self.colors.slotHover
-    end
-    
-    love.graphics.setColor(bgColor)
-    love.graphics.rectangle("fill", x, y, self.slotSize, self.slotSize, 5, 5)
-    
-    love.graphics.setColor(self.colors.border)
-    love.graphics.setLineWidth(1)
-    love.graphics.rectangle("line", x, y, self.slotSize, self.slotSize, 5, 5)
+    Components.drawSlotSimple(x, y, self.slotSize, isHovered, isSelected)
     
     if item then
         local itemColor = self:getItemColor(item)
@@ -139,7 +127,6 @@ function InventoryUI:getItemIcon(item)
     return "?"
 end
 
--- Draw item detail panel
 function InventoryUI:drawItemDetail(inventorySystem, x, y, width, height)
     local item = nil
     local itemData = nil
@@ -158,10 +145,7 @@ function InventoryUI:drawItemDetail(inventorySystem, x, y, width, height)
     
     itemData = ItemDatabase.getItem(item.id)
     
-    love.graphics.setColor(self.colors.background)
-    love.graphics.rectangle("fill", x, y, width, height, 5, 5)
-    love.graphics.setColor(self.colors.border)
-    love.graphics.rectangle("line", x, y, width, height, 5, 5)
+    Components.drawPanelSimple(x, y, width, height, 5)
     
     local textX = x + 15
     local textY = y + 15
