@@ -4,6 +4,7 @@
 local NetworkManager = require("src.network.network_manager")
 local constants = require("src.network.constants")
 local Theme = require("src.ui.theme")
+local Components = require("src.ui.components")
 
 local LoginUI = {}
 LoginUI.__index = LoginUI
@@ -192,12 +193,7 @@ function LoginUI:draw()
 end
 
 function LoginUI:drawPanel(x, y, w, h)
-    love.graphics.setColor(self.colors.panel)
-    love.graphics.rectangle("fill", x, y, w, h, 10, 10)
-    love.graphics.setColor(self.colors.border)
-    love.graphics.setLineWidth(2)
-    love.graphics.rectangle("line", x, y, w, h, 10, 10)
-    love.graphics.setLineWidth(1)
+    Components.drawPanelSimple(x, y, w, h, 10)
 end
 
 function LoginUI:drawTab(text, rect, isActive)
@@ -208,14 +204,7 @@ function LoginUI:drawTab(text, rect, isActive)
     end
     love.graphics.rectangle("fill", rect.x, rect.y, rect.width, rect.height)
     
-    if isActive then
-        love.graphics.setColor(0.5, 0.7, 1.0)
-    else
-        love.graphics.setColor(self.colors.border)
-    end
-    love.graphics.setLineWidth(isActive and 2 or 1)
-    love.graphics.rectangle("line", rect.x, rect.y, rect.width, rect.height)
-    love.graphics.setLineWidth(1)
+    Components.drawBorder(rect.x, rect.y, rect.width, rect.height, 0, isActive)
     
     love.graphics.setFont(self.normalFont)
     love.graphics.setColor(self.colors.text)
@@ -229,21 +218,13 @@ function LoginUI:drawInputField(label, text, rect, selected)
     love.graphics.print(label, rect.x, rect.y - 22)
     
     if selected then
-        love.graphics.setColor(0.2, 0.3, 0.4)
+        love.graphics.setColor(Theme.colors.input.backgroundActive)
     else
-        love.graphics.setColor(0.15, 0.15, 0.2)
+        love.graphics.setColor(Theme.colors.input.background)
     end
     love.graphics.rectangle("fill", rect.x, rect.y, rect.width, rect.height, 5, 5)
     
-    if selected then
-        love.graphics.setColor(self.colors.selected)
-        love.graphics.setLineWidth(2)
-    else
-        love.graphics.setColor(self.colors.border)
-        love.graphics.setLineWidth(1)
-    end
-    love.graphics.rectangle("line", rect.x, rect.y, rect.width, rect.height, 5, 5)
-    love.graphics.setLineWidth(1)
+    Components.drawBorder(rect.x, rect.y, rect.width, rect.height, 5, selected)
     
     love.graphics.setColor(self.colors.text)
     love.graphics.print(text, rect.x + 10, rect.y + 10)
@@ -259,27 +240,15 @@ function LoginUI:drawInputField(label, text, rect, selected)
 end
 
 function LoginUI:drawButton(text, rect, disabled, hover, submitting)
-    local bgColor
+    local state = "normal"
     if submitting then
-        bgColor = {0.3, 0.3, 0.35}
+        state = "pressed"
     elseif hover and not disabled then
-        bgColor = {0.4, 0.6, 1.0}
-    else
-        bgColor = self.colors.buttonPrimary
+        state = "hover"
     end
     
-    love.graphics.setColor(bgColor)
-    love.graphics.rectangle("fill", rect.x, rect.y, rect.width, rect.height, 5, 5)
-    
-    if hover and not disabled and not submitting then
-        love.graphics.setColor(0.5, 0.7, 1.0)
-        love.graphics.setLineWidth(2)
-    else
-        love.graphics.setColor(self.colors.border)
-        love.graphics.setLineWidth(1)
-    end
-    love.graphics.rectangle("line", rect.x, rect.y, rect.width, rect.height, 5, 5)
-    love.graphics.setLineWidth(1)
+    Components.drawButtonSimple(rect.x, rect.y, rect.width, rect.height, 
+        not submitting and hover, submitting, self.normalFont)
     
     love.graphics.setFont(self.normalFont)
     if submitting then

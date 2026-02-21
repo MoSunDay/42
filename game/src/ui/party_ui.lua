@@ -1,6 +1,8 @@
 -- party_ui.lua - Party UI display
 -- Display party members and their status
 
+local Theme = require("src.ui.theme")
+
 local PartyUI = {}
 PartyUI.__index = PartyUI
 
@@ -9,27 +11,15 @@ function PartyUI.new(assetManager)
     
     self.assetManager = assetManager
     
-    -- UI position (top-left, below character panel)
     self.x = 10
     self.y = 220
     self.width = 200
     self.memberHeight = 60
     
-    -- Colors
-    self.colors = {
-        panel = {0.1, 0.1, 0.15, 0.9},
-        border = {0.4, 0.6, 1.0, 0.8},
-        leaderBorder = {1.0, 0.8, 0.2, 0.9},
-        text = {1, 1, 1},
-        hpBar = {0.2, 0.8, 0.2},
-        hpBarBg = {0.3, 0.3, 0.3},
-        offline = {0.5, 0.5, 0.5}
-    }
+    self.colors = Theme.colors.party
     
-    -- Fonts
     self.font = assetManager:getFont("default")
     
-    -- Visibility
     self.isVisible = true
     
     return self
@@ -54,26 +44,21 @@ function PartyUI:draw(partySystem)
     local members = partySystem:getMembers()
     local leaderIndex = partySystem.leaderIndex
     
-    -- Calculate total height
     local totalHeight = 30 + #members * (self.memberHeight + 5)
     
-    -- Draw panel background
     love.graphics.setColor(self.colors.panel)
     love.graphics.rectangle("fill", self.x, self.y, self.width, totalHeight, 5, 5)
     
-    -- Draw panel border
     love.graphics.setColor(self.colors.border)
     love.graphics.setLineWidth(2)
     love.graphics.rectangle("line", self.x, self.y, self.width, totalHeight, 5, 5)
     love.graphics.setLineWidth(1)
     
-    -- Draw title
     love.graphics.setFont(self.font)
     love.graphics.setColor(self.colors.text)
     love.graphics.printf(partySystem:getPartyName() .. " (" .. #members .. "/5)", 
                         self.x, self.y + 8, self.width, "center")
     
-    -- Draw members
     local memberY = self.y + 30
     for i, member in ipairs(members) do
         self:drawMember(member, self.x + 5, memberY, i == leaderIndex)
@@ -81,26 +66,22 @@ function PartyUI:draw(partySystem)
     end
 end
 
--- Draw a single party member
 function PartyUI:drawMember(member, x, y, isLeader)
     local w = self.width - 10
     local h = self.memberHeight
     
-    -- Member background
-    love.graphics.setColor(0.15, 0.15, 0.2, 0.8)
+    love.graphics.setColor(Theme.colors.panelLight[1], Theme.colors.panelLight[2], Theme.colors.panelLight[3], 0.8)
     love.graphics.rectangle("fill", x, y, w, h, 3, 3)
     
-    -- Member border (gold for leader)
     if isLeader then
         love.graphics.setColor(self.colors.leaderBorder)
     else
-        love.graphics.setColor(0.3, 0.3, 0.4)
+        love.graphics.setColor(Theme.colors.borderDim)
     end
     love.graphics.setLineWidth(2)
     love.graphics.rectangle("line", x, y, w, h, 3, 3)
     love.graphics.setLineWidth(1)
     
-    -- Avatar (small circle)
     local avatarX = x + 20
     local avatarY = y + h / 2
     local avatarSize = 15
@@ -112,42 +93,35 @@ function PartyUI:drawMember(member, x, y, isLeader)
     end
     love.graphics.circle("fill", avatarX, avatarY, avatarSize)
     
-    love.graphics.setColor(1, 1, 1)
+    love.graphics.setColor(Theme.colors.text)
     love.graphics.circle("line", avatarX, avatarY, avatarSize)
     
-    -- Leader crown
     if isLeader then
-        love.graphics.setColor(1, 0.8, 0.2)
-        love.graphics.print("★", avatarX - 5, avatarY - avatarSize - 15)
+        love.graphics.setColor(Theme.colors.warning)
+        love.graphics.print("*", avatarX - 5, avatarY - avatarSize - 15)
     end
     
-    -- Member name
     love.graphics.setColor(self.colors.text)
     love.graphics.print(member.name, avatarX + avatarSize + 10, y + 8)
 
-    -- HP bar
     local hpBarX = avatarX + avatarSize + 10
     local hpBarY = y + 38
     local hpBarW = w - (avatarX + avatarSize + 15 - x)
     local hpBarH = 8
     
-    -- HP bar background
     love.graphics.setColor(self.colors.hpBarBg)
     love.graphics.rectangle("fill", hpBarX, hpBarY, hpBarW, hpBarH, 2, 2)
     
-    -- HP bar fill
     local hpPercent = member.hp / member.maxHp
-    love.graphics.setColor(self.colors.hpBar)
+    love.graphics.setColor(Theme.getHpColor(hpPercent))
     love.graphics.rectangle("fill", hpBarX, hpBarY, hpBarW * hpPercent, hpBarH, 2, 2)
     
-    -- HP text
-    love.graphics.setColor(1, 1, 1)
+    love.graphics.setColor(Theme.colors.text)
     love.graphics.printf(member.hp .. "/" .. member.maxHp, 
                         hpBarX, hpBarY + 10, hpBarW, "center")
     
-    -- Online status
     if not member.isOnline then
-        love.graphics.setColor(0.8, 0.3, 0.3)
+        love.graphics.setColor(Theme.colors.error)
         love.graphics.print("Offline", x + w - 50, y + 8)
     end
 end
