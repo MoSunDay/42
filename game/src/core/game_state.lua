@@ -1,6 +1,3 @@
--- game_state.lua - 游戏状态管理
--- 管理所有游戏实体和状态
-
 local Player = require("entities.player")
 local Map = require("entities.map")
 local MapManager = require("map.map_manager")
@@ -16,6 +13,8 @@ local CollisionSystem = require("src.systems.collision_system")
 local NetworkManager = require("src.network.network_manager")
 local LoginUI = require("account.login_ui")
 local CharacterSelectUI = require("account.character_select_ui")
+local SpiritCrystalSystem = require("src.systems.spirit_crystal_system")
+local CompanionSystem = require("src.systems.companion_system")
 
 local GameState = {}
 GameState.__index = GameState
@@ -132,6 +131,18 @@ function GameState:initializeWorld(character)
     self.player:updateStatsWithEquipment()
     -- Don't override movement speed, keep default 250
     -- self.player.speed is for movement, character.speed is for battle
+    
+    self.spiritCrystalSystem = SpiritCrystalSystem.new()
+    if character.spiritCrystals then
+        self.spiritCrystalSystem:deserialize(character.spiritCrystals)
+    end
+    self.equipmentSystem:setSpiritCrystalSystem(self.spiritCrystalSystem)
+    
+    self.companionSystem = CompanionSystem.new()
+    if character.companions then
+        local ItemDatabase = require("src.systems.item_database")
+        self.companionSystem:deserialize(character.companions, ItemDatabase)
+    end
 
     -- 设置玩家的地图边界
     self.player:setMapBounds(self.map.width, self.map.height)
@@ -304,35 +315,31 @@ function GameState:endBattle()
     local state = self.battleSystem:getState()
 
     if state == "victory" then
-        -- Give rewards
         local rewards = self.battleSystem:endBattle("victory")
         if rewards then
-            -- Only give gold rewards (no exp since we removed level system)
             self.player:gainGold(rewards.gold)
             print(string.format("Victory! Gained %d gold", rewards.gold))
+            
+            if rewards.crystals and self.spiritCrystalSystem then
+                for _, crystal in ipairs(rewards.crystals) do
+                    self.spiritCrystalSystem:addCrystal(crystal.type, crystal.tier, 1)
+                    print(string.format("Obtained: %s", crystal.name))
+                end
+            end
         end
-        -- Play victory sound
         self.audioSystem:playSFX("victory")
     elseif state == "defeat" then
-        -- Game over or respawn logic
         print("Player defeated!")
         self.player.hp = self.player.maxHp
         self.player.x = 1000
         self.player.y = 1000
-        -- Play defeat sound
         self.audioSystem:playSFX("defeat")
     end
 
-    -- Sync player data to character
     self:syncPlayerToCharacter()
 
-    -- Return to exploration mode
     self.mode = GAME_MODE.EXPLORATION
-
-    -- Add safe period after battle (no encounters for 2 seconds)
     self.encounterSafeTimer = 2.0
-
-    -- Switch back to exploration music
     self.audioSystem:playBGM("exploration")
 end
 
@@ -354,6 +361,14 @@ function GameState:syncPlayerToCharacter()
         
         if self.inventorySystem then
             character.inventory = self.inventorySystem:serialize()
+        end
+        
+        if self.spiritCrystalSystem then
+            character.spiritCrystals = self.spiritCrystalSystem:serialize()
+        end
+        
+        if self.companionSystem then
+            character.companions = self.companionSystem:serialize()
         end
 
         self.network:save_character(character)
@@ -447,6 +462,16 @@ end
 -- Get inventory system
 function GameState:getInventorySystem()
     return self.inventorySystem
+end
+
+-- Get spirit crystal system
+function GameState:getSpiritCrystalSystem()
+    return self.spiritCrystalSystem
+end
+
+-- Get companion system
+function GameState:getCompanionSystem()
+    return self.companionSystem
 end
 
 -- Get party system
