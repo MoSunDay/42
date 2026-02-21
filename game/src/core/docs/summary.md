@@ -1,6 +1,6 @@
 # Core Module Summary
 
-> Last updated: TBD (commit on first change)
+> Last updated: e0b0fcb - Sound loading integration
 
 ## Purpose
 Core game systems: state management, camera, and asset loading.
@@ -11,7 +11,7 @@ Core game systems: state management, camera, and asset loading.
 |------|-------------|
 | `game_state.lua` | Central state machine managing all game modes |
 | `camera.lua` | Viewport with follow, bounds, shake, deadzone |
-| `asset_manager.lua` | Loads and caches images, fonts, sprites |
+| `asset_manager.lua` | Loads and caches images, fonts, sprites, sounds |
 
 ## Key APIs
 
@@ -31,6 +31,34 @@ Core game systems: state management, camera, and asset loading.
 
 ### asset_manager.lua
 - `AssetManager:loadAll()` - Load all resources
+- `AssetManager:loadSounds()` - Load sound files from assets/sounds/
 - `AssetManager:getCharacterSprite(id, direction)` - Get sprite
 - `AssetManager:getCharacterAnimation(id, anim, dir, frame)` - Get animation frame
 - `AssetManager:hasCharacterSprite(id)` - Check sprite exists
+- `AssetManager:getSound(name)` - Get cached sound
+
+## Asset Paths
+
+| Type | Path |
+|------|------|
+| Images | `assets/images/` |
+| Fonts | `assets/fonts/` |
+| Sounds | `assets/sounds/` |
+| Characters | `assets/images/characters/` |
+| Enemies | `assets/images/characters/enemies/` |
+| NPCs | `assets/images/characters/npcs/` |
+| Tilesets | `assets/images/tilesets/` |
+| UI | `assets/images/ui/` |
+
+## Sound Loading
+
+The asset manager loads sounds from the following structure:
+```
+assets/sounds/
+├── bgm/           # Background music (.ogg/.wav)
+├── bgm/seasonal/  # Seasonal variations
+└── sfx/           # Sound effects
+    ├── combat/
+    ├── ui/
+    └── character/
+```

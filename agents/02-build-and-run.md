@@ -8,10 +8,6 @@ cd game && love .
 
 # Run with debug console (macOS)
 cd game && love . --console
-
-# Run specific test files
-cd game/tools && lua test_battle.lua
-cd game/tools && lua test_game.lua
 ```
 
 ## Server (Python/Sanic)
@@ -34,12 +30,32 @@ cd server && ./start.sh
 ### Running Tests
 
 ```bash
-# Lua tests (from game/tools directory)
-cd game/tools && lua test_battle.lua      # Battle system tests
-cd game/tools && lua test_game.lua        # Core module tests
-cd game/tools && lua test_boundaries.lua  # Boundary tests
+# All Lua tests (from game/tools directory)
+cd game/tools && lua test_battle.lua        # Battle system tests
+cd game/tools && lua test_game.lua          # Core module tests
+cd game/tools && lua test_boundaries.lua    # Boundary tests
+cd game/tools && lua test_audio.lua         # Audio system tests
+cd game/tools && lua test_tiled.lua         # Tiled map loading tests
+cd game/tools && lua test_companion.lua     # Companion system tests
+cd game/tools && lua test_spirit_crystal.lua # Spirit crystal tests
+cd game/tools && lua test_equipment.lua     # Equipment system tests
+```
 
-# Manual API testing (server must be running)
+### Test Coverage
+
+| Test File | Coverage |
+|-----------|----------|
+| `test_battle.lua` | Enemy creation, damage, death |
+| `test_game.lua` | Module loading, player movement, camera |
+| `test_boundaries.lua` | Map boundary restrictions |
+| `test_audio.lua` | SFX/BGM loading, fallback generation |
+| `test_tiled.lua` | JSON parsing, layers, objects |
+| `test_companion.lua` | Templates, leveling, party management |
+| `test_spirit_crystal.lua` | Crystal types, tiers, fusion |
+| `test_equipment.lua` | Slots, stats, enhancement, sets |
+
+### Manual API testing (server must be running)
+```bash
 curl http://localhost:8000/api/health
 curl -X POST http://localhost:8000/api/login \
   -H "Content-Type: application/json" \
