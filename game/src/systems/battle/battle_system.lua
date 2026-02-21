@@ -9,6 +9,7 @@ local BattleUtils = require("src.systems.battle.battle_utils")
 local BattleState = require("src.systems.battle.battle_state")
 local BattleTimer = require("src.systems.battle.battle_timer")
 local BattleExecutor = require("src.systems.battle.battle_executor")
+local SpiritCrystalSystem = require("src.systems.spirit_crystal_system")
 
 local BattleSystem = {}
 BattleSystem.__index = BattleSystem
@@ -81,19 +82,27 @@ function BattleSystem:endBattle(result)
     self.state = result
     
     if result == BATTLE_STATE.VICTORY then
-        -- Calculate rewards
-        local totalExp = 0
         local totalGold = 0
+        local allCrystals = {}
         
         for _, enemy in ipairs(self.enemies) do
-            totalExp = totalExp + enemy.exp
             totalGold = totalGold + enemy.gold
+            
+            local drops = SpiritCrystalSystem.generateDrop(enemy.tier)
+            for i = 1, enemy.crystalBonus or 1 do
+                for _, drop in ipairs(drops) do
+                    table.insert(allCrystals, drop)
+                end
+            end
         end
         
         self:addLog("Victory!")
-        self:addLog("Gained " .. totalExp .. " EXP and " .. totalGold .. " Gold!")
+        self:addLog("Gained " .. totalGold .. " Gold!")
+        if #allCrystals > 0 then
+            self:addLog("Obtained " .. #allCrystals .. " Spirit Crystal(s)!")
+        end
         
-        return {exp = totalExp, gold = totalGold}
+        return {gold = totalGold, crystals = allCrystals}
     elseif result == BATTLE_STATE.DEFEAT then
         self:addLog("Defeat...")
     elseif result == BATTLE_STATE.ESCAPED then
