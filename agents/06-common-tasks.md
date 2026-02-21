@@ -73,3 +73,30 @@ This generates procedural placeholder sounds for development. Replace with real 
 - https://kenney.nl/assets
 - https://opengameart.org
 - https://mixkit.co/free-sound-effects/game/
+
+## Adding a New Procedural Map Theme
+
+1. Edit `map/map_generator.lua`
+2. Add theme to `THEMES` table:
+   ```lua
+   new_theme = {
+       season = "season_name",
+       bgColor = {r, g, b},
+       buildingColors = {{r,g,b}, ...},
+       monsters = {"monster_id", ...},
+       buildingTypes = {"type1", ...}
+   }
+   ```
+3. Register in `map/map_registry.lua` with level range and unlock state
+
+## Adding a New NPC Type
+
+1. Choose category: `bosses.lua`, `friendly_npcs.lua`, `monsters.lua`
+2. Add NPC definition with id, name, stats, dialogue
+3. For special NPCs (teleporters), create dedicated file in `npcs/`
+
+## Adding UI Components
+
+1. Edit `src/ui/components.lua`
+2. Use existing helpers: `draw9Slice`, `drawPanel`, `drawButton`
+3. Reference `Theme` module for consistent colors
