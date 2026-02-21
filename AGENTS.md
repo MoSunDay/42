@@ -20,13 +20,13 @@ This document provides guidelines for AI coding agents working on this codebase.
 | [10-art-assets.md](agents/10-art-assets.md) | 美术素材规格 |
 | [11-audio-assets.md](agents/11-audio-assets.md) | 音效素材规格 |
 
-## 最近更新 (e0b0fcb)
+## 最近更新 (0b5db5a)
 
 新增系统和功能：
-- **音效系统增强**: 支持文件加载 + 程序化后备生成
-- **Tiled 地图集成**: STI 库 + JSON/TMX 解析
-- **伙伴系统**: 6种模板 + 升级 + 战斗AI
-- **灵晶系统**: 5种类型/4个等级 + 融合升级
-- **装备系统增强**: 套装效果 + 强化系统
+- **程序化地图生成**: MapGenerator + 10种主题地图
+- **地图注册表**: 解锁进度 + 等级范围管理
+- **传送NPC**: 维度向导，支持地图传送
+- **UI组件模块**: 9-slice面板、按钮等可复用组件
+- **NPC数据库扩展**: Boss/Friendly/Monster 分类
 
 详见各模块文档的 `docs/summary.md`。
