@@ -3,6 +3,7 @@
 
 local MapRenderer = require("src.ui.map_renderer")
 local Theme = require("src.ui.theme")
+local Components = require("src.ui.components")
 
 local HUD = {}
 HUD.__index = HUD
