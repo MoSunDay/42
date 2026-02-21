@@ -1,9 +1,9 @@
 # Map Module Summary
 
-> Last updated: e0b0fcb - Tiled integration and STI library
+> Last updated: f86d842 - Procedural map generator and registry
 
 ## Purpose
-Map data loading, rendering, tilesets, particle effects, and Tiled map editor integration.
+Map data loading, rendering, tilesets, particle effects, Tiled integration, and procedural generation.
 
 ## Files
 
@@ -11,6 +11,8 @@ Map data loading, rendering, tilesets, particle effects, and Tiled map editor in
 |------|-------------|
 | `map_manager.lua` | Map loading, switching, and Tiled support |
 | `map_data.lua` | Map definitions and tile data |
+| `map_generator.lua` | Procedural terrain generation |
+| `map_registry.lua` | Map unlock/progression system |
 | `tiled_loader.lua` | Tiled map format loader (JSON/TMX/Lua) |
 | `tiled_integration.lua` | Tiled integration guide and demo |
 | `tileset_manager.lua` | Tileset management |
@@ -34,6 +36,19 @@ Map data loading, rendering, tilesets, particle effects, and Tiled map editor in
 - `MapManager.setUseSTI(enabled)` - Enable STI library for Tiled maps
 - `MapManager.setDebugMode(enabled)` - Enable debug output
 
+### map_generator.lua
+- `MapGenerator.new(theme)` - Create generator with theme
+- `MapGenerator:generate(width, height)` - Generate procedural map
+- `MapGenerator:getSpawnPoint()` - Get player spawn position
+- `MapGenerator:getMonsterZones()` - Get encounter zones
+- Themes: forest, desert, snow, volcanic, cave, sky, swamp, crystal, ruins, realm
+
+### map_registry.lua
+- `MapRegistry.unlock(mapId)` - Unlock a map
+- `MapRegistry.isUnlocked(mapId)` - Check if accessible
+- `MapRegistry.getUnlockedMaps()` - Get available destinations
+- `MapRegistry.getRequirements(mapId)` - Get unlock conditions
+
 ### tiled_loader.lua
 - `TiledLoader.new()` - Create loader instance
 - `TiledLoader:load(path)` - Load Tiled JSON/Lua map
@@ -56,6 +71,21 @@ Map data loading, rendering, tilesets, particle effects, and Tiled map editor in
 - `ParticleSystem:update(dt)` - Update particles
 - `ParticleSystem:draw()` - Render particles
 
+## Generated Maps
+
+| ID | Theme | Season | Description |
+|----|-------|--------|-------------|
+| `generated_01_woods` | forest | spring | Beginner forest |
+| `generated_02_desert` | desert | summer | Sandy desert |
+| `generated_03_snow` | snow | winter | Frozen tundra |
+| `generated_04_volcanic` | volcanic | volcanic | Fire realm |
+| `generated_05_cave` | cave | cave | Underground caves |
+| `generated_06_sky` | sky | sky | Floating islands |
+| `generated_07_swamp` | swamp | autumn | Poison swamp |
+| `generated_08_crystal` | crystal | crystal | Crystal caverns |
+| `generated_09_ruins` | ruins | ruins | Ancient ruins |
+| `generated_10_realm` | realm | realm | Final realm |
+
 ## Map IDs
 
 | ID | Description |
@@ -64,6 +94,7 @@ Map data loading, rendering, tilesets, particle effects, and Tiled map editor in
 | `forest_01` | Forest area |
 | `dungeon_01` | Dungeon interior |
 | `tiled_example` | Example Tiled map (JSON format) |
+| `generated_*` | Procedurally generated maps |
 
 ## Tile Layers
 
