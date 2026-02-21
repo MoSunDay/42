@@ -2,6 +2,7 @@
 -- Display full map with navigation support
 
 local MapRenderer = require("src.ui.map_renderer")
+local Theme = require("src.ui.theme")
 
 local FullscreenMap = {}
 FullscreenMap.__index = FullscreenMap
@@ -12,40 +13,24 @@ function FullscreenMap.new(assetManager)
     self.assetManager = assetManager
     self.isOpen = false
     
-    -- Screen dimensions
     self.screenWidth = love.graphics.getWidth()
     self.screenHeight = love.graphics.getHeight()
     
-    -- Map panel dimensions (80% of screen)
     self.panelWidth = self.screenWidth * 0.8
     self.panelHeight = self.screenHeight * 0.8
     self.panelX = (self.screenWidth - self.panelWidth) / 2
     self.panelY = (self.screenHeight - self.panelHeight) / 2
     
-    -- Map rendering area (inside panel with padding)
     self.padding = 40
     self.mapRenderWidth = self.panelWidth - self.padding * 2
     self.mapRenderHeight = self.panelHeight - self.padding * 2
     self.mapRenderX = self.panelX + self.padding
     self.mapRenderY = self.panelY + self.padding
     
-    -- Colors
-    self.colors = {
-        overlay = {0, 0, 0, 0.7},
-        panel = {0.1, 0.1, 0.15, 0.95},
-        border = {0.4, 0.7, 1.0, 0.9},
-        text = {1, 1, 1},
-        road = {0.55, 0.55, 0.60},
-        grass = {0.35, 0.65, 0.35},
-        player = {1, 0.2, 0.2},
-        playerView = {1, 1, 0, 0.3},
-        navigationTarget = {0.2, 1, 0.2, 0.8}
-    }
+    self.colors = Theme.colors.map
     
-    -- Navigation target
     self.navigationTarget = nil
     
-    -- Fonts
     self.font = assetManager:getFont("default")
     self.fontLarge = assetManager:getFont("large")
     
@@ -146,9 +131,7 @@ function FullscreenMap:draw(playerX, playerY, map)
                         self.panelWidth, "center")
 end
 
--- Draw map content (grid, player, etc.)
 function FullscreenMap:drawMapContent(playerX, playerY, map)
-    -- Use unified map renderer
     MapRenderer.render(map, self.mapRenderX, self.mapRenderY,
                       self.mapRenderWidth, self.mapRenderHeight,
                       playerX, playerY, {
@@ -159,7 +142,6 @@ function FullscreenMap:drawMapContent(playerX, playerY, map)
         playerRadius = 8
     })
 
-    -- Draw player coordinates
     local playerMapX = self.mapRenderX + (playerX / map.width) * self.mapRenderWidth
     local playerMapY = self.mapRenderY + (playerY / map.height) * self.mapRenderHeight
 
@@ -167,12 +149,10 @@ function FullscreenMap:drawMapContent(playerX, playerY, map)
     love.graphics.printf(string.format("Player: (%.0f, %.0f)", playerX, playerY),
                         playerMapX - 50, playerMapY + 40, 100, "center")
 
-    -- Draw navigation target if set
     if self.navigationTarget then
         local targetMapX = self.mapRenderX + (self.navigationTarget.x / map.width) * self.mapRenderWidth
         local targetMapY = self.mapRenderY + (self.navigationTarget.y / map.height) * self.mapRenderHeight
         
-        -- Pulsing target marker
         local pulse = 0.5 + 0.5 * math.sin(love.timer.getTime() * 3)
         love.graphics.setColor(self.colors.navigationTarget[1], 
                               self.colors.navigationTarget[2], 
@@ -180,12 +160,11 @@ function FullscreenMap:drawMapContent(playerX, playerY, map)
                               pulse)
         love.graphics.circle("fill", targetMapX, targetMapY, 10)
         
-        love.graphics.setColor(0.2, 1, 0.2)
+        love.graphics.setColor(self.colors.navigationTarget[1], self.colors.navigationTarget[2], self.colors.navigationTarget[3])
         love.graphics.circle("line", targetMapX, targetMapY, 10)
         love.graphics.circle("line", targetMapX, targetMapY, 15)
         
-        -- Draw line from player to target
-        love.graphics.setColor(0.2, 1, 0.2, 0.5)
+        love.graphics.setColor(self.colors.navigationLine)
         love.graphics.setLineWidth(2)
         love.graphics.line(playerMapX, playerMapY, targetMapX, targetMapY)
         love.graphics.setLineWidth(1)

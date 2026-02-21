@@ -45,15 +45,21 @@ function BattleUI.new(assetManager)
     return self
 end
 
--- Draw battle scene
-function BattleUI:draw(battleSystem, player)
+function BattleUI:draw(battleSystem, player, map)
     local w = self.screenWidth
     local h = self.screenHeight
     
-    -- Draw diagonal gradient background (bottom-left to top-right)
-    BattleBackground.draw(w, h)
+    local mapType = BattleBackground.getMapType(map)
+    local bgImage = self.assetManager:getBattleBackground(mapType)
+    
+    if bgImage then
+        local scaleX = w / bgImage:getWidth()
+        local scaleY = h / bgImage:getHeight()
+        love.graphics.draw(bgImage, 0, 0, 0, scaleX, scaleY)
+    else
+        BattleBackground.draw(w, h, mapType)
+    end
 
-    -- Draw player (right bottom corner)
     self:drawPlayer(player, w * 0.75, h * 0.7, battleSystem:getAnimationManager())
 
     -- Draw enemies (left top area)

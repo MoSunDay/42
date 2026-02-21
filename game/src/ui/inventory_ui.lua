@@ -2,6 +2,7 @@
 -- Displays 30-slot backpack grid with item details
 
 local ItemDatabase = require("src.systems.item_database")
+local Theme = require("src.ui.theme")
 
 local InventoryUI = {}
 InventoryUI.__index = InventoryUI
@@ -17,27 +18,12 @@ function InventoryUI.new()
     self.slotSize = 60
     self.slotPadding = 5
     
-    self.colors = {
-        background = {0.1, 0.1, 0.15},
-        slot = {0.2, 0.2, 0.25},
-        slotHover = {0.3, 0.4, 0.5},
-        slotSelected = {0.4, 0.6, 0.8},
-        border = {0.4, 0.4, 0.5},
-        text = {1, 1, 1},
-        textDim = {0.7, 0.7, 0.7},
-        equipment = {0.3, 0.7, 0.4},
-        consumable = {0.7, 0.5, 0.3},
-        weapon = {1.0, 0.5, 0.3},
-        hat = {0.8, 0.6, 0.4},
-        clothes = {0.5, 0.7, 1.0},
-        shoes = {0.6, 0.5, 0.7},
-        necklace = {1.0, 0.8, 0.2}
-    }
+    self.colors = Theme.colors.inventory
+    self.equipColors = Theme.colors.equipment
     
     return self
 end
 
--- Get slot color based on item type/slot
 function InventoryUI:getItemColor(item)
     if not item then
         return self.colors.slot
@@ -48,15 +34,15 @@ function InventoryUI:getItemColor(item)
     end
     
     if item.slot == ItemDatabase.SLOTS.WEAPON then
-        return self.colors.weapon
+        return self.equipColors.weapon
     elseif item.slot == ItemDatabase.SLOTS.HAT then
-        return self.colors.hat
+        return self.equipColors.hat
     elseif item.slot == ItemDatabase.SLOTS.CLOTHES then
-        return self.colors.clothes
+        return self.equipColors.clothes
     elseif item.slot == ItemDatabase.SLOTS.SHOES then
-        return self.colors.shoes
+        return self.equipColors.shoes
     elseif item.slot == ItemDatabase.SLOTS.NECKLACE then
-        return self.colors.necklace
+        return self.equipColors.necklace
     end
     
     return self.colors.equipment

@@ -47,7 +47,29 @@ function CharacterSelectUI.new()
     self.buttonWidth = 200
     self.buttonHeight = 40
     
+    self.characters = {}
+    self.network = nil
+    self.onCharacterSelectedCallback = nil
+    
     return self
+end
+
+function CharacterSelectUI:setCharacters(characters)
+    self.characters = characters or {}
+end
+
+function CharacterSelectUI:setNetwork(network)
+    self.network = network
+end
+
+function CharacterSelectUI:onCharacterSelected(callback)
+    self.onCharacterSelectedCallback = callback
+end
+
+function CharacterSelectUI:triggerCharacterSelected(character)
+    if self.onCharacterSelectedCallback then
+        self.onCharacterSelectedCallback(character)
+    end
 end
 
 -- Generate unique character ID

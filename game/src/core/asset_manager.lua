@@ -40,6 +40,20 @@ function AssetManager.new()
     self.enemySprites = {}
     self.npcSprites = {}
     self.mapObjects = {}
+    self.uiAssets = {
+        panels = {},
+        buttons = {},
+        icons = {},
+        bars = {},
+        borders = {},
+        tabs = {},
+        slots = {},
+        battleBg = {},
+        dialog = {},
+        loading = {},
+        classes = {},
+        effects = {}
+    }
     
     self.paths = {
         images = "assets/images/",
@@ -48,7 +62,8 @@ function AssetManager.new()
         characters = "assets/images/characters/",
         enemies = "assets/images/characters/enemies/",
         npcs = "assets/images/characters/npcs/",
-        tilesets = "assets/images/tilesets/"
+        tilesets = "assets/images/tilesets/",
+        ui = "assets/images/ui/"
     }
     
     return self
@@ -87,6 +102,7 @@ function AssetManager:loadImages()
     self:NPCSprites()
     self:loadTilesets()
     self:loadMapObjects()
+    self:loadUIAssets()
     self.images.player = self:createPlayerSprite()
     print("  - Image loading complete")
 end
@@ -361,6 +377,45 @@ function AssetManager:loadTilesets()
     end
 end
 
+function AssetManager:loadUIAssets()
+    print("  - Loading UI assets...")
+    
+    local uiCategories = {
+        {name = "panels", path = "panels/"},
+        {name = "buttons", path = "buttons/"},
+        {name = "icons", path = "icons/"},
+        {name = "bars", path = "bars/"},
+        {name = "borders", path = "borders/"},
+        {name = "tabs", path = "tabs/"},
+        {name = "slots", path = "slots/"},
+        {name = "battleBg", path = "battle_bg/"},
+        {name = "dialog", path = "dialog/"},
+        {name = "loading", path = "loading/"},
+        {name = "classes", path = "classes/"},
+        {name = "effects", path = "effects/"}
+    }
+    
+    for _, category in ipairs(uiCategories) do
+        local categoryPath = self.paths.ui .. category.path
+        if love.filesystem.getInfo(categoryPath) then
+            local files = love.filesystem.getDirectoryItems(categoryPath)
+            for _, filename in ipairs(files) do
+                if filename:match("%.png$") then
+                    local assetName = filename:gsub("%.png$", "")
+                    local assetPath = categoryPath .. filename
+                    self.uiAssets[category.name][assetName] = love.graphics.newImage(assetPath)
+                end
+            end
+        end
+    end
+    
+    local count = 0
+    for catName, cat in pairs(self.uiAssets) do
+        for _ in pairs(cat) do count = count + 1 end
+    end
+    print("  - Loaded " .. count .. " UI assets")
+end
+
 -- 加载音效
 function AssetManager:loadSounds()
     -- 音效加载（暂时为空）
@@ -538,9 +593,55 @@ function AssetManager:getMapObject(objectName)
     return self.mapObjects[objectName]
 end
 
--- 检查地图物件是否存在
 function AssetManager:hasMapObject(objectName)
     return self.mapObjects[objectName] ~= nil
+end
+
+function AssetManager:getUIAsset(category, name)
+    if self.uiAssets[category] then
+        return self.uiAssets[category][name]
+    end
+    return nil
+end
+
+function AssetManager:getUIPanel(name)
+    return self:getUIAsset("panels", name)
+end
+
+function AssetManager:getUIButton(name)
+    return self:getUIAsset("buttons", name)
+end
+
+function AssetManager:getUIIcon(name)
+    return self:getUIAsset("icons", name)
+end
+
+function AssetManager:getUIBar(name)
+    return self:getUIAsset("bars", name)
+end
+
+function AssetManager:getUISlot(name)
+    return self:getUIAsset("slots", name)
+end
+
+function AssetManager:getBattleBackground(name)
+    return self:getUIAsset("battleBg", name)
+end
+
+function AssetManager:getDialogAsset(name)
+    return self:getUIAsset("dialog", name)
+end
+
+function AssetManager:getLoadingAsset(name)
+    return self:getUIAsset("loading", name)
+end
+
+function AssetManager:getClassIcon(name)
+    return self:getUIAsset("classes", name)
+end
+
+function AssetManager:getEffect(name)
+    return self:getUIAsset("effects", name)
 end
 
 return AssetManager

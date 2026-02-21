@@ -1,26 +1,21 @@
--- battle_background.lua - Battle background rendering
--- Diagonal gradient background for battle scenes
+local Theme = require("src.ui.theme")
 
 local BattleBackground = {}
 
--- Draw diagonal gradient background (bottom-left to top-right)
-function BattleBackground.draw(w, h)
-    -- Draw using triangular strips for diagonal gradient
-    -- Bottom-left is darker, top-right is lighter
+function BattleBackground.draw(w, h, mapType)
+    local bgColors = Theme.colors.battleBg[mapType] or Theme.colors.battleBg.forest
     
-    local segments = 20  -- Number of gradient segments
+    local segments = 20
     
     for i = 0, segments do
         local t = i / segments
         
-        -- Color interpolation from dark (bottom-left) to light (top-right)
-        local r = 0.1 + t * 0.15  -- 0.1 to 0.25
-        local g = 0.1 + t * 0.15  -- 0.1 to 0.25
-        local b = 0.15 + t * 0.15 -- 0.15 to 0.3
+        local r = bgColors.gradient1[1] + t * (bgColors.gradient2[1] - bgColors.gradient1[1])
+        local g = bgColors.gradient1[2] + t * (bgColors.gradient2[2] - bgColors.gradient1[2])
+        local b = bgColors.gradient1[3] + t * (bgColors.gradient2[3] - bgColors.gradient1[3])
         
         love.graphics.setColor(r, g, b, 0.95)
         
-        -- Draw diagonal strips
         local x1 = (i / segments) * w
         local y1 = 0
         local x2 = ((i + 1) / segments) * w
@@ -30,21 +25,37 @@ function BattleBackground.draw(w, h)
         local x4 = 0
         local y4 = ((i + 1) / segments) * h
         
-        -- Top triangle
         if x1 < w then
             love.graphics.polygon("fill", x1, y1, x2, y2, w, h * (i / segments), w, h * ((i + 1) / segments))
         end
         
-        -- Bottom triangle
         if y3 < h then
             love.graphics.polygon("fill", x3, y3, x4, y4, w * (i / segments), h, w * ((i + 1) / segments), h)
         end
     end
     
-    -- Draw battle ground overlay
-    love.graphics.setColor(0.3, 0.25, 0.2, 0.3)
+    love.graphics.setColor(bgColors.ground)
     love.graphics.rectangle("fill", 0, h * 0.6, w, h * 0.4)
 end
 
-return BattleBackground
+function BattleBackground.getMapType(map)
+    if not map then return "forest" end
+    
+    local name = map.name and map.name:lower() or ""
+    
+    if name:find("desert") or name:find("sand") then
+        return "desert"
+    elseif name:find("dungeon") or name:find("cave") or name:find("crypt") then
+        return "dungeon"
+    elseif name:find("boss") or name:find("throne") then
+        return "boss"
+    elseif name:find("sky") or name:find("cloud") then
+        return "sky"
+    elseif name:find("volcanic") or name:find("fire") or name:find("lava") then
+        return "volcanic"
+    else
+        return "forest"
+    end
+end
 
+return BattleBackground
