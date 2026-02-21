@@ -3,6 +3,7 @@
 
 local NetworkManager = require("src.network.network_manager")
 local constants = require("src.network.constants")
+local Theme = require("src.ui.theme")
 
 local LoginUI = {}
 LoginUI.__index = LoginUI
@@ -33,18 +34,18 @@ function LoginUI.new()
     self.network = nil
     
     self.colors = {
-        background = {0.1, 0.1, 0.15},
-        panel = {0.2, 0.2, 0.25},
-        border = {0.4, 0.4, 0.5},
-        text = {1, 1, 1},
-        textDim = {0.6, 0.6, 0.7},
-        selected = {0.3, 0.5, 1.0},
-        error = {1.0, 0.3, 0.3},
-        success = {0.3, 1.0, 0.3},
-        buttonPrimary = {0.3, 0.5, 0.8},
-        buttonSecondary = {0.25, 0.4, 0.6},
-        tabActive = {0.3, 0.5, 0.8},
-        tabInactive = {0.2, 0.2, 0.25},
+        background = Theme.colors.background,
+        panel = Theme.colors.panel,
+        border = Theme.colors.border,
+        text = Theme.colors.text,
+        textDim = Theme.colors.textDim,
+        selected = Theme.colors.accentBlue,
+        error = Theme.colors.error,
+        success = Theme.colors.success,
+        buttonPrimary = Theme.colors.button,
+        buttonSecondary = Theme.colors.panelLight,
+        tabActive = Theme.colors.tab.active,
+        tabInactive = Theme.colors.tab.inactive,
     }
     
     self.titleFont = love.graphics.newFont(32)
