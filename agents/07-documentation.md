@@ -1,27 +1,40 @@
 # Module Documentation
 
-This project uses a multi-layer documentation system:
-- **AGENTS.md** - Index file with links to modular documentation
-- **agents/** - Modular documentation files for different topics
-- **docs/summary.md** - Per-module technical documentation
-- **.opencode/skills/** - Reusable agent instruction sets
+This project uses a 3-layer documentation system:
+
+```
+AGENTS.md (项目入口)
+    ↓
+agents/*.md (专题指南)
+    ↓
+**/docs/summary.md (模块技术文档)
+```
+
+## Documentation Layers
+
+| Layer | File | Purpose |
+|-------|------|---------|
+| Entry | `AGENTS.md` | Project index, recent updates |
+| Guides | `agents/*.md` | Topic-specific guides (style, architecture, tasks) |
+| API Docs | `**/docs/summary.md` | Per-module technical documentation |
 
 ## AGENTS.md Structure
 
-The main `AGENTS.md` is now an index that references modular files in `agents/`:
+The main `AGENTS.md` is an index that references modular files in `agents/`:
 
 | File | Content |
 |------|---------|
-| `agents/01-overview.md` | Project overview |
-| `agents/02-build-and-run.md` | Build & run commands |
-| `agents/03-code-style.md` | Code style guidelines |
-| `agents/04-project-structure.md` | Project structure |
-| `agents/05-architecture.md` | Architecture notes |
-| `agents/06-common-tasks.md` | Common tasks |
-| `agents/07-documentation.md` | Module documentation (this file) |
-| `agents/08-constraints.md` | Important constraints |
-| `agents/09-mcp-configuration.md` | MCP tool configuration |
-| `agents/10-art-assets.md` | Art asset specifications |
+| `01-overview.md` | Project overview |
+| `02-build-and-run.md` | Build & run commands |
+| `03-code-style.md` | Code style guidelines |
+| `04-project-structure.md` | Project structure → links to summary.md |
+| `05-architecture.md` | Architecture notes → links to summary.md |
+| `06-common-tasks.md` | Common tasks |
+| `07-documentation.md` | Module documentation (this file) |
+| `08-constraints.md` | Important constraints |
+| `09-mcp-configuration.md` | MCP tool configuration |
+| `10-art-assets.md` | Art asset specifications |
+| `11-audio-assets.md` | Audio asset specifications |
 
 ## Module Documentation Locations
 
