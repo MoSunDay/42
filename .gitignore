@@ -64,3 +64,6 @@ pip-log.txt
 pip-delete-this-directory.txt
 
 .mcp.json
+
+# User data
+server/data/accounts.json
