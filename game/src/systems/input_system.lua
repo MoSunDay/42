@@ -25,7 +25,7 @@ function InputSystem:mousepressed(x, y, button)
         -- Check if clicked on unified menu
         local unifiedMenu = self.renderSystem:getUnifiedMenu()
         if unifiedMenu and unifiedMenu:isMenuOpen() then
-            if unifiedMenu:mousepressed(x, y, button) then
+            if unifiedMenu:mousepressed(x, y, button, self.gameState) then
                 return
             end
         end
@@ -256,6 +256,18 @@ function InputSystem:wheelmoved(x, y)
         local battleSystem = self.gameState:getBattleSystem()
         if battleSystem and battleSystem.battleLog then
             battleSystem.battleLog:scroll(-y * 20)
+        end
+    end
+end
+
+-- Handle mouse move events
+function InputSystem:mousemoved(x, y)
+    local mode = self.gameState:getMode()
+    
+    if mode == "exploration" then
+        local unifiedMenu = self.renderSystem:getUnifiedMenu()
+        if unifiedMenu and unifiedMenu:isMenuOpen() then
+            unifiedMenu:mousemoved(x, y, self.gameState)
         end
     end
 end
