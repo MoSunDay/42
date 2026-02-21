@@ -83,8 +83,9 @@ end
 function RenderSystem:renderBattle()
     local battleSystem = self.gameState:getBattleSystem()
     local player = self.gameState.player
+    local map = self.gameState.map
 
-    self.battleUI:draw(battleSystem, player)
+    self.battleUI:draw(battleSystem, player, map)
 end
 
 function RenderSystem:renderWorld()

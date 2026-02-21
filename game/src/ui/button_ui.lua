@@ -1,6 +1,8 @@
 -- button_ui.lua - Simple button UI for equipment and inventory
 -- Displays buttons in bottom-right corner
 
+local Theme = require("src.ui.theme")
+
 local ButtonUI = {}
 ButtonUI.__index = ButtonUI
 
@@ -29,10 +31,10 @@ function ButtonUI.new()
     }
     
     self.colors = {
-        background = {0.2, 0.2, 0.25, 0.9},
-        hover = {0.3, 0.4, 0.6, 0.9},
-        text = {1, 1, 1},
-        border = {0.4, 0.6, 1.0}
+        background = Theme.colors.button,
+        hover = Theme.colors.buttonHover,
+        text = Theme.colors.text,
+        border = Theme.colors.border
     }
     
     return self
@@ -74,10 +76,9 @@ function ButtonUI:draw()
         love.graphics.rectangle("line", button.x, button.y, button.width, button.height, 5, 5)
         love.graphics.setLineWidth(1)
         
-        -- Text
         love.graphics.setColor(self.colors.text)
         love.graphics.printf(button.label, button.x, button.y + 8, button.width, "center")
-        love.graphics.setColor(0.7, 0.7, 0.7)
+        love.graphics.setColor(Theme.colors.textDim)
         love.graphics.printf("[" .. button.key:upper() .. "]", button.x, button.y + 22, button.width, "center")
     end
 end
