@@ -9,17 +9,17 @@ local EncounterZone = require("entities.encounter_zone")
 local BattleSystem = require("src.systems.battle.battle_system")
 local AudioSystem = require("systems.audio_system")
 local EquipmentSystem = require("systems.equipment_system")
+local InventorySystem = require("src.systems.inventory_system")
 local PartySystem = require("src.systems.party_system")
 local ChatSystem = require("src.systems.chat_system")
 local CollisionSystem = require("src.systems.collision_system")
-local AccountManager = require("account.account_manager")
+local NetworkManager = require("src.network.network_manager")
 local LoginUI = require("account.login_ui")
 local CharacterSelectUI = require("account.character_select_ui")
 
 local GameState = {}
 GameState.__index = GameState
 
--- Game modes
 local GAME_MODE = {
     LOGIN = "login",
     CHARACTER_SELECT = "character_select",
@@ -27,27 +27,40 @@ local GAME_MODE = {
     BATTLE = "battle"
 }
 
+local USE_NETWORK = true
+local SERVER_HOST = "127.0.0.1"
+local SERVER_PORT = 9000
+
 function GameState.new(assetManager)
     local self = setmetatable({}, GameState)
 
     self.assetManager = assetManager
 
-    -- Initialize account system
-    AccountManager.init()
-
-    -- Game mode (start with login)
     self.mode = GAME_MODE.LOGIN
 
-    -- Login UI
+    self.network = NetworkManager.new()
+    
+    if USE_NETWORK then
+        self.network:connect(SERVER_HOST, SERVER_PORT)
+    end
+
     self.loginUI = LoginUI.new()
+    self.loginUI:setNetwork(self.network)
+    self.loginUI:onLogin(function(characters, username)
+        self.currentUsername = username
+        self.mode = GAME_MODE.CHARACTER_SELECT
+        self.characterSelectUI:setCharacters(characters)
+        self.characterSelectUI:setNetwork(self.network)
+    end)
 
-    -- Character select UI
     self.characterSelectUI = CharacterSelectUI.new()
+    self.characterSelectUI:onCharacterSelected(function(character)
+        self.network:set_character(character)
+        self:initializeWorld(character)
+    end)
 
-    -- Current logged in username
     self.currentUsername = nil
 
-    -- These will be initialized after character selection
     self.map = nil
     self.player = nil
     self.camera = nil
@@ -55,7 +68,6 @@ function GameState.new(assetManager)
     self.audioSystem = nil
     self.battleSystem = nil
 
-    -- 游戏时间
     self.time = 0
 
     return self
@@ -97,7 +109,21 @@ function GameState:initializeWorld(character)
     end
     self.player:setEquipmentSystem(self.equipmentSystem)
 
-    -- Sync player stats with character data
+    self.inventorySystem = InventorySystem.new()
+    if character.inventory then
+        self.inventorySystem:deserialize(character.inventory)
+    else
+        self.inventorySystem:addItem("health_potion")
+        self.inventorySystem:addItem("health_potion")
+        self.inventorySystem:addItem("large_health_potion")
+        self.inventorySystem:addItem("antidote")
+        self.inventorySystem:addItem("iron_sword")
+        self.inventorySystem:addItem("leather_cap")
+        self.inventorySystem:addItem("leather_vest")
+        self.inventorySystem:addItem("leather_boots")
+        self.inventorySystem:addItem("copper_necklace")
+    end
+
     self.player.gold = character.gold
     self.player.maxHp = character.maxHp
     self.player.hp = character.hp
@@ -143,7 +169,7 @@ function GameState:initializeWorld(character)
     self.audioSystem:playBGM("exploration")
 
     -- Battle system
-    self.battleSystem = BattleSystem.new(self.player, self.audioSystem, self.animationManager)
+    self.battleSystem = BattleSystem.new(self.player, self.audioSystem, self.animationManager, self.assetManager)
 
     -- Party system
     self.partySystem = PartySystem.new()
@@ -312,7 +338,7 @@ end
 
 -- Sync player data to character (save progress)
 function GameState:syncPlayerToCharacter()
-    local character = AccountManager.getCurrentCharacter()
+    local character = self.network and self.network:get_character()
     if character and self.player then
         character.gold = self.player.gold
         character.hp = self.player.hp
@@ -321,9 +347,16 @@ function GameState:syncPlayerToCharacter()
         character.defense = self.player.defense
         character.x = self.player.x
         character.y = self.player.y
+        
+        if self.equipmentSystem then
+            character.equipment = self.equipmentSystem:serialize()
+        end
+        
+        if self.inventorySystem then
+            character.inventory = self.inventorySystem:serialize()
+        end
 
-        -- Save to account manager
-        AccountManager.saveCharacter()
+        self.network:save_character(character)
     end
 end
 
@@ -355,8 +388,7 @@ end
 -- Send chat message
 function GameState:sendChatMessage(text)
     if self.chatSystem and self.player then
-        local AccountManager = require("account.account_manager")
-        local character = AccountManager.getCurrentCharacter()
+        local character = self.network and self.network:get_character()
         local senderName = character and character.characterName or "Player"
 
         -- Pass player entity as owner so bubble follows the player
@@ -392,61 +424,29 @@ end
 -- Handle key press
 function GameState:keypressed(key)
     if self.mode == GAME_MODE.LOGIN then
-        local success, username = self.loginUI:keypressed(key)
-        if success then
-            -- Login successful, go to character select
-            self.currentUsername = username
-            self.mode = GAME_MODE.CHARACTER_SELECT
-        end
+        self.loginUI:keypressed(key)
     elseif self.mode == GAME_MODE.CHARACTER_SELECT then
-        local character = self.characterSelectUI:keypressed(key, AccountManager, self.currentUsername)
-        if character then
-            -- Character selected, initialize world
-            AccountManager.selectCharacter(character)
-            self:initializeWorld(character)
-        end
+        self.characterSelectUI:keypressed(key)
     end
 end
 
 -- Handle mouse press
 function GameState:mousepressed(x, y, button)
     if self.mode == GAME_MODE.LOGIN then
-        local success, username = self.loginUI:mousepressed(x, y, button)
-        if success then
-            -- Login successful, go to character select
-            self.currentUsername = username
-            self.mode = GAME_MODE.CHARACTER_SELECT
-        end
+        self.loginUI:mousepressed(x, y, button)
     elseif self.mode == GAME_MODE.CHARACTER_SELECT then
-        local character = self.characterSelectUI:mousepressed(x, y, button, AccountManager, self.currentUsername)
-        if character then
-            -- Character selected, initialize world
-            AccountManager.selectCharacter(character)
-            self:initializeWorld(character)
-        end
-    elseif self.mode == GAME_MODE.BATTLE then
-        -- Handle battle UI mouse clicks
-        local battleUI = self.renderSystem.battleUI
-        local action = battleUI:mousepressed(x, y, button, self.battleSystem)
-
-        if action then
-            -- Execute the clicked action
-            if action == "attack" then
-                self.battleSystem:selectAction("attack", battleUI:getSelectedEnemy())
-            elseif action == "defend" then
-                self.battleSystem:selectAction("defend", nil)
-            elseif action == "escape" then
-                self.battleSystem:selectAction("escape", nil)
-            elseif action == "auto" then
-                self.battleSystem:toggleAutoBattle()
-            end
-        end
+        self.characterSelectUI:mousepressed(x, y, button)
     end
 end
 
 -- Get equipment system
 function GameState:getEquipmentSystem()
     return self.equipmentSystem
+end
+
+-- Get inventory system
+function GameState:getInventorySystem()
+    return self.inventorySystem
 end
 
 -- Get party system

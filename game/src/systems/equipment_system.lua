@@ -1,147 +1,83 @@
 -- equipment_system.lua - Equipment management system
--- Handles equipment slots, stats bonuses, and equipment database
+-- Handles equipment slots, stats bonuses
+
+local ItemDatabase = require("src.systems.item_database")
 
 local EquipmentSystem = {}
 EquipmentSystem.__index = EquipmentSystem
 
--- Equipment slots
-local EQUIPMENT_SLOTS = {
-    WEAPON = "weapon",
-    ARMOR = "armor",
-    NECKLACE = "necklace"
-}
-
--- Equipment database
-local EQUIPMENT_DATABASE = {
-    -- Weapons
-    wooden_sword = {
-        id = "wooden_sword",
-        name = "Wooden Sword",
-        slot = EQUIPMENT_SLOTS.WEAPON,
-        attack = 5,
-        defense = 0,
-        speed = 0,
-        price = 50,
-        description = "A simple wooden training sword"
-    },
-    iron_sword = {
-        id = "iron_sword",
-        name = "Iron Sword",
-        slot = EQUIPMENT_SLOTS.WEAPON,
-        attack = 10,
-        defense = 0,
-        speed = 0,
-        price = 150,
-        description = "A sturdy iron sword"
-    },
-    steel_sword = {
-        id = "steel_sword",
-        name = "Steel Sword",
-        slot = EQUIPMENT_SLOTS.WEAPON,
-        attack = 18,
-        defense = 0,
-        speed = 1,
-        price = 350,
-        description = "A well-crafted steel blade"
-    },
-    
-    -- Armor
-    leather_armor = {
-        id = "leather_armor",
-        name = "Leather Armor",
-        slot = EQUIPMENT_SLOTS.ARMOR,
-        attack = 0,
-        defense = 5,
-        speed = 0,
-        price = 80,
-        description = "Light leather protection"
-    },
-    chain_mail = {
-        id = "chain_mail",
-        name = "Chain Mail",
-        slot = EQUIPMENT_SLOTS.ARMOR,
-        attack = 0,
-        defense = 12,
-        speed = -1,
-        price = 200,
-        description = "Heavy chain mail armor"
-    },
-    plate_armor = {
-        id = "plate_armor",
-        name = "Plate Armor",
-        slot = EQUIPMENT_SLOTS.ARMOR,
-        attack = 0,
-        defense = 20,
-        speed = -2,
-        price = 500,
-        description = "Full plate armor, very heavy"
-    },
-    
-    -- Necklaces
-    copper_necklace = {
-        id = "copper_necklace",
-        name = "Copper Necklace",
-        slot = EQUIPMENT_SLOTS.NECKLACE,
-        attack = 2,
-        defense = 2,
-        speed = 0,
-        price = 100,
-        description = "A simple copper necklace"
-    },
-    silver_necklace = {
-        id = "silver_necklace",
-        name = "Silver Necklace",
-        slot = EQUIPMENT_SLOTS.NECKLACE,
-        attack = 4,
-        defense = 4,
-        speed = 1,
-        price = 250,
-        description = "A shiny silver necklace"
-    },
-    gold_necklace = {
-        id = "gold_necklace",
-        name = "Gold Necklace",
-        slot = EQUIPMENT_SLOTS.NECKLACE,
-        attack = 6,
-        defense = 6,
-        speed = 2,
-        price = 600,
-        description = "A precious gold necklace"
-    }
-}
+local DEF_TO_PERCENT = 5  -- 5 DEF = 1% damage reduction
+local MAX_DEF_PERCENT = 50  -- Maximum 50% damage reduction
 
 function EquipmentSystem.new()
     local self = setmetatable({}, EquipmentSystem)
     
-    -- Equipped items
-    self.equipped = {
-        [EQUIPMENT_SLOTS.WEAPON] = nil,
-        [EQUIPMENT_SLOTS.ARMOR] = nil,
-        [EQUIPMENT_SLOTS.NECKLACE] = nil
-    }
+    self.equipped = {}
+    for _, slot in pairs(ItemDatabase.SLOTS) do
+        self.equipped[slot] = nil
+    end
     
     return self
 end
 
--- Equip an item
 function EquipmentSystem:equip(itemId)
-    local item = EQUIPMENT_DATABASE[itemId]
+    local item = ItemDatabase.getItem(itemId)
     if not item then
         print("Warning: Unknown equipment: " .. tostring(itemId))
-        return false
+        return false, nil
     end
     
-    -- Unequip current item in slot
-    local oldItem = self.equipped[item.slot]
+    if item.type ~= ItemDatabase.TYPE.EQUIPMENT then
+        print("Warning: Item is not equipment: " .. tostring(itemId))
+        return false, nil
+    end
     
-    -- Equip new item
+    local oldItem = self.equipped[item.slot]
     self.equipped[item.slot] = item
     
     print("Equipped: " .. item.name)
     return true, oldItem
 end
 
--- Unequip an item from a slot
+function EquipmentSystem:equipFromInventory(inventorySystem, slotIndex)
+    local invItem = inventorySystem:getItem(slotIndex)
+    if not invItem then
+        return false, "No item in slot"
+    end
+    
+    if not ItemDatabase.isEquipment(invItem.id) then
+        return false, "Item is not equipment"
+    end
+    
+    local itemData = ItemDatabase.getItem(invItem.id)
+    local oldEquipped = self.equipped[itemData.slot]
+    
+    self.equipped[itemData.slot] = itemData
+    inventorySystem:removeItem(slotIndex)
+    
+    if oldEquipped then
+        inventorySystem:addItem(oldEquipped.id)
+    end
+    
+    return true, "Equipped " .. invItem.name
+end
+
+function EquipmentSystem:unequipToInventory(slot, inventorySystem)
+    local item = self.equipped[slot]
+    if not item then
+        return false, "No item equipped in that slot"
+    end
+    
+    if inventorySystem:isFull() then
+        return false, "Inventory is full"
+    end
+    
+    inventorySystem:addItem(item.id)
+    self.equipped[slot] = nil
+    
+    return true, "Unequipped " .. item.name
+end
+
 function EquipmentSystem:unequip(slot)
     local item = self.equipped[slot]
     if item then
@@ -152,17 +88,22 @@ function EquipmentSystem:unequip(slot)
     return nil
 end
 
--- Get equipped item in a slot
 function EquipmentSystem:getEquipped(slot)
     return self.equipped[slot]
 end
 
--- Get total stat bonuses from all equipment
+function EquipmentSystem:getAllEquipped()
+    return self.equipped
+end
+
 function EquipmentSystem:getTotalStats()
     local stats = {
         attack = 0,
         defense = 0,
-        speed = 0
+        speed = 0,
+        hp = 0,
+        crit = 0,
+        eva = 0
     }
     
     for slot, item in pairs(self.equipped) do
@@ -170,34 +111,29 @@ function EquipmentSystem:getTotalStats()
             stats.attack = stats.attack + (item.attack or 0)
             stats.defense = stats.defense + (item.defense or 0)
             stats.speed = stats.speed + (item.speed or 0)
+            stats.hp = stats.hp + (item.hp or 0)
+            stats.crit = stats.crit + (item.crit or 0)
+            stats.eva = stats.eva + (item.eva or 0)
         end
     end
     
     return stats
 end
 
--- Get equipment data by ID
+function EquipmentSystem:getDefensePercent()
+    local stats = self:getTotalStats()
+    local defPercent = math.floor(stats.defense / DEF_TO_PERCENT)
+    return math.min(MAX_DEF_PERCENT, defPercent)
+end
+
 function EquipmentSystem.getEquipmentData(itemId)
-    return EQUIPMENT_DATABASE[itemId]
+    return ItemDatabase.getItem(itemId)
 end
 
--- Get all equipment of a specific slot
 function EquipmentSystem.getEquipmentBySlot(slot)
-    local items = {}
-    for id, item in pairs(EQUIPMENT_DATABASE) do
-        if item.slot == slot then
-            table.insert(items, item)
-        end
-    end
-    return items
+    return ItemDatabase.getEquipmentBySlot(slot)
 end
 
--- Get all equipment
-function EquipmentSystem.getAllEquipment()
-    return EQUIPMENT_DATABASE
-end
-
--- Serialize equipment for saving
 function EquipmentSystem:serialize()
     local data = {}
     for slot, item in pairs(self.equipped) do
@@ -208,7 +144,6 @@ function EquipmentSystem:serialize()
     return data
 end
 
--- Deserialize equipment from saved data
 function EquipmentSystem:deserialize(data)
     if not data then return end
     
@@ -219,8 +154,7 @@ function EquipmentSystem:deserialize(data)
     end
 end
 
--- Export slots constant
-EquipmentSystem.SLOTS = EQUIPMENT_SLOTS
+EquipmentSystem.SLOTS = ItemDatabase.SLOTS
+EquipmentSystem.MAX_DEF_PERCENT = MAX_DEF_PERCENT
 
 return EquipmentSystem
-

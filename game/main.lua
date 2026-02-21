@@ -2,7 +2,7 @@
 -- Top-down combat game MVP v1
 
 -- Add src directory to Lua path
-package.path = package.path .. ";src/?.lua;src/core/?.lua;src/entities/?.lua;src/systems/?.lua;src/ui/?.lua;src/animations/?.lua;account/?.lua;map/?.lua;map/maps/?.lua;map/minimap/?.lua;npcs/?.lua"
+package.path = package.path .. ";src/?.lua;src/core/?.lua;src/entities/?.lua;src/systems/?.lua;src/ui/?.lua;src/animations/?.lua;src/network/?.lua;account/?.lua;map/?.lua;map/maps/?.lua;map/minimap/?.lua;npcs/?.lua;lib/?.lua"
 
 -- Core modules
 local GameState = require("core.game_state")
@@ -106,6 +106,13 @@ function love.wheelmoved(x, y)
     -- Handle mouse wheel scroll
     if game.inputSystem then
         game.inputSystem:wheelmoved(x, y)
+    end
+end
+
+function love.mousemoved(x, y)
+    -- Handle mouse move (for hover effects)
+    if game.inputSystem then
+        game.inputSystem:mousemoved(x, y)
     end
 end
 

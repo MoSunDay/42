@@ -32,12 +32,13 @@ function BattleAnimation:addAttackAnimation(fromX, fromY, toX, toY, callback)
 end
 
 -- Add damage number
-function BattleAnimation:addDamageNumber(x, y, damage, isCritical)
+function BattleAnimation:addDamageNumber(x, y, damage, isPlayer, hitType)
     local dmg = {
         x = x,
         y = y,
         damage = damage,
-        isCritical = isCritical or false,
+        isPlayer = isPlayer or false,
+        hitType = hitType or "normal",
         alpha = 1.0,
         offsetY = 0,
         duration = 1.5,
@@ -148,19 +149,31 @@ function BattleAnimation:drawDamageNumber(dmg)
     local x = dmg.x
     local y = dmg.y + dmg.offsetY
     
-    -- Shadow
-    love.graphics.setColor(0, 0, 0, dmg.alpha * 0.5)
-    love.graphics.print(tostring(dmg.damage), x + 2, y + 2)
+    local text, color, scale
     
-    -- Damage number
-    if dmg.isCritical then
-        love.graphics.setColor(1, 0.3, 0.3, dmg.alpha)  -- Red for critical
+    if dmg.hitType == "miss" then
+        text = "MISS"
+        color = {0.5, 0.5, 0.5, dmg.alpha}
+        scale = 0.9
+    elseif dmg.hitType == "crit" then
+        text = tostring(dmg.damage) .. "!"
+        color = {1, 0.8, 0.1, dmg.alpha}
+        scale = 1.6
     else
-        love.graphics.setColor(1, 1, 1, dmg.alpha)  -- White for normal
+        text = tostring(dmg.damage)
+        if dmg.isPlayer then
+            color = {1, 0.4, 0.4, dmg.alpha}
+        else
+            color = {1, 1, 1, dmg.alpha}
+        end
+        scale = 1.2
     end
     
-    local scale = dmg.isCritical and 1.5 or 1.0
-    love.graphics.print(tostring(dmg.damage), x, y, 0, scale, scale)
+    love.graphics.setColor(0, 0, 0, dmg.alpha * 0.5)
+    love.graphics.print(text, x + 2, y + 2, 0, scale, scale)
+    
+    love.graphics.setColor(color)
+    love.graphics.print(text, x, y, 0, scale, scale)
 end
 
 -- Check if animations are playing

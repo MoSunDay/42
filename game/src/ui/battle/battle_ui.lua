@@ -8,30 +8,29 @@ local BattlePanels = require("src.ui.battle.battle_panels")
 local BattleUI = {}
 BattleUI.__index = BattleUI
 
-function BattleUI.new()
+function BattleUI.new(assetManager)
     local self = setmetatable({}, BattleUI)
 
     self.screenWidth = love.graphics.getWidth()
     self.screenHeight = love.graphics.getHeight()
+    
+    self.assetManager = assetManager
 
-    -- Action menu
     self.actions = {
         {name = "Attack", key = "attack"},
         {name = "Defend", key = "defend"},
         {name = "Item", key = "item"},
         {name = "Escape", key = "escape"},
-        {name = "Auto", key = "auto"}  -- Auto battle
+        {name = "Auto", key = "auto"}
     }
     self.selectedAction = 1
     self.selectedEnemy = 1
 
-    -- Menu position for mouse detection
     self.menuX = 0
     self.menuY = 0
     self.menuWidth = 200
     self.menuHeight = 0
     
-    -- UI colors
     self.colors = {
         background = {0.1, 0.1, 0.15, 0.95},
         panel = {0.2, 0.2, 0.25, 0.9},
@@ -148,40 +147,51 @@ end
 -- Draw enemy
 function BattleUI:drawEnemy(enemy, x, y, isSelected)
     if not enemy:isAlive() then
-        -- Draw defeated enemy (faded)
-        love.graphics.setColor(0.3, 0.3, 0.3, 0.3)
-        love.graphics.circle("fill", x, y, 18)
+        if enemy:hasSprite() and self.assetManager then
+            local sprite = enemy:getSprite("south")
+            if sprite then
+                love.graphics.setColor(0.3, 0.3, 0.3, 0.3)
+                local sw, sh = sprite:getDimensions()
+                love.graphics.draw(sprite, x - sw/2, y - sh/2)
+            end
+        else
+            love.graphics.setColor(0.3, 0.3, 0.3, 0.3)
+            love.graphics.circle("fill", x, y, 18)
+        end
         return
     end
 
-    -- Get animation transform
     local offsetX, offsetY, rotation, scaleX, scaleY = 0, 0, 0, 1, 1
     if enemy.animationManager and enemy.animationId then
         offsetX, offsetY, rotation, scaleX, scaleY = enemy.animationManager:getTransform(enemy.animationId)
     end
 
-    -- Draw shadow
     love.graphics.setColor(0, 0, 0, 0.3)
     love.graphics.ellipse("fill", x + offsetX, y + offsetY + 35, 20 * scaleX, 8)
 
-    -- Apply transform for enemy body
     love.graphics.push()
     love.graphics.translate(x + offsetX, y + offsetY)
     love.graphics.rotate(rotation)
     love.graphics.scale(scaleX, scaleY)
 
-    -- Draw enemy body
-    love.graphics.setColor(enemy.color)
-    love.graphics.circle("fill", 0, 0, 18)
+    if enemy:hasSprite() and self.assetManager then
+        local sprite = enemy:getSprite("south")
+        if sprite then
+            love.graphics.setColor(1, 1, 1, 1)
+            local sw, sh = sprite:getDimensions()
+            love.graphics.draw(sprite, -sw/2, -sh/2)
+        end
+    else
+        love.graphics.setColor(enemy.color)
+        love.graphics.circle("fill", 0, 0, 18)
 
-    -- Draw eyes
-    love.graphics.setColor(1, 0, 0)
-    love.graphics.circle("fill", -6, -4, 3)
-    love.graphics.circle("fill", 6, -4, 3)
+        love.graphics.setColor(1, 0, 0)
+        love.graphics.circle("fill", -6, -4, 3)
+        love.graphics.circle("fill", 6, -4, 3)
+    end
 
     love.graphics.pop()
 
-    -- Draw selection indicator (not affected by breathing)
     if isSelected then
         love.graphics.setColor(self.colors.selected)
         love.graphics.setLineWidth(3)
@@ -189,8 +199,15 @@ function BattleUI:drawEnemy(enemy, x, y, isSelected)
         love.graphics.setLineWidth(1)
     end
 
-    -- Draw HP bar above enemy
     BattlePanels.drawHPBar(self.colors, enemy, x + offsetX - 30, y + offsetY - 35, 60, 6)
+    
+    if enemy:hasSprite() then
+        love.graphics.setColor(1, 1, 1)
+        local font = love.graphics.getFont()
+        local name = enemy.name
+        local nameWidth = font:getWidth(name)
+        love.graphics.print(name, x + offsetX - nameWidth/2, y + offsetY + 30)
+    end
 end
 
 -- (drawHPBar, drawPlayerPanel, drawActionMenu, drawBattleLog moved to BattlePanels and BattleMenu modules)

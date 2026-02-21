@@ -11,7 +11,7 @@ function EncounterZone.new(x, y, radius)
 
     self.x = x
     self.y = y
-    self.radius = radius or 20  -- Smaller radius for visible monsters
+    self.radius = radius or 40  -- Visible monsters size (doubled)
     self.isActive = true
     self.isTriggered = false
 

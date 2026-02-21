@@ -1,0 +1,136 @@
+{
+  "characters": {
+    "hero": {
+      "id": "c1a5b79d-b073-4b76-8960-155ff8ccdab4",
+      "job": "62dba72e-4c67-45f5-9a06-2c40e3dfcca2",
+      "animations": []
+    },
+    "slime": {
+      "id": "b4804e10-1300-4bd1-8367-a4fd8ea33f4c",
+      "job": "327a4ac5-3f03-489d-b221-57af72ad6a46",
+      "animations": []
+    },
+    "goblin": {
+      "id": "6c7fb53b-1063-4411-8312-e912d3f64b48",
+      "job": "8bbb2c0d-475b-438c-8cc0-e74233381084",
+      "animations": []
+    },
+    "skeleton": {
+      "id": "801b38ac-ca27-4ac8-8fd9-540c254c93aa",
+      "job": "be5a2883-88eb-4d28-b197-4fa54c4a5337",
+      "animations": []
+    },
+    "bat": {
+      "id": "c033a832-cd5f-4775-8587-7d214eb6c4fb",
+      "job": "615f7745-10a2-434d-91ef-6ada698bad5d",
+      "animations": []
+    },
+    "orc_warrior": {
+      "id": "1a597b1a-d9b2-4964-86a8-08236ff6e183",
+      "job": "ee1104d7-042c-4260-8f0a-835bb237d3d3",
+      "animations": []
+    },
+    "skeleton_knight": {
+      "id": "2fe84518-03c3-40d2-a418-3a4206aca2a9",
+      "job": "c0c59708-0811-480e-92b3-3e30b7caefa4",
+      "animations": []
+    },
+    "wolf": {
+      "id": "44906816-8b5b-42d4-a785-f7fddcc88ae5",
+      "job": "e26b3bed-f8bb-4a72-bd94-79c384c6af83",
+      "animations": []
+    },
+    "dark_mage": {
+      "id": "7941ddb5-e623-4752-a2db-c5c30278d357",
+      "job": "2d5854e8-e7df-40e6-925b-9fe499c5a335",
+      "animations": []
+    },
+    "orc_chieftain": {
+      "id": "c22cbf0a-73f9-4400-a131-976e4f3d1822",
+      "job": "ed28b4a5-cf45-4790-9ad4-b096284e2cdc",
+      "animations": []
+    },
+    "vampire": {
+      "id": "85cdc16c-35c9-4bd1-ad12-6768b50d4651",
+      "job": "28e69679-fea3-46d9-8b6d-ad1c5f4ebc34",
+      "animations": []
+    },
+    "golem": {
+      "id": "dde074c1-32dd-43ac-807d-7d951bf65509",
+      "job": "cbf8bc35-44ca-420d-a142-4d7b37135dc8",
+      "animations": []
+    },
+    "demon": {
+      "id": "8508b314-9161-4dcd-9e3f-f29d01233109",
+      "job": "584a83a9-3569-46bf-a40c-51470bbd19d6",
+      "animations": []
+    },
+    "ancient_dragon": {
+      "id": "e5d952e8-ecb5-41c5-ae0c-1db6f1fed4a7",
+      "job": "e3f36cb2-357f-431e-a99b-d6b938843c10",
+      "animations": []
+    },
+    "lich_king": {
+      "id": "b10652e2-8130-4ef3-89cd-333130f88f8c",
+      "job": "810dc884-9b57-469e-8dac-757c00227966",
+      "animations": []
+    },
+    "chaos_serpent": {
+      "id": "355aa3d9-96ef-4bb0-96ba-37cad78436d8",
+      "job": "175b4be4-6c34-48a5-a4f6-4f7fbca2dafb",
+      "animations": []
+    },
+    "village_chief": {
+      "id": "8cc8436d-3bf4-4c9b-980e-7bd808a8943a",
+      "job": "20f7c412-0192-49e6-98c9-bdf278aae418",
+      "animations": []
+    },
+    "spring_guardian": {
+      "id": "cca57c8c-c01a-4f1e-8c33-11b0bbf76b23",
+      "job": "abe82778-d29f-47a2-876f-5029cadf1563",
+      "animations": []
+    },
+    "summer_merchant": {
+      "id": "4676c4d2-b78b-4c9a-b7cc-42324728135e",
+      "job": "a686356f-9e92-4a00-8399-8ad43136f56b",
+      "animations": []
+    },
+    "autumn_innkeeper": {
+      "id": "40b23287-f862-423d-8bf2-ce5fe4520b25",
+      "job": "44c4853e-a46c-4032-810d-521bb33a477a",
+      "animations": []
+    },
+    "winter_priest": {
+      "id": "7f321ec5-41d9-4452-9f35-81d436c60b34",
+      "job": "91833e7c-e48b-4f52-a11d-ef541ab7e012",
+      "animations": []
+    }
+  },
+  "tilesets": {
+    "ocean_beach": {
+      "id": "fdda0506-bd79-4395-805b-fed2219ecf26",
+      "job": "c7494d9c-348a-42f3-93a7-e931fe50eb68"
+    },
+    "beach_grass": {
+      "id": "1753eb3b-79fc-4159-a655-aeeac37c74c3",
+      "job": "f965bef3-dc59-4dea-aecb-a912d0eeae4f"
+    },
+    "grass_path": {
+      "id": "b14019f1-2ede-4f01-9f75-ba97f5adb176",
+      "job": "2119bf87-1fd5-4a64-91ce-8f6e06848a72"
+    },
+    "forest_floor": {
+      "id": "73dbab60-a407-43ea-9890-3078f6d05560",
+      "job": "24107693-2deb-4cfa-9f23-d71685f95d2a"
+    },
+    "summer_grass": {
+      "id": "7dada4b0-3201-48f0-a310-1506956b2465",
+      "job": "eaf569e8-031f-4795-9cc4-aeb811d1a78c"
+    },
+    "autumn_leaves": {
+      "id": "85ea2eb4-078f-46b4-93ef-3effb8d452ff",
+      "job": "e7fafe27-7448-49c8-9287-dcdb4bf45137"
+    }
+  },
+  "map_objects": {}
+}

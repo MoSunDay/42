@@ -75,7 +75,8 @@ end
 
 -- Update HUD (for animations)
 function HUD:update(dt)
-    -- Update minimap hint animation
+    MapRenderer.update(dt)
+    
     if self.minimapHintTimer > 0 then
         self.minimapHintTimer = self.minimapHintTimer - dt
         self.minimapHintAlpha = math.max(0, self.minimapHintTimer / 2.0)
@@ -95,17 +96,8 @@ end
 function HUD:drawMinimap(playerX, playerY, map)
     local mm = self.minimap
 
-    -- Background
-    love.graphics.setColor(0, 0, 0, 0.75)
-    love.graphics.rectangle("fill", mm.x, mm.y, mm.size, mm.size, 5, 5)
+    MapRenderer.drawMinimapFrame(mm.x, mm.y, mm.size, mm.size, "modern")
 
-    -- Border
-    love.graphics.setColor(0.4, 0.7, 1.0, 0.8)
-    love.graphics.setLineWidth(2)
-    love.graphics.rectangle("line", mm.x, mm.y, mm.size, mm.size, 5, 5)
-    love.graphics.setLineWidth(1)
-
-    -- Use unified map renderer
     MapRenderer.render(map, mm.x, mm.y, mm.size, mm.size, playerX, playerY, {
         showPlayer = true,
         showBuildings = true,
@@ -114,28 +106,35 @@ function HUD:drawMinimap(playerX, playerY, map)
         playerRadius = 5
     })
 
-    -- Draw coordinates below minimap
     local coordY = mm.y + mm.size + 10
 
-    -- Background for coordinates
-    love.graphics.setColor(0, 0, 0, 0.75)
-    love.graphics.rectangle("fill", mm.x, coordY, mm.size, 30, 5, 5)
-
-    -- Border
-    love.graphics.setColor(0.4, 0.7, 1.0, 0.8)
-    love.graphics.setLineWidth(2)
-    love.graphics.rectangle("line", mm.x, coordY, mm.size, 30, 5, 5)
+    love.graphics.setColor(0, 0, 0, 0.6)
+    MapRenderer.drawRoundedRect(mm.x, coordY, mm.size, 28, 5)
+    
+    love.graphics.setColor(0.3, 0.5, 0.7, 0.6)
+    love.graphics.setLineWidth(1.5)
+    MapRenderer.drawRoundedRectLine(mm.x, coordY, mm.size, 28, 5)
     love.graphics.setLineWidth(1)
 
-    -- Coordinate text
     love.graphics.setFont(self.font)
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.print(string.format("X: %.0f  Y: %.0f", playerX, playerY), mm.x + 10, coordY + 8)
+    love.graphics.setColor(0.8, 0.9, 1.0)
+    love.graphics.print(string.format("X: %.0f  Y: %.0f", playerX, playerY), mm.x + 10, coordY + 7)
 
-    -- Draw "Click to open" hint
+    if map and map.name then
+        local mapName = map.name
+        local nameY = mm.y - 18
+        
+        love.graphics.setColor(0, 0, 0, 0.6)
+        MapRenderer.drawRoundedRect(mm.x, nameY, mm.size, 16, 3)
+        
+        love.graphics.setColor(0.9, 0.95, 1.0)
+        love.graphics.printf(mapName, mm.x, nameY + 2, mm.size, "center")
+    end
+
     if self.minimapHintAlpha > 0 then
-        love.graphics.setColor(1, 1, 1, self.minimapHintAlpha)
-        love.graphics.printf("Click or TAB", mm.x, mm.y - 20, mm.size, "center")
+        love.graphics.setColor(1, 1, 0.8, self.minimapHintAlpha * 0.8)
+        love.graphics.setFont(self.font)
+        love.graphics.printf("Click to open map", mm.x, mm.y + mm.size / 2 - 8, mm.size, "center")
     end
 
     love.graphics.setColor(1, 1, 1)

@@ -16,7 +16,7 @@ BattleSystem.__index = BattleSystem
 -- Use imported battle states
 local BATTLE_STATE = BattleState
 
-function BattleSystem.new(player, audioSystem, animationManager)
+function BattleSystem.new(player, audioSystem, animationManager, assetManager)
     local self = setmetatable({}, BattleSystem)
 
     self.player = player
@@ -29,19 +29,17 @@ function BattleSystem.new(player, audioSystem, animationManager)
     self.introTimer = 0
     self.actionTimer = 0
     self.isActive = false
-    self.autoBattle = false  -- Auto battle mode
+    self.autoBattle = false
 
-    -- Turn timer (90 seconds per turn)
     self.timer = BattleTimer.new(90.0)
 
-    -- Animation system
     self.animation = BattleAnimation.new()
 
-    -- Audio system
     self.audioSystem = audioSystem
 
-    -- Animation manager for breathing effects
     self.animationManager = animationManager
+    
+    self.assetManager = assetManager
 
     return self
 end
@@ -54,7 +52,7 @@ function BattleSystem:startBattle(enemyCount)
     self.enemies = {}
     for i = 1, math.min(enemyCount, 3) do
         local enemyType = Enemy.getRandomType()
-        local enemy = Enemy.new(enemyType)
+        local enemy = Enemy.new(enemyType, self.assetManager)
 
         -- Set animation for enemy
         if self.animationManager then
