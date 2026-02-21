@@ -1,6 +1,8 @@
 -- chat_ui.lua - Chat UI display
 -- Display chat box in bottom-left corner
 
+local Theme = require("src.ui.theme")
+
 local ChatUI = {}
 ChatUI.__index = ChatUI
 
@@ -27,15 +29,7 @@ function ChatUI.new(assetManager)
     self.inputY = self.y + self.chatHeight + 5
     
     -- Colors
-    self.colors = {
-        panel = {0.1, 0.1, 0.15, 0.85},
-        border = {0.4, 0.6, 1.0, 0.8},
-        inputBg = {0.15, 0.15, 0.2, 0.9},
-        inputActive = {0.2, 0.3, 0.4, 0.9},
-        text = {1, 1, 1},
-        sender = {0.4, 0.8, 1.0},
-        timestamp = {0.6, 0.6, 0.6}
-    }
+    self.colors = Theme.colors.chat
     
     -- Fonts
     self.font = assetManager:getFont("default")
@@ -152,23 +146,19 @@ function ChatUI:drawScrollbar(contentHeight, viewHeight)
     local scrollbarHeight = viewHeight
     local scrollbarWidth = 5
 
-    -- Scrollbar background
-    love.graphics.setColor(0.2, 0.2, 0.25, 0.5)
+    love.graphics.setColor(self.colors.scrollbarBg)
     love.graphics.rectangle("fill", scrollbarX, scrollbarY, scrollbarWidth, scrollbarHeight)
 
-    -- Scrollbar thumb
     local thumbHeight = math.max(20, (viewHeight / contentHeight) * scrollbarHeight)
     local thumbY = scrollbarY + (self.scrollOffset / (contentHeight - viewHeight)) * (scrollbarHeight - thumbHeight)
 
-    love.graphics.setColor(0.4, 0.6, 1.0, 0.8)
+    love.graphics.setColor(self.colors.scrollbarThumb)
     love.graphics.rectangle("fill", scrollbarX, thumbY, scrollbarWidth, thumbHeight, 2, 2)
 end
 
--- Draw input area
 function ChatUI:drawInputArea(chatSystem)
     local isActive = chatSystem:isInputting()
     
-    -- Input background
     if isActive then
         love.graphics.setColor(self.colors.inputActive)
     else
@@ -176,30 +166,26 @@ function ChatUI:drawInputArea(chatSystem)
     end
     love.graphics.rectangle("fill", self.x, self.inputY, self.width, self.inputHeight, 5, 5)
     
-    -- Input border
     if isActive then
-        love.graphics.setColor(0.4, 0.8, 1.0)
+        love.graphics.setColor(self.colors.inputBorderActive)
     else
-        love.graphics.setColor(0.3, 0.3, 0.4)
+        love.graphics.setColor(self.colors.inputBorderInactive)
     end
     love.graphics.setLineWidth(2)
     love.graphics.rectangle("line", self.x, self.inputY, self.width, self.inputHeight, 5, 5)
     love.graphics.setLineWidth(1)
     
-    -- Input text
     love.graphics.setFont(self.font)
     love.graphics.setColor(self.colors.text)
     
     local displayText = chatSystem:getInputText()
     if isActive then
-        -- Add cursor
         if math.floor(love.timer.getTime() * 2) % 2 == 0 then
             displayText = displayText .. "|"
         end
     else
-        -- Show hint when not active
         if displayText == "" then
-            love.graphics.setColor(0.5, 0.5, 0.5)
+            love.graphics.setColor(self.colors.textHint)
             displayText = "Press ENTER to chat..."
         end
     end

@@ -1,29 +1,27 @@
 -- battle_panels.lua - Battle UI panels (player info, battle log)
 -- Handles rendering of information panels
 
+local Theme = require("src.ui.theme")
+
 local BattlePanels = {}
 
--- Draw HP bar
 function BattlePanels.drawHPBar(colors, entity, x, y, width, height)
     local hpPercent = entity:getHPPercent()
     
-    -- Background
-    love.graphics.setColor(0.2, 0.2, 0.2)
+    love.graphics.setColor(0.12, 0.12, 0.12)
     love.graphics.rectangle("fill", x, y, width, height)
     
-    -- HP fill
-    local color = colors.hpGreen
+    local color = Theme.colors.hp.high
     if hpPercent < 0.3 then
-        color = colors.hpRed
+        color = Theme.colors.hp.low
     elseif hpPercent < 0.6 then
-        color = colors.hpYellow
+        color = Theme.colors.hp.medium
     end
     
     love.graphics.setColor(color)
     love.graphics.rectangle("fill", x, y, width * hpPercent, height)
     
-    -- Border
-    love.graphics.setColor(1, 1, 1)
+    love.graphics.setColor(Theme.colors.border)
     love.graphics.setLineWidth(1)
     love.graphics.rectangle("line", x, y, width, height)
 end
@@ -121,16 +119,14 @@ end
 function BattlePanels.drawScrollbar(colors, x, y, viewHeight, contentHeight, scrollOffset)
     local scrollbarWidth = 5
 
-    -- Scrollbar background
-    love.graphics.setColor(0.2, 0.2, 0.25, 0.5)
+    love.graphics.setColor(Theme.colors.chat.scrollbarBg)
     love.graphics.rectangle("fill", x, y, scrollbarWidth, viewHeight)
 
-    -- Scrollbar thumb
     local thumbHeight = math.max(20, (viewHeight / contentHeight) * viewHeight)
     local maxScroll = contentHeight - viewHeight
     local thumbY = y + (scrollOffset / maxScroll) * (viewHeight - thumbHeight)
 
-    love.graphics.setColor(0.4, 0.6, 1.0, 0.8)
+    love.graphics.setColor(Theme.colors.chat.scrollbarThumb)
     love.graphics.rectangle("fill", x, thumbY, scrollbarWidth, thumbHeight, 2, 2)
 end
 

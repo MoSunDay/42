@@ -4,6 +4,7 @@
 local BattleBackground = require("src.ui.battle.battle_background")
 local BattleMenu = require("src.ui.battle.battle_menu")
 local BattlePanels = require("src.ui.battle.battle_panels")
+local Theme = require("src.ui.theme")
 
 local BattleUI = {}
 BattleUI.__index = BattleUI
@@ -32,13 +33,13 @@ function BattleUI.new(assetManager)
     self.menuHeight = 0
     
     self.colors = {
-        background = {0.1, 0.1, 0.15, 0.95},
-        panel = {0.2, 0.2, 0.25, 0.9},
-        text = {1, 1, 1},
-        hpGreen = {0.2, 0.8, 0.3},
-        hpYellow = {0.9, 0.9, 0.2},
-        hpRed = {0.9, 0.2, 0.2},
-        selected = {1, 0.8, 0.2}
+        background = Theme.colors.battle.background,
+        panel = Theme.colors.battle.playerPanel,
+        text = Theme.colors.text,
+        hpGreen = Theme.colors.hp.high,
+        hpYellow = Theme.colors.hp.medium,
+        hpRed = Theme.colors.hp.low,
+        selected = Theme.colors.battle.enemySelected
     }
     
     return self

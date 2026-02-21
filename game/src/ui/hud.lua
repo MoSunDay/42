@@ -2,6 +2,7 @@
 -- Display coordinates, minimap, etc.
 
 local MapRenderer = require("src.ui.map_renderer")
+local Theme = require("src.ui.theme")
 
 local HUD = {}
 HUD.__index = HUD
@@ -32,8 +33,8 @@ function HUD.new(assetManager)
             y = self.screenHeight - 60,
             width = 100,
             height = 50,
-            color = {0.3, 0.5, 0.7},
-            hoverColor = {0.4, 0.6, 0.8},
+            color = Theme.colors.button,
+            hoverColor = Theme.colors.buttonHover,
             icon = "M"
         },
         {
@@ -43,8 +44,8 @@ function HUD.new(assetManager)
             y = self.screenHeight - 60,
             width = 100,
             height = 50,
-            color = {0.5, 0.3, 0.7},
-            hoverColor = {0.6, 0.4, 0.8},
+            color = Theme.colors.accent,
+            hoverColor = {Theme.colors.accent[1] * 1.2, Theme.colors.accent[2] * 1.2, Theme.colors.accent[3] * 1.2},
             icon = "P"
         },
         {
@@ -54,9 +55,9 @@ function HUD.new(assetManager)
             y = self.screenHeight - 60,
             width = 100,
             height = 50,
-            color = {0.7, 0.5, 0.3},
-            hoverColor = {0.8, 0.6, 0.4},
-            icon = "🐾"
+            color = Theme.colors.accentAlt,
+            hoverColor = {Theme.colors.accentAlt[1] * 1.2, Theme.colors.accentAlt[2] * 1.2, Theme.colors.accentAlt[3] * 1.2},
+            icon = "Pet"
         }
     }
 
@@ -108,31 +109,31 @@ function HUD:drawMinimap(playerX, playerY, map)
 
     local coordY = mm.y + mm.size + 10
 
-    love.graphics.setColor(0, 0, 0, 0.6)
+    love.graphics.setColor(Theme.colors.minimap.background[1], Theme.colors.minimap.background[2], Theme.colors.minimap.background[3], 0.7)
     MapRenderer.drawRoundedRect(mm.x, coordY, mm.size, 28, 5)
     
-    love.graphics.setColor(0.3, 0.5, 0.7, 0.6)
+    love.graphics.setColor(Theme.colors.minimap.border[1], Theme.colors.minimap.border[2], Theme.colors.minimap.border[3], 0.7)
     love.graphics.setLineWidth(1.5)
     MapRenderer.drawRoundedRectLine(mm.x, coordY, mm.size, 28, 5)
     love.graphics.setLineWidth(1)
 
     love.graphics.setFont(self.font)
-    love.graphics.setColor(0.8, 0.9, 1.0)
+    love.graphics.setColor(Theme.colors.text)
     love.graphics.print(string.format("X: %.0f  Y: %.0f", playerX, playerY), mm.x + 10, coordY + 7)
 
     if map and map.name then
         local mapName = map.name
         local nameY = mm.y - 18
         
-        love.graphics.setColor(0, 0, 0, 0.6)
+        love.graphics.setColor(Theme.colors.minimap.background[1], Theme.colors.minimap.background[2], Theme.colors.minimap.background[3], 0.7)
         MapRenderer.drawRoundedRect(mm.x, nameY, mm.size, 16, 3)
         
-        love.graphics.setColor(0.9, 0.95, 1.0)
+        love.graphics.setColor(Theme.colors.textBright)
         love.graphics.printf(mapName, mm.x, nameY + 2, mm.size, "center")
     end
 
     if self.minimapHintAlpha > 0 then
-        love.graphics.setColor(1, 1, 0.8, self.minimapHintAlpha * 0.8)
+        love.graphics.setColor(Theme.colors.warning[1], Theme.colors.warning[2], Theme.colors.warning[3], self.minimapHintAlpha * 0.8)
         love.graphics.setFont(self.font)
         love.graphics.printf("Click to open map", mm.x, mm.y + mm.size / 2 - 8, mm.size, "center")
     end

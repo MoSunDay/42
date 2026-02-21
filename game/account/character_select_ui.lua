@@ -3,6 +3,7 @@
 
 local AvatarRenderer = require("account.avatar_renderer")
 local AppearanceSystem = require("src.systems.appearance_system")
+local Theme = require("src.ui.theme")
 
 local CharacterSelectUI = {}
 CharacterSelectUI.__index = CharacterSelectUI
@@ -10,17 +11,27 @@ CharacterSelectUI.__index = CharacterSelectUI
 function CharacterSelectUI.new()
     local self = setmetatable({}, CharacterSelectUI)
     
-    -- UI state
-    self.mode = "select"  -- "select" or "create"
+    self.mode = "select"
     self.selectedCharIndex = 1
     self.selectedAppearance = "blue_hero"
     
-    -- Create character form
     self.newCharName = ""
     self.nameInputActive = false
     self.errorMessage = ""
     
-    -- Available appearances
+    self.colors = {
+        background = Theme.colors.background,
+        panel = Theme.colors.panel,
+        border = Theme.colors.border,
+        text = Theme.colors.text,
+        textDim = Theme.colors.textDim,
+        selected = Theme.colors.accentBlue,
+        error = Theme.colors.error,
+        success = Theme.colors.success,
+        buttonPrimary = Theme.colors.button,
+        buttonDanger = Theme.colors.error,
+    }
+    
     self.appearances = {
         {id = "blue_hero", name = "Blue Hero"},
         {id = "red_warrior", name = "Red Warrior"},
@@ -33,7 +44,6 @@ function CharacterSelectUI.new()
     }
     self.selectedAppearanceIndex = 1
     
-    -- UI layout
     self.buttonWidth = 200
     self.buttonHeight = 40
     

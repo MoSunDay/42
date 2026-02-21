@@ -3,6 +3,7 @@
 
 local ItemDatabase = require("src.systems.item_database")
 local InventoryUI = require("src.ui.inventory_ui")
+local Theme = require("src.ui.theme")
 
 local UnifiedMenu = {}
 UnifiedMenu.__index = UnifiedMenu
@@ -31,20 +32,20 @@ function UnifiedMenu.new(assetManager)
     self.tabWidth = self.width / #self.tabs
     
     self.colors = {
-        background = {0.1, 0.1, 0.15, 0.95},
-        panel = {0.15, 0.15, 0.2, 0.9},
-        border = {0.4, 0.7, 1.0, 0.9},
-        tabActive = {0.3, 0.5, 0.7, 0.9},
-        tabInactive = {0.2, 0.2, 0.25, 0.9},
-        text = {1, 1, 1},
-        textDim = {0.7, 0.7, 0.7},
-        button = {0.3, 0.5, 0.7, 0.9},
-        buttonHover = {0.4, 0.6, 0.8, 0.9},
-        weapon = {1.0, 0.5, 0.3},
-        hat = {0.8, 0.6, 0.4},
-        clothes = {0.5, 0.7, 1.0},
-        shoes = {0.6, 0.5, 0.7},
-        necklace = {1.0, 0.8, 0.2}
+        background = Theme.colors.background,
+        panel = Theme.colors.panel,
+        border = Theme.colors.border,
+        tabActive = Theme.colors.tab.active,
+        tabInactive = Theme.colors.tab.inactive,
+        text = Theme.colors.text,
+        textDim = Theme.colors.textDim,
+        button = Theme.colors.button,
+        buttonHover = Theme.colors.buttonHover,
+        weapon = Theme.colors.equipment.weapon,
+        hat = Theme.colors.equipment.hat,
+        clothes = Theme.colors.equipment.clothes,
+        shoes = Theme.colors.equipment.shoes,
+        necklace = Theme.colors.equipment.necklace
     }
     
     self.font = assetManager:getFont("default")
