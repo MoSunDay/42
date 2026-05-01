@@ -14,9 +14,10 @@ local MODE = {
     REGISTER = "register"
 }
 
-function LoginUI.new()
+function LoginUI.new(assetManager)
     local self = setmetatable({}, LoginUI)
     
+    self.assetManager = assetManager
     self.isActive = true
     self.mode = MODE.LOGIN
     self.selectedField = "username"

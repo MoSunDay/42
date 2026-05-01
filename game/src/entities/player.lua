@@ -62,13 +62,23 @@ function Player.new(x, y, assetManager)
     self.defense = 5
     self.defPercent = 1
     self.battleSpeed = 6
-    self.gold = 0
     self.isDefending = false
     
     self.baseCrit = 5
     self.crit = 5
     self.baseEva = 3
     self.eva = 3
+    
+    self.mp = 100
+    self.maxMp = 100
+    self.baseMp = 100
+    self.baseMagicAttack = 10
+    self.magicAttack = 10
+    
+    self.classId = nil
+    self.skills = {}
+    self.skillCrystals = 0
+    self.critBonus = 0
 
     self.animationManager = nil
     self.animationId = "player"
@@ -330,10 +340,6 @@ function Player:calculateDamage()
     end
     
     return damage, isCrit
-end
-
-function Player:gainGold(amount)
-    self.gold = self.gold + amount
 end
 
 function Player:setEquipmentSystem(equipSystem)

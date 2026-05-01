@@ -5,6 +5,18 @@ local MapRegistry = {}
 
 local MAPS = {
     {
+        id = "trial_of_awakening",
+        name = "觉醒者试炼",
+        theme = "ruins",
+        level = {min = 1, max = 3},
+        description = "古老的新手试炼场，觉醒者证明自己力量的第一站。",
+        sizeRange = {min = 35, max = 40},
+        unlocked = true,
+        isDungeon = true,
+        dungeonType = "tutorial",
+        recommendedLevel = 1
+    },
+    {
         id = "generated_01_woods",
         name = "Whispering Woods",
         theme = "forest",

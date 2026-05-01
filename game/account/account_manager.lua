@@ -31,14 +31,13 @@ function AccountManager.createDefaultAccounts()
     local char1 = CharacterData.new({
         username = "test",
         characterName = "Test Hero",
-        gold = 500,
         maxHp = 150,
         hp = 150,
         attack = 25,
         defense = 10,
-        avatarColor = {0.3, 0.5, 1.0},  -- Blue
+        avatarColor = {0.3, 0.5, 1.0},
         mapId = "newbie_village",
-        x = 1600,  -- Village center
+        x = 1600,
         y = 1600,
     })
     char1.id = "char_test_001"
@@ -53,14 +52,13 @@ function AccountManager.createDefaultAccounts()
     local char2 = CharacterData.new({
         username = "admin",
         characterName = "Admin",
-        gold = 9999,
         maxHp = 250,
         hp = 250,
         attack = 50,
         defense = 20,
-        avatarColor = {1.0, 0.8, 0.2},  -- Gold
+        avatarColor = {1.0, 0.8, 0.2},
         mapId = "newbie_village",
-        x = 1600,  -- Village center
+        x = 1600,
         y = 1600,
     })
     char2.id = "char_admin_001"
@@ -69,15 +67,14 @@ function AccountManager.createDefaultAccounts()
     local char3 = CharacterData.new({
         username = "admin",
         characterName = "Warrior",
-        gold = 5000,
         maxHp = 200,
         hp = 200,
         attack = 40,
         defense = 15,
-        avatarColor = {1.0, 0.3, 0.3},  -- Red
-        mapId = "four_seasons_city",  -- Use Four Seasons City
-        x = 2400,  -- Safe spawn point
-        y = 2100,  -- North of monument
+        avatarColor = {1.0, 0.3, 0.3},
+        mapId = "four_seasons_city",
+        x = 2400,
+        y = 2100,
     })
     char3.id = "char_admin_002"
     char3.appearanceId = "red_warrior"
@@ -91,14 +88,13 @@ function AccountManager.createDefaultAccounts()
     local char4 = CharacterData.new({
         username = "player",
         characterName = "Brave Knight",
-        gold = 100,
         maxHp = 100,
         hp = 100,
         attack = 15,
         defense = 5,
-        avatarColor = {0.8, 0.3, 0.3},  -- Red
+        avatarColor = {0.8, 0.3, 0.3},
         mapId = "newbie_village",
-        x = 1600,  -- Village center
+        x = 1600,
         y = 1600,
     })
     char4.id = "char_player_001"

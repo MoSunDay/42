@@ -21,6 +21,14 @@ end
 function InputSystem:mousepressed(x, y, button)
     local mode = self.gameState:getMode()
 
+    -- Handle skill panel mouse events
+    local skillPanel = self.gameState:getSkillPanel()
+    if skillPanel and skillPanel.isOpen then
+        if skillPanel:mousepressed(x, y, button) then
+            return
+        end
+    end
+
     if mode == "exploration" then
         -- Check if clicked on unified menu
         local unifiedMenu = self.renderSystem:getUnifiedMenu()
@@ -148,6 +156,14 @@ end
 function InputSystem:keypressed(key)
     local mode = self.gameState:getMode()
 
+    -- Handle skill panel
+    local skillPanel = self.gameState:getSkillPanel()
+    if skillPanel and skillPanel.isOpen then
+        if skillPanel:keypressed(key) then
+            return
+        end
+    end
+
     -- Handle unified menu (M key)
     if mode == "exploration" then
         local unifiedMenu = self.renderSystem:getUnifiedMenu()
@@ -167,6 +183,14 @@ function InputSystem:keypressed(key)
     -- Handle chat input in exploration mode
     if mode == "exploration" then
         local chatSystem = self.gameState:getChatSystem()
+        
+        -- Handle K key for skill panel
+        if key == "k" then
+            if skillPanel then
+                skillPanel:toggle(self.gameState.player)
+            end
+            return
+        end
 
         if chatSystem and chatSystem:isInputting() then
             -- Chat is active
@@ -210,6 +234,26 @@ function InputSystem:keypressed(key)
         local battleSystem = self.gameState:getBattleSystem()
         local state = battleSystem:getState()
 
+        -- Handle skill selection mode
+        if self.battleUI:isSkillMode() then
+            if key == "up" or key == "w" then
+                self.battleUI:navigateSkillUp()
+            elseif key == "down" or key == "s" then
+                self.battleUI:navigateSkillDown()
+            elseif key == "return" or key == "space" then
+                local skillId = self.battleUI:getSelectedSkill()
+                if skillId then
+                    battleSystem:selectSkill(skillId)
+                    self.battleUI:exitSkillMode()
+                    local targetIndex = self.battleUI:getSelectedEnemy()
+                    battleSystem:selectAction("skill", targetIndex)
+                end
+            elseif key == "escape" then
+                self.battleUI:exitSkillMode()
+            end
+            return
+        end
+
         if state == "player" then
             if key == "up" or key == "w" then
                 self.battleUI:navigateUp()
@@ -223,6 +267,12 @@ function InputSystem:keypressed(key)
             elseif key == "return" or key == "space" then
                 -- Confirm action
                 local action = self.battleUI:getSelectedAction()
+
+                -- Check if skill selected
+                if action == "skill" then
+                    self.battleUI:enterSkillMode(battleSystem)
+                    return
+                end
 
                 -- Check if auto battle selected
                 if action == "auto" then

@@ -1,8 +1,6 @@
--- fullscreen_map.lua - Fullscreen map UI
--- Display full map with navigation support
-
 local MapRenderer = require("src.ui.map_renderer")
 local Theme = require("src.ui.theme")
+local Components = require("src.ui.components")
 
 local FullscreenMap = {}
 FullscreenMap.__index = FullscreenMap
@@ -95,36 +93,23 @@ function FullscreenMap:mousepressed(x, y, button, map)
     return nil
 end
 
--- Draw fullscreen map
 function FullscreenMap:draw(playerX, playerY, map)
     if not self.isOpen then
         return
     end
 
-    -- Draw overlay
-    love.graphics.setColor(self.colors.overlay)
-    love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
+    local w, h = self.screenWidth, self.screenHeight
+    Components.drawOverlay(w, h, self.colors.overlay[4])
 
-    -- Draw panel background
-    love.graphics.setColor(self.colors.panel)
-    love.graphics.rectangle("fill", self.panelX, self.panelY, self.panelWidth, self.panelHeight, 10, 10)
+    Components.drawPanel(self.panelX, self.panelY, self.panelWidth, self.panelHeight, self.assetManager, "menu_panel")
 
-    -- Draw panel border
-    love.graphics.setColor(self.colors.border)
-    love.graphics.setLineWidth(3)
-    love.graphics.rectangle("line", self.panelX, self.panelY, self.panelWidth, self.panelHeight, 10, 10)
-    love.graphics.setLineWidth(1)
-
-    -- Draw title
     love.graphics.setFont(self.fontLarge)
     love.graphics.setColor(self.colors.text)
     love.graphics.printf("World Map", self.panelX, self.panelY + 10, self.panelWidth, "center")
     love.graphics.setFont(self.font)
 
-    -- Draw map content
     self:drawMapContent(playerX, playerY, map)
 
-    -- Draw instructions
     love.graphics.setColor(0.7, 0.7, 0.7)
     love.graphics.printf("Click on map to navigate | Press TAB or ESC to close",
                         self.panelX, self.panelY + self.panelHeight - 25,

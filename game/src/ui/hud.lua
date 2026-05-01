@@ -162,7 +162,8 @@ function HUD:drawButtons()
         local isHovered = mouseX >= button.x and mouseX <= button.x + button.width and
                          mouseY >= button.y and mouseY <= button.y + button.height
 
-        Components.drawButtonSimple(button.x, button.y, button.width, button.height, button.name, isHovered, false, self.font)
+        Components.drawButton(button.x, button.y, button.width, button.height, button.name, 
+            isHovered and "hover" or "normal", self.assetManager, self.font)
     end
 
     love.graphics.setColor(1, 1, 1)

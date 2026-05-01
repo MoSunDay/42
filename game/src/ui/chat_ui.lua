@@ -120,29 +120,13 @@ function ChatUI:drawChatArea(chatSystem)
     -- Disable scissor
     love.graphics.setScissor()
 
-    -- Draw scrollbar if needed
     if contentHeight > viewHeight then
-        self:drawScrollbar(contentHeight, viewHeight)
+        local scrollbarX = self.x + self.width - 10
+        local scrollbarY = self.y + 25
+        Components.drawScrollbar(scrollbarX, scrollbarY, 5, viewHeight, contentHeight, self.scrollOffset)
     end
 
     love.graphics.setColor(1, 1, 1)
-end
-
--- Draw scrollbar
-function ChatUI:drawScrollbar(contentHeight, viewHeight)
-    local scrollbarX = self.x + self.width - 10
-    local scrollbarY = self.y + 25
-    local scrollbarHeight = viewHeight
-    local scrollbarWidth = 5
-
-    love.graphics.setColor(self.colors.scrollbarBg)
-    love.graphics.rectangle("fill", scrollbarX, scrollbarY, scrollbarWidth, scrollbarHeight)
-
-    local thumbHeight = math.max(20, (viewHeight / contentHeight) * scrollbarHeight)
-    local thumbY = scrollbarY + (self.scrollOffset / (contentHeight - viewHeight)) * (scrollbarHeight - thumbHeight)
-
-    love.graphics.setColor(self.colors.scrollbarThumb)
-    love.graphics.rectangle("fill", scrollbarX, thumbY, scrollbarWidth, thumbHeight, 2, 2)
 end
 
 function ChatUI:drawInputArea(chatSystem)

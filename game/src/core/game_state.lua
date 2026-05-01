@@ -15,6 +15,7 @@ local LoginUI = require("account.login_ui")
 local CharacterSelectUI = require("account.character_select_ui")
 local SpiritCrystalSystem = require("src.systems.spirit_crystal_system")
 local CompanionSystem = require("src.systems.companion_system")
+local SkillPanel = require("src.ui.skill_panel")
 
 local GameState = {}
 GameState.__index = GameState
@@ -43,7 +44,7 @@ function GameState.new(assetManager)
         self.network:connect(SERVER_HOST, SERVER_PORT)
     end
 
-    self.loginUI = LoginUI.new()
+    self.loginUI = LoginUI.new(assetManager)
     self.loginUI:setNetwork(self.network)
     self.loginUI:onLogin(function(characters, username)
         self.currentUsername = username
@@ -59,6 +60,8 @@ function GameState.new(assetManager)
     end)
 
     self.currentUsername = nil
+
+    self.skillPanel = SkillPanel.new()
 
     self.map = nil
     self.player = nil
@@ -123,12 +126,32 @@ function GameState:initializeWorld(character)
         self.inventorySystem:addItem("copper_necklace")
     end
 
-    self.player.gold = character.gold
     self.player.maxHp = character.maxHp
     self.player.hp = character.hp
     self.player.baseAttack = character.attack
     self.player.baseDefense = character.defense
     self.player:updateStatsWithEquipment()
+    
+    if character.maxMp then
+        self.player.maxMp = character.maxMp
+        self.player.mp = character.mp or character.maxMp
+    end
+    if character.magicAttack then
+        self.player.baseMagicAttack = character.magicAttack
+        self.player.magicAttack = character.magicAttack
+    end
+    if character.classId then
+        self.player.classId = character.classId
+    end
+    if character.skills then
+        self.player.skills = character.skills
+    end
+    if character.skillCrystals then
+        self.player.skillCrystals = character.skillCrystals
+    end
+    if character.critBonus then
+        self.player.critBonus = character.critBonus
+    end
     -- Don't override movement speed, keep default 250
     -- self.player.speed is for movement, character.speed is for battle
     
@@ -236,6 +259,11 @@ function GameState:update(dt)
             self.chatSystem:update(dt)
         end
 
+        -- Update skill panel
+        if self.skillPanel then
+            self.skillPanel:update(dt)
+        end
+
         -- Update safe timer
         if self.encounterSafeTimer and self.encounterSafeTimer > 0 then
             self.encounterSafeTimer = self.encounterSafeTimer - dt
@@ -317,9 +345,6 @@ function GameState:endBattle()
     if state == "victory" then
         local rewards = self.battleSystem:endBattle("victory")
         if rewards then
-            self.player:gainGold(rewards.gold)
-            print(string.format("Victory! Gained %d gold", rewards.gold))
-            
             if rewards.crystals and self.spiritCrystalSystem then
                 for _, crystal in ipairs(rewards.crystals) do
                     self.spiritCrystalSystem:addCrystal(crystal.type, crystal.tier, 1)
@@ -347,13 +372,19 @@ end
 function GameState:syncPlayerToCharacter()
     local character = self.network and self.network:get_character()
     if character and self.player then
-        character.gold = self.player.gold
         character.hp = self.player.hp
         character.maxHp = self.player.maxHp
         character.attack = self.player.attack
         character.defense = self.player.defense
         character.x = self.player.x
         character.y = self.player.y
+        character.mp = self.player.mp
+        character.maxMp = self.player.maxMp
+        character.magicAttack = self.player.magicAttack
+        character.classId = self.player.classId
+        character.skills = self.player.skills
+        character.skillCrystals = self.player.skillCrystals
+        character.critBonus = self.player.critBonus
         
         if self.equipmentSystem then
             character.equipment = self.equipmentSystem:serialize()
@@ -472,6 +503,11 @@ end
 -- Get companion system
 function GameState:getCompanionSystem()
     return self.companionSystem
+end
+
+-- Get skill panel
+function GameState:getSkillPanel()
+    return self.skillPanel
 end
 
 -- Get party system

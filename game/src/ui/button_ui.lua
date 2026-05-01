@@ -1,7 +1,5 @@
--- button_ui.lua - Simple button UI for equipment and inventory
--- Displays buttons in bottom-right corner
-
 local Theme = require("src.ui.theme")
+local Components = require("src.ui.components")
 
 local ButtonUI = {}
 ButtonUI.__index = ButtonUI
@@ -52,32 +50,19 @@ function ButtonUI:updatePositions()
     end
 end
 
--- Draw buttons
 function ButtonUI:draw()
     self:updatePositions()
     
     local mx, my = love.mouse.getPosition()
+    local font = love.graphics.getFont()
     
     for _, button in ipairs(self.buttons) do
         local isHover = mx >= button.x and mx <= button.x + button.width and
                        my >= button.y and my <= button.y + button.height
         
-        -- Background
-        if isHover then
-            love.graphics.setColor(self.colors.hover)
-        else
-            love.graphics.setColor(self.colors.background)
-        end
-        love.graphics.rectangle("fill", button.x, button.y, button.width, button.height, 5, 5)
+        Components.drawButtonSimple(button.x, button.y, button.width, button.height, 
+            button.label, isHover, false, font)
         
-        -- Border
-        love.graphics.setColor(self.colors.border)
-        love.graphics.setLineWidth(2)
-        love.graphics.rectangle("line", button.x, button.y, button.width, button.height, 5, 5)
-        love.graphics.setLineWidth(1)
-        
-        love.graphics.setColor(self.colors.text)
-        love.graphics.printf(button.label, button.x, button.y + 8, button.width, "center")
         love.graphics.setColor(Theme.colors.textDim)
         love.graphics.printf("[" .. button.key:upper() .. "]", button.x, button.y + 22, button.width, "center")
     end

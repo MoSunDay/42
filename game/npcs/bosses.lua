@@ -1,14 +1,35 @@
--- bosses.lua - Boss monster definitions
--- Boss怪物定义
-
 local BOSSES = {
+    trial_guardian = {
+        type = "boss",
+        name = "试炼守护者",
+        displayName = "Trial Guardian",
+        description = "古老试炼场的守护者，考验觉醒者的力量",
+        hp = 350, maxHp = 350,
+        attack = 20, defense = 8, speed = 4,
+        crit = 5, eva = 3,
+        tier = 1,
+        color = {0.5, 0.4, 0.6},
+        size = 35,
+        aggressive = true,
+        chaseRange = 200,
+        dropTable = {
+            {item = "Guardian's Essence", chance = 1.0},
+            {item = "Trial Badge", chance = 0.5}
+        },
+        abilities = {"Heavy Strike", "Guardian Shield"},
+        dialogue = {
+            onEngage = "...你来到了最终试炼。让我看看你的力量是否名副其实...",
+            onDefeat = "...你通过了试炼，觉醒者。这只是开始...更大的威胁正在逼近...带上这些灵晶，变强吧..."
+        },
+        isTutorialBoss = true
+    },
+    
     forest_guardian = {
         type = "boss",
         name = "Forest Guardian",
         description = "Ancient protector of the forest",
         hp = 200, maxHp = 200,
         attack = 18, defense = 8, speed = 5,
-        exp = 100, gold = 100,
         color = {0.2, 0.6, 0.2},
         size = 30,
         aggressive = true,
@@ -27,7 +48,6 @@ local BOSSES = {
         description = "Master of the realm between dreams and reality",
         hp = 500, maxHp = 500,
         attack = 40, defense = 20, speed = 6,
-        exp = 500, gold = 300,
         color = {0.5, 0.3, 0.7},
         size = 35,
         aggressive = true,
@@ -46,7 +66,6 @@ local BOSSES = {
         description = "Ancient ruler of the desert depths",
         hp = 350, maxHp = 350,
         attack = 32, defense = 15, speed = 4,
-        exp = 250, gold = 200,
         color = {0.85, 0.7, 0.4},
         size = 32,
         aggressive = true,
@@ -65,7 +84,6 @@ local BOSSES = {
         description = "An immense being of eternal ice",
         hp = 400, maxHp = 400,
         attack = 35, defense = 25, speed = 3,
-        exp = 300, gold = 250,
         color = {0.5, 0.7, 0.9},
         size = 38,
         aggressive = true,

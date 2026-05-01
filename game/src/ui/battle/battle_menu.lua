@@ -1,6 +1,3 @@
--- battle_menu.lua - Battle action menu rendering and interaction
--- Handles menu display, mouse clicks, and timer display
-
 local Theme = require("src.ui.theme")
 local Components = require("src.ui.components")
 
@@ -17,7 +14,7 @@ function BattleMenu.draw(battleUI, battleSystem, x, y)
     battleUI.menuY = y
     battleUI.menuHeight = 40 + #battleUI.actions * 30
     
-    Components.drawPanelSimple(x, y, battleUI.menuWidth, battleUI.menuHeight, 5)
+    Components.drawPanel(x, y, battleUI.menuWidth, battleUI.menuHeight, battleUI.assetManager, "menu_panel")
     
     love.graphics.setColor(battleUI.colors.text)
     love.graphics.print("Actions", x + 10, y + 10)
@@ -75,7 +72,7 @@ function BattleMenu.mousepressed(battleUI, x, y, button, battleSystem)
     return nil
 end
 
-function BattleMenu.drawTimer(battleSystem, x, y)
+function BattleMenu.drawTimer(battleSystem, x, y, assetManager)
     local state = battleSystem:getState()
     if state ~= "player" then
         return
@@ -88,10 +85,10 @@ function BattleMenu.drawTimer(battleSystem, x, y)
         return
     end
     
-    Components.drawPanelSimple(x, y, 200, 40, 5)
+    Components.drawPanel(x, y, 200, 40, assetManager, "small_panel")
     
     local timeRatio = turnTimer / maxTime
-    Components.drawHPBar(x + 10, y + 10, 180, 20, timeRatio, nil)
+    Components.drawHPBar(x + 10, y + 10, 180, 20, timeRatio, assetManager)
     
     love.graphics.setColor(Theme.colors.text)
     love.graphics.printf(string.format("%.1fs", turnTimer), x, y + 12, 200, "center")

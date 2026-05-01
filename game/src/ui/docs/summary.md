@@ -1,9 +1,9 @@
 # UI Module Summary
 
-> Last updated: b2dd66d - UI refactored with Components
+> Last updated: 2026-02-21 - Skill panel added
 
 ## Purpose
-User interface components for HUD, menus, and interactions.
+User interface components for HUD, menus, skills, and interactions.
 
 ## Files
 
@@ -21,6 +21,8 @@ User interface components for HUD, menus, and interactions.
 | `map_renderer.lua` | Minimap rendering |
 | `theme.lua` | Color palette and theming |
 | `components.lua` | Reusable UI components (9-slice, panels, buttons, bars, etc.) |
+| `tutorial_panel.lua` | Tutorial display with navigation buttons |
+| `skill_panel.lua` | Skill management (unlock/upgrade skills) |
 | `battle/` | Battle UI subdirectory |
 
 ## Key APIs
@@ -72,6 +74,28 @@ User interface components for HUD, menus, and interactions.
 - `ButtonUI.new(x, y, width, height, text)` - Create button
 - `ButtonUI:isClicked(mouseX, mouseY)` - Check click
 - `ButtonUI:draw()` - Render button
+
+### tutorial_panel.lua
+- `TutorialPanel.new(tutorialSystem)` - Create panel
+- `TutorialPanel:init()` - Initialize fonts and positions
+- `TutorialPanel:show()` / `hide()` - Toggle visibility
+- `TutorialPanel:update(dt)` - Update animations and hover
+- `TutorialPanel:draw()` - Render panel with content
+- `TutorialPanel:handleClick(x, y)` - Handle button clicks
+- `TutorialPanel:handleKeyPress(key)` - Handle keyboard navigation (arrows, space, escape)
+
+### skill_panel.lua
+- `SkillPanel.new()` - Create skill panel
+- `SkillPanel:open(player)` - Open panel with player data
+- `SkillPanel:close()` - Close panel
+- `SkillPanel:toggle(player)` - Toggle open/close
+- `SkillPanel:update(dt)` - Update message timer
+- `SkillPanel:draw()` - Render skill list
+- `SkillPanel:keypressed(key)` - Handle keyboard (↑↓ select, Enter confirm, Tab switch, ESC close)
+- `SkillPanel:mousepressed(x, y, button)` - Handle mouse clicks
+- Tabs: "unlocked" / "locked"
+- Shows skill name, level, description, MP cost, upgrade cost
+- Press `K` in exploration mode to open
 
 ## Color Categories (theme.lua)
 
