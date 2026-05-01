@@ -8,8 +8,10 @@ local Components = require("src.ui.components")
 local InventoryUI = {}
 InventoryUI.__index = InventoryUI
 
-function InventoryUI.new()
+function InventoryUI.new(assetManager)
     local self = setmetatable({}, InventoryUI)
+    
+    self.assetManager = assetManager
     
     self.hoveredSlot = nil
     self.selectedSlot = nil
@@ -73,7 +75,8 @@ function InventoryUI:draw(inventorySystem, x, y, width, height)
 end
 
 function InventoryUI:drawSlot(slotIndex, item, x, y, isHovered, isSelected)
-    Components.drawSlotSimple(x, y, self.slotSize, isHovered, isSelected)
+    local state = isSelected and "selected" or (isHovered and "hover" or "normal")
+    Components.drawSlot(x, y, self.slotSize, state, self.assetManager)
     
     if item then
         local itemColor = self:getItemColor(item)
@@ -145,7 +148,7 @@ function InventoryUI:drawItemDetail(inventorySystem, x, y, width, height)
     
     itemData = ItemDatabase.getItem(item.id)
     
-    Components.drawPanelSimple(x, y, width, height, 5)
+    Components.drawPanel(x, y, width, height, self.assetManager, "small_panel")
     
     local textX = x + 15
     local textY = y + 15
@@ -211,7 +214,7 @@ function InventoryUI:drawItemDetail(inventorySystem, x, y, width, height)
     if itemData.price then
         textY = y + height - 25
         love.graphics.setColor(1, 0.8, 0.2)
-        love.graphics.print("Price: " .. itemData.price .. " G", textX, textY)
+        love.graphics.print("灵晶值: " .. itemData.price, textX, textY)
     end
 end
 

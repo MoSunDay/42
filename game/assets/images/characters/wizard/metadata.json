@@ -1,0 +1,17 @@
+{
+  "id": "wizard",
+  "name": "Wizard",
+  "animations": {
+    "walking": {
+      "frame_count": 6,
+      "frame_duration": 0.1,
+      "directions": ["north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west"]
+    },
+    "breathing-idle": {
+      "frame_count": 4,
+      "frame_duration": 0.2,
+      "directions": ["north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west"]
+    }
+  },
+  "rotations": ["north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west"]
+}

@@ -10,6 +10,7 @@ local BattleState = require("src.systems.battle.battle_state")
 local BattleTimer = require("src.systems.battle.battle_timer")
 local BattleExecutor = require("src.systems.battle.battle_executor")
 local SpiritCrystalSystem = require("src.systems.spirit_crystal_system")
+local SkillSystem = require("src.systems.skill_system")
 
 local BattleSystem = {}
 BattleSystem.__index = BattleSystem
@@ -32,6 +33,10 @@ function BattleSystem.new(player, audioSystem, animationManager, assetManager, c
     self.actionTimer = 0
     self.isActive = false
     self.autoBattle = false
+    
+    self.skillMode = false
+    self.selectedSkill = nil
+    self.availableSkills = {}
 
     self.timer = BattleTimer.new(90.0)
 
@@ -95,12 +100,9 @@ function BattleSystem:endBattle(result)
     self.state = result
     
     if result == BATTLE_STATE.VICTORY then
-        local totalGold = 0
         local allCrystals = {}
         
         for _, enemy in ipairs(self.enemies) do
-            totalGold = totalGold + enemy.gold
-            
             local preferredType = SpiritCrystalSystem.getPreferredCrystalType(enemy)
             local drops = SpiritCrystalSystem.generateDrop(enemy.tier, preferredType)
             for _, drop in ipairs(drops) do
@@ -117,12 +119,11 @@ function BattleSystem:endBattle(result)
         end
         
         self:addLog("Victory!")
-        self:addLog("Gained " .. totalGold .. " Gold!")
         if #allCrystals > 0 then
             self:addLog("Obtained " .. #allCrystals .. " Spirit Crystal(s)!")
         end
         
-        return {gold = totalGold, crystals = allCrystals}
+        return {crystals = allCrystals}
     elseif result == BATTLE_STATE.DEFEAT then
         self:addLog("Defeat...")
     elseif result == BATTLE_STATE.ESCAPED then
@@ -237,6 +238,21 @@ function BattleSystem:executePlayerAction()
     if action == "attack" then
         if target and target:isAlive() then
             BattleExecutor.executePlayerAttack(self, target, targetIndex)
+        end
+    elseif action == "skill" then
+        if self.selectedSkill then
+            local targets, indices = BattleExecutor.selectSkillTargets(self, self.selectedSkill)
+            if #targets > 0 then
+                BattleExecutor.executePlayerSkill(self, self.selectedSkill, targets, indices)
+            else
+                local skillData = require("src.data.skill_database").getSkill(self.selectedSkill)
+                if skillData and (skillData.targets == "self" or skillData.targets == "all_allies") then
+                    BattleExecutor.executePlayerSkill(self, self.selectedSkill, {}, {})
+                else
+                    self:addLog("No valid target for skill!")
+                    self.state = BATTLE_STATE.PLAYER_TURN
+                end
+            end
         end
     elseif action == "defend" then
         BattleExecutor.executePlayerDefend(self)
@@ -415,6 +431,36 @@ end
 -- Check if auto was triggered by timeout
 function BattleSystem:isAutoTriggeredByTimeout()
     return self.timer:isAutoTriggered()
+end
+
+-- Get available skills for player
+function BattleSystem:getAvailableSkills()
+    if not self.player or not self.player.skills then
+        return {}
+    end
+    return SkillSystem.getAvailableSkills(self.player)
+end
+
+-- Select a skill
+function BattleSystem:selectSkill(skillId)
+    self.selectedSkill = skillId
+    self.skillMode = true
+end
+
+-- Clear skill selection
+function BattleSystem:clearSkillSelection()
+    self.selectedSkill = nil
+    self.skillMode = false
+end
+
+-- Check if in skill mode
+function BattleSystem:isSkillMode()
+    return self.skillMode
+end
+
+-- Get selected skill
+function BattleSystem:getSelectedSkill()
+    return self.selectedSkill
 end
 
 -- Export battle states

@@ -19,14 +19,15 @@ This document provides guidelines for AI coding agents working on this codebase.
 | [09-mcp-configuration.md](agents/09-mcp-configuration.md) | MCP 素材工具配置 |
 | [10-art-assets.md](agents/10-art-assets.md) | 美术素材规格 |
 | [11-audio-assets.md](agents/11-audio-assets.md) | 音效素材规格 |
+| [12-battle-simulator.md](agents/12-battle-simulator.md) | 战斗模拟器 |
 
-## 最近更新 (0b5db5a)
+## 最近更新 (2026-02-21)
 
-新增系统和功能：
-- **程序化地图生成**: MapGenerator + 10种主题地图
-- **地图注册表**: 解锁进度 + 等级范围管理
-- **传送NPC**: 维度向导，支持地图传送
-- **UI组件模块**: 9-slice面板、按钮等可复用组件
-- **NPC数据库扩展**: Boss/Friendly/Monster 分类
+新增职业和技能系统：
+- **6个职业**: 双刀流/巨剑士/侠客/封印师/治愈师/元素师
+- **18个技能**: 每个职业3-4个技能
+- **无限升级**: 灵晶消耗曲线，效果每级+3%
+- **角色创建**: 3步流程（名字→职业→外观）
+- **战斗技能**: 战斗中选择并释放技能
 
-详见各模块文档的 `docs/summary.md`。
+详见 [docs/CLASS_SKILL_SYSTEM.md](game/docs/CLASS_SKILL_SYSTEM.md)。

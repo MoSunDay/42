@@ -21,55 +21,11 @@ Map data loading, rendering, tilesets, particle effects, Tiled integration, and 
 | `maps/` | Map data files (including Tiled JSON) |
 | `minimap/` | Minimap data files |
 
-## External Libraries
+## Dungeon Maps
 
-| Library | Description |
-|---------|-------------|
-| `lib/sti/` | Simple Tiled Implementation - full Tiled map support |
-
-## Key APIs
-
-### map_manager.lua
-- `MapManager.loadMap(mapId, useTiled)` - Load map by ID (supports Tiled format)
-- `MapManager.getCurrentMap()` - Get active map
-- `MapManager.getMapList()` - Available maps
-- `MapManager.setUseSTI(enabled)` - Enable STI library for Tiled maps
-- `MapManager.setDebugMode(enabled)` - Enable debug output
-
-### map_generator.lua
-- `MapGenerator.new(theme)` - Create generator with theme
-- `MapGenerator:generate(width, height)` - Generate procedural map
-- `MapGenerator:getSpawnPoint()` - Get player spawn position
-- `MapGenerator:getMonsterZones()` - Get encounter zones
-- Themes: forest, desert, snow, volcanic, cave, sky, swamp, crystal, ruins, realm
-
-### map_registry.lua
-- `MapRegistry.unlock(mapId)` - Unlock a map
-- `MapRegistry.isUnlocked(mapId)` - Check if accessible
-- `MapRegistry.getUnlockedMaps()` - Get available destinations
-- `MapRegistry.getRequirements(mapId)` - Get unlock conditions
-
-### tiled_loader.lua
-- `TiledLoader.new()` - Create loader instance
-- `TiledLoader:load(path)` - Load Tiled JSON/Lua map
-- `TiledLoader:parseJson(jsonString)` - Parse JSON data
-- `TiledLoader:getTileLayer(name)` - Get layer data by name
-- `TiledLoader:getObjectLayer(name)` - Get objects from object layer
-- `TiledLoader:getProperty(name)` - Get custom map property
-
-### tiled_integration.lua
-- `M.demo()` - Run demo to test Tiled loading
-- Supports JSON, TMX, and Lua export formats from Tiled editor
-
-### autotile.lua
-- `Autotile.update(tileGrid)` - Calculate auto-tiles
-- `Autotile.getTileType(neighbors)` - Get tile from neighbors
-
-### particle_system.lua
-- `ParticleSystem.new()` - Create system
-- `ParticleSystem:emit(x, y, count)` - Emit particles
-- `ParticleSystem:update(dt)` - Update particles
-- `ParticleSystem:draw()` - Render particles
+| ID | Type | Level | Description |
+| |----|-------|--------|-------------|
+| `trial_of_awakening` | tutorial | 1-3 | New player tutorial dungeon |
 
 ## Generated Maps
 

@@ -1,0 +1,279 @@
+local TutorialSystem = {}
+TutorialSystem.__index = TutorialSystem
+
+local TUTORIALS = {
+    basic_combat = {
+        id = "basic_combat",
+        title = "基础战斗",
+        pages = {
+            {
+                title = "欢迎来到战斗教学",
+                content = "在这个世界中，你需要通过战斗来获得灵晶和经验。",
+                highlight = nil
+            },
+            {
+                title = "攻击",
+                content = "点击「攻击」按钮对敌人造成伤害。\n你的攻击力越高，造成的伤害越大！",
+                highlight = "attack_button"
+            },
+            {
+                title = "开始战斗",
+                content = "现在，试着击败面前的史莱姆吧！\n点击敌人选中目标，然后点击攻击。",
+                highlight = nil
+            }
+        },
+        skipable = true
+    },
+    
+    defense_mechanic = {
+        id = "defense_mechanic",
+        title = "防御机制",
+        pages = {
+            {
+                title = "防御的重要性",
+                content = "当生命值较低时，防御可以大幅减少受到的伤害！",
+                highlight = nil
+            },
+            {
+                title = "如何防御",
+                content = "点击「防御」按钮进入防御状态。\n防御时，受到的伤害减少25%！",
+                highlight = "defend_button"
+            },
+            {
+                title = "最佳时机",
+                content = "建议在生命值低于50%时使用防御，\n等待合适时机再进行反击！",
+                highlight = nil
+            }
+        },
+        skipable = true
+    },
+    
+    spirit_crystal_system = {
+        id = "spirit_crystal_system",
+        title = "灵晶系统",
+        pages = {
+            {
+                title = "灵晶的奥秘",
+                content = "灵晶是这个世界力量的结晶，\n可以用来强化装备属性。",
+                highlight = nil
+            },
+            {
+                title = "灵晶等级",
+                content = "灵晶分为四个等级：\n碎片(10点) → 晶体(50点) → 宝石(200点) → 核心(1000点)\n等级越高，价值越大！",
+                highlight = nil
+            },
+            {
+                title = "获得灵晶",
+                content = "击败敌人有几率获得灵晶！\n更强的敌人会掉落更高等级的灵晶。",
+                highlight = nil
+            },
+            {
+                title = "强化装备",
+                content = "收集灵晶后，可以强化装备！\n每次强化都会提升装备的基础属性。",
+                highlight = nil
+            }
+        },
+        skipable = true
+    },
+    
+    multi_enemy_strategy = {
+        id = "multi_enemy_strategy",
+        title = "多敌人战斗",
+        pages = {
+            {
+                title = "面对多个敌人",
+                content = "在某些区域，你会遇到多波敌人的攻击！\n需要合理安排战斗策略。",
+                highlight = nil
+            },
+            {
+                title = "战斗策略",
+                content = "1. 优先击败攻击力高的敌人\n2. 适时使用防御恢复状态\n3. 保持生命值在安全范围",
+                highlight = nil
+            },
+            {
+                title = "波次战斗",
+                content = "完成一波敌人后，可能会有新的一波出现！\n做好准备，迎接挑战！",
+                highlight = nil
+            }
+        },
+        skipable = true
+    },
+    
+    boss_battle = {
+        id = "boss_battle",
+        title = "Boss战",
+        pages = {
+            {
+                title = "Boss遭遇",
+                content = "你即将面对试炼守护者！\nBoss比普通敌人强大得多。",
+                highlight = nil
+            },
+            {
+                title = "Boss特点",
+                content = "Boss拥有更高的生命值和攻击力，\n有时还会使用特殊技能！",
+                highlight = nil
+            },
+            {
+                title = "战胜Boss",
+                content = "保持耐心，合理使用防御，\n注意自己的生命值，你一定能获胜！",
+                highlight = nil
+            },
+            {
+                title = "丰厚奖励",
+                content = "击败Boss后会获得丰厚的灵晶奖励！\n准备好迎接挑战了吗？",
+                highlight = nil
+            }
+        },
+        skipable = true
+    }
+}
+
+function TutorialSystem.new()
+    local self = setmetatable({}, TutorialSystem)
+    
+    self.completedTutorials = {}
+    self.currentTutorial = nil
+    self.currentPage = 1
+    self.isActive = false
+    self.highlightElement = nil
+    
+    self.onCompleteCallback = nil
+    self.onSkipCallback = nil
+    
+    return self
+end
+
+function TutorialSystem:startTutorial(tutorialId)
+    local tutorial = TUTORIALS[tutorialId]
+    if not tutorial then
+        print("Tutorial not found: " .. tutorialId)
+        return false
+    end
+    
+    if self.completedTutorials[tutorialId] then
+        return false
+    end
+    
+    self.currentTutorial = tutorial
+    self.currentPage = 1
+    self.isActive = true
+    self.highlightElement = tutorial.pages[1].highlight
+    
+    return true
+end
+
+function TutorialSystem:nextPage()
+    if not self.isActive or not self.currentTutorial then return end
+    
+    if self.currentPage < #self.currentTutorial.pages then
+        self.currentPage = self.currentPage + 1
+        self.highlightElement = self.currentTutorial.pages[self.currentPage].highlight
+    else
+        self:completeTutorial()
+    end
+end
+
+function TutorialSystem:prevPage()
+    if not self.isActive or not self.currentTutorial then return end
+    
+    if self.currentPage > 1 then
+        self.currentPage = self.currentPage - 1
+        self.highlightElement = self.currentTutorial.pages[self.currentPage].highlight
+    end
+end
+
+function TutorialSystem:skipTutorial()
+    if not self.currentTutorial then return end
+    
+    if not self.currentTutorial.skipable then
+        return false
+    end
+    
+    self.completedTutorials[self.currentTutorial.id] = true
+    self.isActive = false
+    
+    if self.onSkipCallback then
+        self.onSkipCallback(self.currentTutorial.id)
+    end
+    
+    self.currentTutorial = nil
+    self.currentPage = 1
+    self.highlightElement = nil
+    
+    return true
+end
+
+function TutorialSystem:completeTutorial()
+    if not self.currentTutorial then return end
+    
+    self.completedTutorials[self.currentTutorial.id] = true
+    self.isActive = false
+    
+    if self.onCompleteCallback then
+        self.onCompleteCallback(self.currentTutorial.id)
+    end
+    
+    self.currentTutorial = nil
+    self.currentPage = 1
+    self.highlightElement = nil
+end
+
+function TutorialSystem:isTutorialActive()
+    return self.isActive
+end
+
+function TutorialSystem:getCurrentPage()
+    if not self.currentTutorial then return nil end
+    return self.currentTutorial.pages[self.currentPage]
+end
+
+function TutorialSystem:getCurrentHighlight()
+    return self.highlightElement
+end
+
+function TutorialSystem:isFirstPage()
+    return self.currentPage == 1
+end
+
+function TutorialSystem:isLastPage()
+    if not self.currentTutorial then return true end
+    return self.currentPage == #self.currentTutorial.pages
+end
+
+function TutorialSystem:canSkip()
+    return self.currentTutorial and self.currentTutorial.skipable
+end
+
+function TutorialSystem:getProgress()
+    if not self.currentTutorial then return 0, 0 end
+    return self.currentPage, #self.currentTutorial.pages
+end
+
+function TutorialSystem:isCompleted(tutorialId)
+    return self.completedTutorials[tutorialId] == true
+end
+
+function TutorialSystem:setOnCompleteCallback(callback)
+    self.onCompleteCallback = callback
+end
+
+function TutorialSystem:setOnSkipCallback(callback)
+    self.onSkipCallback = callback
+end
+
+function TutorialSystem:getAllTutorials()
+    return TUTORIALS
+end
+
+function TutorialSystem:serialize()
+    return {
+        completedTutorials = self.completedTutorials
+    }
+end
+
+function TutorialSystem:deserialize(data)
+    if not data then return end
+    self.completedTutorials = data.completedTutorials or {}
+end
+
+return TutorialSystem

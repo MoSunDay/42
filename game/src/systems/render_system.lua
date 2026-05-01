@@ -8,6 +8,7 @@ local PartyUI = require("src.ui.party_ui")
 local ChatUI = require("src.ui.chat_ui")
 local AvatarRenderer = require("account.avatar_renderer")
 local UnifiedMenu = require("src.ui.unified_menu")
+local SkillPanel = require("src.ui.skill_panel")
 local MapManager = require("map.map_manager")
 
 local RenderSystem = {}
@@ -58,12 +59,10 @@ function RenderSystem:renderLogin()
 end
 
 function RenderSystem:renderCharacterSelect()
-    local AccountManager = require("account.account_manager")
     local characterSelectUI = self.gameState:getCharacterSelectUI()
-    local username = self.gameState:getCurrentUsername()
 
-    if characterSelectUI and username then
-        characterSelectUI:draw(AccountManager, username)
+    if characterSelectUI then
+        characterSelectUI:draw()
     end
 end
 
@@ -166,6 +165,11 @@ function RenderSystem:renderUI()
 
     if self.unifiedMenu:isMenuOpen() then
         self.unifiedMenu:draw(self.gameState)
+    end
+
+    local skillPanel = self.gameState:getSkillPanel()
+    if skillPanel and skillPanel.isOpen then
+        skillPanel:draw()
     end
 end
 

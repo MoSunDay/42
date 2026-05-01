@@ -19,6 +19,7 @@ function BattleUI.new(assetManager)
 
     self.actions = {
         {name = "Attack", key = "attack"},
+        {name = "Skill", key = "skill"},
         {name = "Defend", key = "defend"},
         {name = "Item", key = "item"},
         {name = "Escape", key = "escape"},
@@ -26,6 +27,10 @@ function BattleUI.new(assetManager)
     }
     self.selectedAction = 1
     self.selectedEnemy = 1
+    
+    self.skillSelectMode = false
+    self.selectedSkillIndex = 1
+    self.availableSkills = {}
 
     self.menuX = 0
     self.menuY = 0
@@ -87,18 +92,15 @@ function BattleUI:draw(battleSystem, player, map)
         self:drawEnemy(enemy, x, y, i == self.selectedEnemy)
     end
     
-    -- Draw UI panels
-    BattlePanels.drawPlayerPanel(self.colors, player, 20, h - 180)
+    BattlePanels.drawPlayerPanel(self.colors, player, 20, h - 180, self.assetManager)
 
-    -- Draw action menu centered vertically
     local menuHeight = 40 + #self.actions * 30
     local menuY = (h - menuHeight) / 2
     BattleMenu.draw(self, battleSystem, w - 220, menuY)
 
-    BattlePanels.drawBattleLog(self.colors, battleSystem, 20, 20)
+    BattlePanels.drawBattleLog(self.colors, battleSystem, 20, 20, self.assetManager)
 
-    -- Draw turn timer
-    BattleMenu.drawTimer(battleSystem, w / 2 - 100, 20)
+    BattleMenu.drawTimer(battleSystem, w / 2 - 100, 20, self.assetManager)
     
     -- Draw turn indicator
     local state = battleSystem:getState()
@@ -108,6 +110,11 @@ function BattleUI:draw(battleSystem, player, map)
     local animation = battleSystem:getAnimation()
     if animation then
         animation:draw()
+    end
+    
+    -- Draw skill selection panel if in skill mode
+    if self.skillSelectMode then
+        self:drawSkillSelectPanel(battleSystem, w, h)
     end
 end
 
@@ -301,6 +308,101 @@ end
 -- Handle mouse click on action menu (delegated to BattleMenu)
 function BattleUI:mousepressed(x, y, button, battleSystem)
     return BattleMenu.mousepressed(self, x, y, button, battleSystem)
+end
+
+-- Draw skill selection panel
+function BattleUI:drawSkillSelectPanel(battleSystem, w, h)
+    local panelW, panelH = 400, 300
+    local panelX = (w - panelW) / 2
+    local panelY = (h - panelH) / 2
+    
+    love.graphics.setColor(0.1, 0.1, 0.15, 0.95)
+    love.graphics.rectangle("fill", panelX, panelY, panelW, panelH, 10, 10)
+    love.graphics.setColor(0.4, 0.5, 0.7)
+    love.graphics.setLineWidth(2)
+    love.graphics.rectangle("line", panelX, panelY, panelW, panelH, 10, 10)
+    
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.printf("Select Skill", panelX, panelY + 10, panelW, "center")
+    
+    local skills = self.availableSkills
+    if #skills == 0 then
+        love.graphics.setColor(0.6, 0.6, 0.6)
+        love.graphics.printf("No skills available", panelX, panelY + panelH/2, panelW, "center")
+    else
+        local itemH = 60
+        local startY = panelY + 40
+        local listH = panelH - 80
+        
+        for i, skillInfo in ipairs(skills) do
+            local itemY = startY + (i - 1) * itemH
+            if itemY + itemH > panelY + panelH - 40 then break end
+            
+            local isSelected = (i == self.selectedSkillIndex)
+            local skill = skillInfo.data
+            
+            if isSelected then
+                love.graphics.setColor(0.3, 0.4, 0.6, 0.8)
+                love.graphics.rectangle("fill", panelX + 10, itemY, panelW - 20, itemH - 5, 5, 5)
+            end
+            
+            love.graphics.setColor(1, 1, 1)
+            love.graphics.print(string.format("%s Lv.%d", skill.name, skillInfo.level), panelX + 20, itemY + 5)
+            
+            love.graphics.setColor(0.7, 0.7, 0.7)
+            love.graphics.print(skill.description, panelX + 20, itemY + 22)
+            
+            local mpColor = (battleSystem.player and battleSystem.player.mp >= skill.mpCost) and {0.4, 0.7, 1.0} or {1.0, 0.4, 0.4}
+            love.graphics.setColor(mpColor)
+            love.graphics.print(string.format("MP: %d", skill.mpCost), panelX + panelW - 80, itemY + 5)
+            
+            love.graphics.setColor(0.6, 0.8, 0.6)
+            local effectText = ""
+            if skill.damageMultiplier then
+                effectText = string.format("DMG: %d%%", skillInfo.effectiveDamage * 100)
+            elseif skill.healPercent then
+                effectText = string.format("HEAL: %d%%HP", skillInfo.effectiveHeal * 100)
+            end
+            love.graphics.print(effectText, panelX + 20, itemY + 39)
+        end
+    end
+    
+    love.graphics.setColor(0.5, 0.5, 0.5)
+    love.graphics.printf("↑↓ Select  Enter Confirm  ESC Cancel", panelX, panelY + panelH - 25, panelW, "center")
+end
+
+-- Enter skill select mode
+function BattleUI:enterSkillMode(battleSystem)
+    self.skillSelectMode = true
+    self.selectedSkillIndex = 1
+    self.availableSkills = battleSystem:getAvailableSkills()
+end
+
+-- Exit skill select mode
+function BattleUI:exitSkillMode()
+    self.skillSelectMode = false
+    self.selectedSkillIndex = 1
+end
+
+-- Check if in skill mode
+function BattleUI:isSkillMode()
+    return self.skillSelectMode
+end
+
+-- Navigate skill list
+function BattleUI:navigateSkillUp()
+    self.selectedSkillIndex = math.max(1, self.selectedSkillIndex - 1)
+end
+
+function BattleUI:navigateSkillDown()
+    self.selectedSkillIndex = math.min(#self.availableSkills, self.selectedSkillIndex + 1)
+end
+
+-- Get selected skill
+function BattleUI:getSelectedSkill()
+    if #self.availableSkills == 0 then return nil end
+    local skillInfo = self.availableSkills[self.selectedSkillIndex]
+    return skillInfo and skillInfo.id
 end
 
 return BattleUI

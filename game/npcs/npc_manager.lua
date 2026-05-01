@@ -54,8 +54,6 @@ function NPCManager:spawnNPC(npcType, x, y)
         attack = template.attack,
         defense = template.defense,
         speed = template.speed,
-        exp = template.exp,
-        gold = template.gold,
         aggressive = template.aggressive,
         chaseRange = template.chaseRange,
         dropTable = template.dropTable,

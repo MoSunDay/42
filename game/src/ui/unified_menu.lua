@@ -52,7 +52,7 @@ function UnifiedMenu.new(assetManager)
     self.font = assetManager:getFont("default")
     self.fontLarge = assetManager:getFont("large")
     
-    self.inventoryUI = InventoryUI.new()
+    self.inventoryUI = InventoryUI.new(assetManager)
     
     self.selectedEquipSlot = nil
     self.showEquipDialog = false
@@ -102,7 +102,7 @@ function UnifiedMenu:draw(gameState)
     
     Components.drawOverlay(love.graphics.getWidth(), love.graphics.getHeight(), 0.5)
     
-    Components.drawPanelSimple(self.x, self.y, self.width, self.height, 10)
+    Components.drawPanel(self.x, self.y, self.width, self.height, self.assetManager, "menu_panel")
     
     self:drawTabs()
     
@@ -175,7 +175,7 @@ function UnifiedMenu:drawEquipmentTab(gameState, contentY, contentHeight)
     
     love.graphics.setFont(self.font)
     
-    Components.drawPanelSimple(leftPanelX, slotY - 10, leftPanelWidth, #slots * (slotHeight + 5) + 20, 5)
+    Components.drawPanel(leftPanelX, slotY - 10, leftPanelWidth, #slots * (slotHeight + 5) + 20, self.assetManager, "small_panel")
     
     for i, slotInfo in ipairs(slots) do
         local y = slotY + (i - 1) * (slotHeight + 5)
@@ -189,7 +189,7 @@ function UnifiedMenu:drawEquipmentTab(gameState, contentY, contentHeight)
     local rightPanelX = self.x + leftPanelWidth + 40
     local rightPanelWidth = self.width - leftPanelWidth - 60
     
-    Components.drawPanelSimple(rightPanelX, contentY + 50, rightPanelWidth, contentHeight - 60, 5)
+    Components.drawPanel(rightPanelX, contentY + 50, rightPanelWidth, contentHeight - 60, self.assetManager, "small_panel")
     
     love.graphics.setColor(self.colors.text)
     love.graphics.print("Inventory", rightPanelX + 10, contentY + 60)
@@ -248,7 +248,7 @@ function UnifiedMenu:drawTotalStats(equipmentSystem, x, y, width)
     local stats = equipmentSystem:getTotalStats()
     local defPercent = equipmentSystem:getDefensePercent()
     
-    Components.drawPanelSimple(x, y, width, 80, 5)
+    Components.drawPanel(x, y, width, 80, self.assetManager, "small_panel")
     
     love.graphics.setColor(self.colors.text)
     love.graphics.print("Equipment Bonus:", x + 10, y + 8)
@@ -311,14 +311,14 @@ function UnifiedMenu:drawItemsTab(gameState, contentY, contentHeight)
     local gridWidth = self.width - 250
     local gridHeight = contentHeight - 100
     
-    Components.drawPanelSimple(gridX, gridY, gridWidth, gridHeight, 5)
+    Components.drawPanel(gridX, gridY, gridWidth, gridHeight, self.assetManager, "small_panel")
     
     self.inventoryUI:draw(inventorySystem, gridX, gridY + 10, gridWidth, gridHeight - 20)
     
     local detailX = gridX + gridWidth + 10
     local detailWidth = self.width - gridWidth - 40
     
-    Components.drawPanelSimple(detailX, gridY, detailWidth, gridHeight, 5)
+    Components.drawPanel(detailX, gridY, detailWidth, gridHeight, self.assetManager, "small_panel")
     
     self.inventoryUI:drawItemDetail(inventorySystem, detailX + 10, gridY + 10, detailWidth - 20, gridHeight - 60)
     
@@ -339,7 +339,7 @@ function UnifiedMenu:drawItemsTab(gameState, contentY, contentHeight)
 end
 
 function UnifiedMenu:drawButton(text, x, y, width, height, isHovered)
-    Components.drawButtonSimple(x, y, width, height, text, isHovered, false, self.font)
+    Components.drawButton(x, y, width, height, text, isHovered and "hover" or "normal", self.assetManager, self.font)
 end
 
 function UnifiedMenu:drawPartyTab(gameState, contentY, contentHeight)
@@ -364,7 +364,7 @@ function UnifiedMenu:drawPartyTab(gameState, contentY, contentHeight)
     for i, member in ipairs(members) do
         local y = memberY + (i - 1) * 70
         
-        Components.drawPanelSimple(self.x + 50, y, self.width - 100, 60, 5)
+        Components.drawPanel(self.x + 50, y, self.width - 100, 60, self.assetManager, "small_panel")
         
         if i == partySystem.leaderIndex then
             love.graphics.setColor(1, 0.8, 0.2)

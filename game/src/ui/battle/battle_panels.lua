@@ -1,31 +1,26 @@
--- battle_panels.lua - Battle UI panels (player info, battle log)
--- Handles rendering of information panels
-
 local Theme = require("src.ui.theme")
 local Components = require("src.ui.components")
 
 local BattlePanels = {}
 
-function BattlePanels.drawHPBar(colors, entity, x, y, width, height)
+function BattlePanels.drawHPBar(colors, entity, x, y, width, height, assetManager)
     local hpPercent = entity:getHPPercent()
-    Components.drawHPBar(x, y, width, height, hpPercent, nil)
+    Components.drawHPBar(x, y, width, height, hpPercent, assetManager)
 end
 
-function BattlePanels.drawPlayerPanel(colors, player, x, y)
-    Components.drawPanelSimple(x, y, 300, 160, 5)
+function BattlePanels.drawPlayerPanel(colors, player, x, y, assetManager)
+    Components.drawPanel(x, y, 300, 160, assetManager, "battle_panel")
     
     love.graphics.setColor(colors.text)
     love.graphics.print("Player", x + 10, y + 10)
     
     love.graphics.print("HP: " .. player.hp .. " / " .. player.maxHp, x + 10, y + 35)
     
-    BattlePanels.drawHPBar(colors, player, x + 10, y + 55, 280, 15)
+    BattlePanels.drawHPBar(colors, player, x + 10, y + 55, 280, 15, assetManager)
     
     love.graphics.print("ATK: " .. player.attack, x + 10, y + 80)
     love.graphics.print("DEF: " .. player.defense, x + 120, y + 80)
     love.graphics.print("SPD: " .. player.speed, x + 230, y + 80)
-
-    love.graphics.print("Gold: " .. (player.gold or 0), x + 10, y + 105)
     
     if player.equipment then
         local equipCount = 0
@@ -40,11 +35,11 @@ function BattlePanels.drawPlayerPanel(colors, player, x, y)
     end
 end
 
-function BattlePanels.drawBattleLog(colors, battleSystem, x, y)
+function BattlePanels.drawBattleLog(colors, battleSystem, x, y, assetManager)
     local battleLog = battleSystem.battleLog
     local messages = battleLog:getMessages()
 
-    Components.drawPanelSimple(x, y, 400, 120, 5)
+    Components.drawPanel(x, y, 400, 120, assetManager, "battle_panel")
 
     love.graphics.setColor(colors.text)
     love.graphics.print("Battle Log", x + 10, y + 10)
@@ -75,23 +70,8 @@ function BattlePanels.drawBattleLog(colors, battleSystem, x, y)
     love.graphics.setScissor()
 
     if contentHeight > viewHeight then
-        BattlePanels.drawScrollbar(colors, x + 385, y + 30, viewHeight, contentHeight, scrollOffset)
+        Components.drawScrollbar(x + 385, y + 30, 5, viewHeight, contentHeight, scrollOffset)
     end
-end
-
--- Draw scrollbar
-function BattlePanels.drawScrollbar(colors, x, y, viewHeight, contentHeight, scrollOffset)
-    local scrollbarWidth = 5
-
-    love.graphics.setColor(Theme.colors.chat.scrollbarBg)
-    love.graphics.rectangle("fill", x, y, scrollbarWidth, viewHeight)
-
-    local thumbHeight = math.max(20, (viewHeight / contentHeight) * viewHeight)
-    local maxScroll = contentHeight - viewHeight
-    local thumbY = y + (scrollOffset / maxScroll) * (viewHeight - thumbHeight)
-
-    love.graphics.setColor(Theme.colors.chat.scrollbarThumb)
-    love.graphics.rectangle("fill", x, thumbY, scrollbarWidth, thumbHeight, 2, 2)
 end
 
 return BattlePanels

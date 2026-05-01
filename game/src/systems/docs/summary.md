@@ -1,9 +1,9 @@
 # Systems Module Summary
 
-> Last updated: 0b5db5a - UI components + NPC expansion
+> Last updated: 2026-02-21 - Class & Skill System
 
 ## Purpose
-Game systems for battle, party, chat, inventory, equipment, collision, audio, companions, and spirit crystals.
+Game systems for battle, party, chat, inventory, equipment, collision, audio, companions, spirit crystals, and skills.
 
 ## Files
 
@@ -14,8 +14,11 @@ Game systems for battle, party, chat, inventory, equipment, collision, audio, co
 | `chat_system.lua` | Chat box + speech bubbles |
 | `collision_system.lua` | Tile-based walkability |
 | `companion_system.lua` | Companion/pet management with 6 templates, leveling, battle AI |
+| `dungeon_system.lua` | Dungeon instance management, area progression, rewards |
 | `equipment_system.lua` | Equipment slots, stat bonuses, set bonuses, enhancement |
-| `spirit_crystal_system.lua` | Spirit crystal collection, 5 types/4 tiers, stat bonuses, fusion |
+| `spirit_crystal_system.lua` | Spirit crystal collection, 4 tiers for equipment enhancement |
+| `skill_system.lua` | Skill unlock/upgrade/use, infinite leveling with Spirit Crystals |
+| `tutorial_system.lua` | Tutorial flow management, 5 tutorial types, skip/complete tracking |
 | `input_system.lua` | Keyboard/mouse input handling |
 | `inventory_system.lua` | Item storage and management |
 | `item_database.lua` | Item definitions with stats |
@@ -46,13 +49,15 @@ Game systems for battle, party, chat, inventory, equipment, collision, audio, co
 - Templates: warrior, berserker, guardian, assassin, mage, paladin
 
 ### spirit_crystal_system.lua
-- `SpiritCrystalSystem:generateCrystal(type, tier)` - Create crystal
-- `SpiritCrystalSystem:collectCrystal(crystal)` - Add to collection
-- `SpiritCrystalSystem:equipCrystal(slot, crystal)` - Equip for bonuses
-- `SpiritCrystalSystem:getTotalBonuses()` - Get all stat bonuses
-- `SpiritCrystalSystem:fuseCrystals(id1, id2)` - Combine into higher tier
-- Types: crimson (ATK), azure (DEF), emerald (HP), violet (CRIT), golden (EVA)
-- Tiers: 1=fragment, 2=crystal, 3=gem, 4=core
+- `SpiritCrystalSystem:addCrystal(tier, amount)` - Add crystal by tier
+- `SpiritCrystalSystem:addCrystalValue(value)` - Add by total value
+- `SpiritCrystalSystem:getCrystalCount(tier)` - Get count for tier
+- `SpiritCrystalSystem:getTotalValue()` - Get total crystal value
+- `SpiritCrystalSystem:spendValue(cost)` - Spend crystals
+- `SpiritCrystalSystem:canEnhance(currentLevel)` - Check if can enhance
+- `SpiritCrystalSystem:enhance(currentLevel)` - Enhance equipment
+- `SpiritCrystalSystem.generateDrop(enemyTier)` - Generate random drop
+- Tiers: 1=碎片(10点), 2=晶体(50点), 3=宝石(200点), 4=核心(1000点)
 
 ### collision_system.lua
 - `CollisionSystem:isWalkable(x, y)` - Check if position walkable
@@ -76,6 +81,44 @@ Game systems for battle, party, chat, inventory, equipment, collision, audio, co
 - `PartySystem:addMember(memberData)` - Add member
 - `PartySystem:removeMember(id)` - Remove member
 - `PartySystem.MAX_MEMBERS` = 5
+
+### dungeon_system.lua
+- `DungeonSystem.new(player, spiritCrystalSystem)` - Create dungeon manager
+- `DungeonSystem:loadDungeon(dungeonId)` - Load dungeon data
+- `DungeonSystem:startDungeon()` - Begin dungeon run
+- `DungeonSystem:advanceToNextArea()` - Move to next area
+- `DungeonSystem:checkAreaProgress()` - Check if area cleared
+- `DungeonSystem:claimRewards()` - Claim pending rewards
+- `DungeonSystem:getProgress()` - Get current progress info
+- `DungeonSystem:isDungeonComplete()` - Check completion status
+
+### tutorial_system.lua
+- `TutorialSystem.new()` - Create tutorial manager
+- `TutorialSystem:startTutorial(tutorialId)` - Start tutorial
+- `TutorialSystem:nextPage()` / `prevPage()` - Navigate pages
+- `TutorialSystem:skipTutorial()` - Skip current tutorial
+- `TutorialSystem:completeTutorial()` - Mark complete
+- `TutorialSystem:isCompleted(tutorialId)` - Check completion
+- Tutorial IDs: basic_combat, defense_mechanic, spirit_crystal_system, multi_enemy_strategy, boss_battle
+
+### skill_system.lua
+- `SkillSystem.initPlayerSkills(player, classId)` - Initialize skills for new character
+- `SkillSystem.getPlayerSkill(player, skillId)` - Get player's skill data
+- `SkillSystem.isSkillUnlocked(player, skillId)` - Check if skill unlocked
+- `SkillSystem.getSkillLevel(player, skillId)` - Get skill level (0 if locked)
+- `SkillSystem.canUnlockSkill(player, skillId)` - Check unlock requirements
+- `SkillSystem.unlockSkill(player, skillId)` - Unlock skill (costs Spirit Crystals)
+- `SkillSystem.canUpgradeSkill(player, skillId)` - Check upgrade requirements
+- `SkillSystem.upgradeSkill(player, skillId)` - Upgrade skill level
+- `SkillSystem.addSkillCrystals(player, amount)` - Add currency
+- `SkillSystem.getAvailableSkills(player)` - Get all unlocked skills
+- `SkillSystem.getLockedSkills(player)` - Get all locked skills
+- `SkillSystem.canUseSkill(player, skillId)` - Check MP cost
+- `SkillSystem.useSkill(player, skillId)` - Execute skill in battle
+- `SkillSystem.getSkillInfo(player, skillId)` - Get detailed skill info
+- Unlock costs: Tier1=0, Tier2=100, Tier3=250 Spirit Crystals
+- Upgrade formula: `cost = 40 × level × (1 + 0.08 × level)`
+- Effect bonus: +3% per level
 
 ## Sound Effect Files
 

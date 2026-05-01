@@ -12,7 +12,6 @@ local ENEMY_TYPES = {
         defPercent = 0,
         speed = 3,
         crit = 2, eva = 0,
-        gold = 8,
         crystalBonus = 0,
         color = {0.2, 0.8, 0.3}
     },
@@ -24,7 +23,6 @@ local ENEMY_TYPES = {
         defPercent = 0,
         speed = 5,
         crit = 5, eva = 3,
-        gold = 12,
         crystalBonus = 0,
         color = {0.6, 0.4, 0.2}
     },
@@ -36,7 +34,6 @@ local ENEMY_TYPES = {
         defPercent = 0,
         speed = 4,
         crit = 8, eva = 2,
-        gold = 10,
         crystalBonus = 0,
         color = {0.9, 0.9, 0.9}
     },
@@ -48,7 +45,6 @@ local ENEMY_TYPES = {
         defPercent = 0,
         speed = 8,
         crit = 3, eva = 12,
-        gold = 6,
         crystalBonus = 0,
         color = {0.3, 0.2, 0.4}
     },
@@ -60,7 +56,6 @@ local ENEMY_TYPES = {
         defPercent = 0,
         speed = 7,
         crit = 10, eva = 5,
-        gold = 15,
         crystalBonus = 0,
         color = {0.5, 0.5, 0.5}
     },
@@ -73,7 +68,6 @@ local ENEMY_TYPES = {
         defPercent = 5,
         speed = 4,
         crit = 5, eva = 2,
-        gold = 25,
         crystalBonus = 1,
         color = {0.3, 0.6, 0.3}
     },
@@ -85,7 +79,6 @@ local ENEMY_TYPES = {
         defPercent = 4,
         speed = 5,
         crit = 12, eva = 3,
-        gold = 30,
         crystalBonus = 1,
         color = {0.7, 0.7, 0.8}
     },
@@ -97,7 +90,6 @@ local ENEMY_TYPES = {
         defPercent = 0,
         speed = 9,
         crit = 15, eva = 10,
-        gold = 22,
         crystalBonus = 1,
         color = {0.4, 0.4, 0.5}
     },
@@ -109,7 +101,6 @@ local ENEMY_TYPES = {
         defPercent = 0,
         speed = 5,
         crit = 18, eva = 6,
-        gold = 35,
         crystalBonus = 1,
         color = {0.4, 0.2, 0.6}
     },
@@ -121,7 +112,6 @@ local ENEMY_TYPES = {
         defPercent = 0,
         speed = 10,
         crit = 10, eva = 15,
-        gold = 28,
         crystalBonus = 1,
         color = {0.8, 0.6, 0.8}
     },
@@ -134,7 +124,6 @@ local ENEMY_TYPES = {
         defPercent = 18,
         speed = 4,
         crit = 8, eva = 3,
-        gold = 70,
         crystalBonus = 2,
         multiTarget = true,
         color = {0.2, 0.5, 0.2}
@@ -147,7 +136,6 @@ local ENEMY_TYPES = {
         defPercent = 12,
         speed = 8,
         crit = 18, eva = 15,
-        gold = 85,
         crystalBonus = 2,
         multiTarget = true,
         color = {0.5, 0.1, 0.2}
@@ -160,7 +148,6 @@ local ENEMY_TYPES = {
         defPercent = 30,
         speed = 2,
         crit = 3, eva = 0,
-        gold = 100,
         crystalBonus = 2,
         color = {0.5, 0.5, 0.5}
     },
@@ -172,7 +159,6 @@ local ENEMY_TYPES = {
         defPercent = 15,
         speed = 6,
         crit = 15, eva = 10,
-        gold = 120,
         crystalBonus = 2,
         multiTarget = true,
         color = {0.8, 0.2, 0.2}
@@ -185,7 +171,6 @@ local ENEMY_TYPES = {
         defPercent = 8,
         speed = 7,
         crit = 20, eva = 12,
-        gold = 90,
         crystalBonus = 2,
         multiTarget = true,
         color = {0.3, 0.7, 0.9}
@@ -199,7 +184,6 @@ local ENEMY_TYPES = {
         defPercent = 35,
         speed = 5,
         crit = 12, eva = 8,
-        gold = 200,
         crystalBonus = 3,
         multiTarget = true,
         boss = true,
@@ -213,7 +197,6 @@ local ENEMY_TYPES = {
         defPercent = 25,
         speed = 6,
         crit = 25, eva = 12,
-        gold = 250,
         crystalBonus = 3,
         multiTarget = true,
         boss = true,
@@ -227,7 +210,6 @@ local ENEMY_TYPES = {
         defPercent = 28,
         speed = 9,
         crit = 18, eva = 18,
-        gold = 220,
         crystalBonus = 3,
         multiTarget = true,
         boss = true,
@@ -241,7 +223,6 @@ local ENEMY_TYPES = {
         defPercent = 40,
         speed = 3,
         crit = 5, eva = 0,
-        gold = 280,
         crystalBonus = 3,
         multiTarget = true,
         boss = true,
@@ -274,8 +255,7 @@ function Enemy.new(enemyType, assetManager)
     self.speed = template.speed
     self.crit = template.crit or 0
     self.eva = template.eva or 0
-    self.gold = template.gold
-    self.crystalBonus = template.crystalBonus or 1
+    self.crystalBonus = template.crystalBonus or 0
     self.multiTarget = template.multiTarget or false
     self.boss = template.boss or false
     self.color = template.color
@@ -454,12 +434,9 @@ function Enemy:scaleForPartySize(partySize)
     
     local multiplier = math.min(maxMultiplier, baseMultiplier + perMemberBonus * (partySize - 1))
     
-    local oldMaxHp = self.maxHp
     self.maxHp = math.floor(self.maxHp * multiplier)
     self.hp = self.maxHp
     self.hpRatio = multiplier
-    
-    self.gold = math.floor(self.gold * multiplier)
     
     if partySize >= 5 then
         self.crystalBonus = self.crystalBonus + 1

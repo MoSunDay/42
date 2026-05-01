@@ -50,14 +50,11 @@ function AvatarRenderer.drawCharacterPanel(x, y, width, height, character, font)
     love.graphics.setColor(0.9, 0.3, 0.3)
     love.graphics.print("HP: " .. character.hp .. "/" .. character.maxHp, x + 10, statsY)
     
-    love.graphics.setColor(1, 0.8, 0.2)
-    love.graphics.print("Gold: " .. character.gold, x + 10, statsY + lineHeight)
-    
     love.graphics.setColor(1, 0.5, 0.3)
-    love.graphics.print("ATK: " .. character.attack, x + 10, statsY + lineHeight * 2)
+    love.graphics.print("ATK: " .. character.attack, x + 10, statsY + lineHeight)
     
     love.graphics.setColor(0.5, 0.7, 1)
-    love.graphics.print("DEF: " .. character.defense, x + 10, statsY + lineHeight * 3)
+    love.graphics.print("DEF: " .. character.defense, x + 10, statsY + lineHeight * 2)
 end
 
 -- Draw HP bar (for battle)
