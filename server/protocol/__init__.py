@@ -1,11 +1,10 @@
-from .packet import Packet, PacketType, PacketBuilder
-from .rudp import ReliableChannel, ConnectionManager
+from .packet import PacketType
+from . import packet
+from . import rudp
 from .constants import *
 
 __all__ = [
-    "Packet",
     "PacketType",
-    "PacketBuilder",
-    "ReliableChannel",
-    "ConnectionManager",
+    "packet",
+    "rudp",
 ]

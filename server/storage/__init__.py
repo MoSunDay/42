@@ -1,3 +1,3 @@
-from .json_store import JsonStore
+from . import json_store
 
-__all__ = ["JsonStore"]
+__all__ = ["json_store"]

@@ -1,6 +1,8 @@
 -- map_renderer.lua - Unified map rendering for minimap, fullscreen map, etc.
 -- 统一的地图渲染器，支持多层渲染和美化效果
 
+local MapData = require("map.map_data")
+
 local MapRenderer = {}
 
 MapRenderer.animationTime = 0
@@ -124,7 +126,7 @@ end
 
 function MapRenderer.renderTiles(map, renderX, renderY, renderWidth, renderHeight, scaleX, scaleY)
     local season = map.season or "spring"
-    local theme = map.getSeasonTheme and map:getSeasonTheme(season) or MapRenderer.getDefaultTheme(season)
+    local theme = MapData.getSeasonTheme and MapData.getSeasonTheme(map, season) or MapRenderer.getDefaultTheme(season)
 
     local tileSizeX = map.tileSize * scaleX
     local tileSizeY = map.tileSize * scaleY
@@ -162,7 +164,7 @@ function MapRenderer.renderTiles(map, renderX, renderY, renderWidth, renderHeigh
                 end
             end
 
-            local tileTheme = map.getSeasonTheme and map:getSeasonTheme(tileSeason) or MapRenderer.getDefaultTheme(tileSeason)
+            local tileTheme = MapData.getSeasonTheme and MapData.getSeasonTheme(map, tileSeason) or MapRenderer.getDefaultTheme(tileSeason)
 
             local isRoad = (x % 5 == 0 or y % 5 == 0)
 

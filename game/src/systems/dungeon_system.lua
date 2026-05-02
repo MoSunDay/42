@@ -1,117 +1,110 @@
 local DungeonSystem = {}
-DungeonSystem.__index = DungeonSystem
 
 local SpiritCrystalSystem = require("src.systems.spirit_crystal_system")
 
 function DungeonSystem.new(player, spiritCrystalSystem)
-    local self = setmetatable({}, DungeonSystem)
-    
-    self.player = player
-    self.spiritCrystalSystem = spiritCrystalSystem or SpiritCrystalSystem.new()
-    
-    self.currentDungeon = nil
-    self.currentAreaIndex = 0
-    self.clearedAreas = {}
-    self.areaClearedFlags = {}
-    self.dungeonClearHistory = {}
-    self.currentWave = 0
-    self.wavesCleared = false
-    self.bossDefeated = false
-    
-    self.enemies = {}
-    self.currentBoss = nil
-    
-    self.pendingDialogue = nil
-    self.pendingTutorial = nil
-    self.pendingRewards = nil
-    
-    self.state = "idle"
-    self.onDialogueCallback = nil
-    self.onTutorialCallback = nil
-    self.onRewardsCallback = nil
-    self.onDungeonCompleteCallback = nil
-    self.onAreaTransitionCallback = nil
-    
-    return self
+    return {
+        player = player,
+        spiritCrystalSystem = spiritCrystalSystem or SpiritCrystalSystem.new(),
+        currentDungeon = nil,
+        currentAreaIndex = 0,
+        clearedAreas = {},
+        areaClearedFlags = {},
+        dungeonClearHistory = {},
+        currentWave = 0,
+        wavesCleared = false,
+        bossDefeated = false,
+        enemies = {},
+        currentBoss = nil,
+        pendingDialogue = nil,
+        pendingTutorial = nil,
+        pendingRewards = nil,
+        state = "idle",
+        onDialogueCallback = nil,
+        onTutorialCallback = nil,
+        onRewardsCallback = nil,
+        onDungeonCompleteCallback = nil,
+        onAreaTransitionCallback = nil,
+    }
 end
 
-function DungeonSystem:loadDungeon(dungeonId)
+function DungeonSystem.loadDungeon(state, dungeonId)
     local success, dungeonData = pcall(require, "map.maps." .. dungeonId)
     if not success or not dungeonData then
         print("Failed to load dungeon: " .. dungeonId)
         return false
     end
     
-    self.currentDungeon = dungeonData
-    self.currentAreaIndex = 0
-    self.clearedAreas = {}
-    self.areaClearedFlags = {}
-    self.currentWave = 0
-    self.wavesCleared = false
-    self.bossDefeated = false
-    self.enemies = {}
-    self.currentBoss = nil
-    self.state = "loaded"
+    state.currentDungeon = dungeonData
+    state.currentAreaIndex = 0
+    state.clearedAreas = {}
+    state.areaClearedFlags = {}
+    state.currentWave = 0
+    state.wavesCleared = false
+    state.bossDefeated = false
+    state.enemies = {}
+    state.currentBoss = nil
+    state.state = "loaded"
     
     return true
 end
 
-function DungeonSystem:startDungeon()
-    if not self.currentDungeon then return false end
+function DungeonSystem.startDungeon(state)
+    if not state.currentDungeon then return false end
     
-    self.currentAreaIndex = self.currentDungeon.startArea or 1
-    self.state = "active"
+    state.currentAreaIndex = state.currentDungeon.startArea or 1
+    state.state = "active"
     
-    local area = self.currentDungeon:getArea(self.currentAreaIndex)
+    local area = state.currentDungeon:getArea(state.currentAreaIndex)
     if area then
-        self:setupArea(area)
+        DungeonSystem.setupArea(state, area)
     end
     
     return true
 end
 
-function DungeonSystem:setupArea(area)
-    self.enemies = {}
-    self.currentWave = 0
-    self.wavesCleared = false
-    self.currentBoss = nil
+function DungeonSystem.setupArea(state, area)
+    state.enemies = {}
+    state.currentWave = 0
+    state.wavesCleared = false
+    state.currentBoss = nil
     
     if area.enemies then
         for _, enemyData in ipairs(area.enemies) do
-            table.insert(self.enemies, self:createEnemy(enemyData))
+            table.insert(state.enemies, DungeonSystem.createEnemy(state, enemyData))
         end
     end
     
     if area.waves then
-        self.currentWave = 1
+        state.currentWave = 1
         local wave = area.waves[1]
         if wave and wave.enemies then
             for _, enemyData in ipairs(wave.enemies) do
-                table.insert(self.enemies, self:createEnemy(enemyData))
+                table.insert(state.enemies, DungeonSystem.createEnemy(state, enemyData))
             end
         end
     end
     
     if area.boss then
-        self.currentBoss = self:createBoss(area.boss)
+        state.currentBoss = DungeonSystem.createBoss(state, area.boss)
     end
     
     if area.dialogue and area.dialogue.onEnter then
-        self.pendingDialogue = {
+        state.pendingDialogue = {
             speaker = area.dialogue.onEnter.speaker,
             text = area.dialogue.onEnter.text
         }
     end
     
     if area.tutorial and area.tutorial.triggerOnEnter then
-        self.pendingTutorial = {
+        state.pendingTutorial = {
             tutorialId = area.tutorial.tutorialId,
             canSkip = area.tutorial.canSkip
         }
     end
 end
 
-function DungeonSystem:createEnemy(enemyData)
+function DungeonSystem.createEnemy(state, enemyData)
     local Enemy = require("src.entities.enemy")
     local enemy = Enemy.new(enemyData.type)
     
@@ -127,7 +120,7 @@ function DungeonSystem:createEnemy(enemyData)
     return enemy
 end
 
-function DungeonSystem:createBoss(bossData)
+function DungeonSystem.createBoss(state, bossData)
     local BOSSES = require("npcs.bosses")
     local bossTemplate = BOSSES[bossData.id]
     
@@ -157,22 +150,22 @@ function DungeonSystem:createBoss(bossData)
     return boss
 end
 
-function DungeonSystem:areaCleared()
-    if self.currentBoss and self.currentBoss.hp > 0 then
+function DungeonSystem.areaCleared(state)
+    if state.currentBoss and state.currentBoss.hp > 0 then
         return false
     end
     
-    if #self.enemies > 0 then
-        for _, enemy in ipairs(self.enemies) do
+    if #state.enemies > 0 then
+        for _, enemy in ipairs(state.enemies) do
             if enemy.hp > 0 then
                 return false
             end
         end
     end
     
-    local area = self.currentDungeon:getArea(self.currentAreaIndex)
+    local area = state.currentDungeon:getArea(state.currentAreaIndex)
     if area and area.waves then
-        if self.currentWave < #area.waves then
+        if state.currentWave < #area.waves then
             return false
         end
     end
@@ -180,26 +173,26 @@ function DungeonSystem:areaCleared()
     return true
 end
 
-function DungeonSystem:checkAreaProgress()
-    if not self:areaCleared() then return false end
+function DungeonSystem.checkAreaProgress(state)
+    if not DungeonSystem.areaCleared(state) then return false end
     
-    local areaIndex = self.currentAreaIndex
-    if self.areaClearedFlags[areaIndex] then return false end
+    local areaIndex = state.currentAreaIndex
+    if state.areaClearedFlags[areaIndex] then return false end
     
-    self.areaClearedFlags[areaIndex] = true
-    table.insert(self.clearedAreas, areaIndex)
+    state.areaClearedFlags[areaIndex] = true
+    table.insert(state.clearedAreas, areaIndex)
     
-    local area = self.currentDungeon:getArea(areaIndex)
+    local area = state.currentDungeon:getArea(areaIndex)
     if area and area.rewards and area.rewards.firstClear then
-        if not self.dungeonClearHistory[self.currentDungeon.id] then
-            self.pendingRewards = area.rewards.firstClear
+        if not state.dungeonClearHistory[state.currentDungeon.id] then
+            state.pendingRewards = area.rewards.firstClear
         end
     end
     
-    if area and area.boss and self.currentBoss and self.currentBoss.hp <= 0 then
-        self.bossDefeated = true
+    if area and area.boss and state.currentBoss and state.currentBoss.hp <= 0 then
+        state.bossDefeated = true
         if area.dialogue and area.dialogue.onBossDefeat then
-            self.pendingDialogue = {
+            state.pendingDialogue = {
                 speaker = area.dialogue.onBossDefeat.speaker,
                 text = area.dialogue.onBossDefeat.text,
                 isBossDefeat = true
@@ -207,9 +200,9 @@ function DungeonSystem:checkAreaProgress()
         end
         
         if area.onClear then
-            self.state = "completed"
-            if self.onDungeonCompleteCallback then
-                self.onDungeonCompleteCallback(area.onClear)
+            state.state = "completed"
+            if state.onDungeonCompleteCallback then
+                state.onDungeonCompleteCallback(area.onClear)
             end
         end
     end
@@ -217,191 +210,191 @@ function DungeonSystem:checkAreaProgress()
     return true
 end
 
-function DungeonSystem:advanceToNextArea()
-    local nextAreaIndex = self.currentAreaIndex + 1
-    if nextAreaIndex > self.currentDungeon:getAreaCount() then
+function DungeonSystem.advanceToNextArea(state)
+    local nextAreaIndex = state.currentAreaIndex + 1
+    if nextAreaIndex > state.currentDungeon:getAreaCount() then
         return false
     end
     
-    self.currentAreaIndex = nextAreaIndex
-    local area = self.currentDungeon:getArea(nextAreaIndex)
+    state.currentAreaIndex = nextAreaIndex
+    local area = state.currentDungeon:getArea(nextAreaIndex)
     if area then
-        self:setupArea(area)
+        DungeonSystem.setupArea(state, area)
     end
     
     return true
 end
 
-function DungeonSystem:processWave()
-    local area = self.currentDungeon:getArea(self.currentAreaIndex)
+function DungeonSystem.processWave(state)
+    local area = state.currentDungeon:getArea(state.currentAreaIndex)
     if not area or not area.waves then return false end
     
-    if self.currentWave < #area.waves then
-        self.currentWave = self.currentWave + 1
-        self.enemies = {}
+    if state.currentWave < #area.waves then
+        state.currentWave = state.currentWave + 1
+        state.enemies = {}
         
-        local wave = area.waves[self.currentWave]
+        local wave = area.waves[state.currentWave]
         if wave and wave.enemies then
             for _, enemyData in ipairs(wave.enemies) do
-                table.insert(self.enemies, self:createEnemy(enemyData))
+                table.insert(state.enemies, DungeonSystem.createEnemy(state, enemyData))
             end
         end
         
-        if area.dialogue and area.dialogue.onWaveStart and area.dialogue.onWaveStart[self.currentWave] then
-            self.pendingDialogue = {
-                speaker = area.dialogue.onWaveStart[self.currentWave].speaker,
-                text = area.dialogue.onWaveStart[self.currentWave].text
+        if area.dialogue and area.dialogue.onWaveStart and area.dialogue.onWaveStart[state.currentWave] then
+            state.pendingDialogue = {
+                speaker = area.dialogue.onWaveStart[state.currentWave].speaker,
+                text = area.dialogue.onWaveStart[state.currentWave].text
             }
         end
         
         return true
     end
     
-    self.wavesCleared = true
+    state.wavesCleared = true
     return false
 end
 
-function DungeonSystem:claimRewards()
-    if not self.pendingRewards then return nil end
+function DungeonSystem.claimRewards(state)
+    if not state.pendingRewards then return nil end
     
-    local rewards = self.pendingRewards
-    self.pendingRewards = nil
+    local rewards = state.pendingRewards
+    state.pendingRewards = nil
     
     for _, reward in ipairs(rewards) do
-        if reward.tier and self.spiritCrystalSystem then
-            self.spiritCrystalSystem:addCrystal(reward.tier, reward.count)
+        if reward.tier and state.spiritCrystalSystem then
+            state.spiritCrystalSystem:addCrystal(reward.tier, reward.count)
         end
     end
     
     return rewards
 end
 
-function DungeonSystem:skipDialogue()
-    self.pendingDialogue = nil
+function DungeonSystem.skipDialogue(state)
+    state.pendingDialogue = nil
 end
 
-function DungeonSystem:skipTutorial()
-    self.pendingTutorial = nil
+function DungeonSystem.skipTutorial(state)
+    state.pendingTutorial = nil
 end
 
-function DungeonSystem:getSpawnPosition()
-    local area = self.currentDungeon:getArea(self.currentAreaIndex)
+function DungeonSystem.getSpawnPosition(state)
+    local area = state.currentDungeon:getArea(state.currentAreaIndex)
     if area and area.spawnPoint then
         return area.spawnPoint.x, area.spawnPoint.y
     end
-    return self.currentDungeon.startPosition.x, self.currentDungeon.startPosition.y
+    return state.currentDungeon.startPosition.x, state.currentDungeon.startPosition.y
 end
 
-function DungeonSystem:getExitPosition()
-    local area = self.currentDungeon:getArea(self.currentAreaIndex)
+function DungeonSystem.getExitPosition(state)
+    local area = state.currentDungeon:getArea(state.currentAreaIndex)
     if area and area.exitPoint then
         return area.exitPoint.x, area.exitPoint.y
     end
     return nil, nil
 end
 
-function DungeonSystem:getEnemies()
-    return self.enemies
+function DungeonSystem.getEnemies(state)
+    return state.enemies
 end
 
-function DungeonSystem:getBoss()
-    return self.currentBoss
+function DungeonSystem.getBoss(state)
+    return state.currentBoss
 end
 
-function DungeonSystem:isAtExit(playerX, playerY)
-    local exitX, exitY = self:getExitPosition()
+function DungeonSystem.isAtExit(state, playerX, playerY)
+    local exitX, exitY = DungeonSystem.getExitPosition(state)
     if not exitX then return false end
     
     local distance = math.sqrt((playerX - exitX)^2 + (playerY - exitY)^2)
     return distance < 50
 end
 
-function DungeonSystem:getCurrentAreaInfo()
-    return self.currentDungeon:getArea(self.currentAreaIndex)
+function DungeonSystem.getCurrentAreaInfo(state)
+    return state.currentDungeon:getArea(state.currentAreaIndex)
 end
 
-function DungeonSystem:getProgress()
+function DungeonSystem.getProgress(state)
     return {
-        dungeonId = self.currentDungeon and self.currentDungeon.id,
-        currentArea = self.currentAreaIndex,
-        totalAreas = self.currentDungeon and self.currentDungeon:getAreaCount() or 0,
-        clearedAreas = #self.clearedAreas,
-        state = self.state,
-        bossDefeated = self.bossDefeated
+        dungeonId = state.currentDungeon and state.currentDungeon.id,
+        currentArea = state.currentAreaIndex,
+        totalAreas = state.currentDungeon and state.currentDungeon:getAreaCount() or 0,
+        clearedAreas = #state.clearedAreas,
+        state = state.state,
+        bossDefeated = state.bossDefeated
     }
 end
 
-function DungeonSystem:isDungeonComplete()
-    return self.state == "completed"
+function DungeonSystem.isDungeonComplete(state)
+    return state.state == "completed"
 end
 
-function DungeonSystem:setOnDialogueCallback(callback)
-    self.onDialogueCallback = callback
+function DungeonSystem.setOnDialogueCallback(state, callback)
+    state.onDialogueCallback = callback
 end
 
-function DungeonSystem:setOnTutorialCallback(callback)
-    self.onTutorialCallback = callback
+function DungeonSystem.setOnTutorialCallback(state, callback)
+    state.onTutorialCallback = callback
 end
 
-function DungeonSystem:setOnRewardsCallback(callback)
-    self.onRewardsCallback = callback
+function DungeonSystem.setOnRewardsCallback(state, callback)
+    state.onRewardsCallback = callback
 end
 
-function DungeonSystem:setOnDungeonCompleteCallback(callback)
-    self.onDungeonCompleteCallback = callback
+function DungeonSystem.setOnDungeonCompleteCallback(state, callback)
+    state.onDungeonCompleteCallback = callback
 end
 
-function DungeonSystem:setOnAreaTransitionCallback(callback)
-    self.onAreaTransitionCallback = callback
+function DungeonSystem.setOnAreaTransitionCallback(state, callback)
+    state.onAreaTransitionCallback = callback
 end
 
-function DungeonSystem:update(dt, playerX, playerY)
-    if self.state ~= "active" then return end
+function DungeonSystem.update(state, dt, playerX, playerY)
+    if state.state ~= "active" then return end
     
-    if self.pendingDialogue and self.onDialogueCallback then
-        self.onDialogueCallback(self.pendingDialogue)
+    if state.pendingDialogue and state.onDialogueCallback then
+        state.onDialogueCallback(state.pendingDialogue)
     end
     
-    if self.pendingTutorial and self.onTutorialCallback then
-        self.onTutorialCallback(self.pendingTutorial)
+    if state.pendingTutorial and state.onTutorialCallback then
+        state.onTutorialCallback(state.pendingTutorial)
     end
     
-    if self.pendingRewards and self.onRewardsCallback then
-        self.onRewardsCallback(self.pendingRewards)
+    if state.pendingRewards and state.onRewardsCallback then
+        state.onRewardsCallback(state.pendingRewards)
     end
     
-    if self:isAtExit(playerX, playerY) and self:areaCleared() then
-        if self.onAreaTransitionCallback then
-            self.onAreaTransitionCallback(self.currentAreaIndex + 1)
+    if DungeonSystem.isAtExit(state, playerX, playerY) and DungeonSystem.areaCleared(state) then
+        if state.onAreaTransitionCallback then
+            state.onAreaTransitionCallback(state.currentAreaIndex + 1)
         end
     end
 end
 
-function DungeonSystem:serialize()
+function DungeonSystem.serialize(state)
     return {
-        currentDungeonId = self.currentDungeon and self.currentDungeon.id,
-        currentAreaIndex = self.currentAreaIndex,
-        clearedAreas = self.clearedAreas,
-        areaClearedFlags = self.areaClearedFlags,
-        dungeonClearHistory = self.dungeonClearHistory,
-        state = self.state,
-        bossDefeated = self.bossDefeated
+        currentDungeonId = state.currentDungeon and state.currentDungeon.id,
+        currentAreaIndex = state.currentAreaIndex,
+        clearedAreas = state.clearedAreas,
+        areaClearedFlags = state.areaClearedFlags,
+        dungeonClearHistory = state.dungeonClearHistory,
+        state = state.state,
+        bossDefeated = state.bossDefeated
     }
 end
 
-function DungeonSystem:deserialize(data)
+function DungeonSystem.deserialize(state, data)
     if not data then return end
     
     if data.currentDungeonId then
-        self:loadDungeon(data.currentDungeonId)
+        DungeonSystem.loadDungeon(state, data.currentDungeonId)
     end
     
-    self.currentAreaIndex = data.currentAreaIndex or 0
-    self.clearedAreas = data.clearedAreas or {}
-    self.areaClearedFlags = data.areaClearedFlags or {}
-    self.dungeonClearHistory = data.dungeonClearHistory or {}
-    self.state = data.state or "idle"
-    self.bossDefeated = data.bossDefeated or false
+    state.currentAreaIndex = data.currentAreaIndex or 0
+    state.clearedAreas = data.clearedAreas or {}
+    state.areaClearedFlags = data.areaClearedFlags or {}
+    state.dungeonClearHistory = data.dungeonClearHistory or {}
+    state.state = data.state or "idle"
+    state.bossDefeated = data.bossDefeated or false
 end
 
 return DungeonSystem

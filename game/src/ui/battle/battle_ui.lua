@@ -1,23 +1,24 @@
--- battle_ui.lua - Battle UI rendering
--- Displays battle scene, HP bars, action menu, and battle log
-
+local AnimationManager = require("src.animations.animation_manager")
 local BattleBackground = require("src.ui.battle.battle_background")
 local BattleMenu = require("src.ui.battle.battle_menu")
 local BattlePanels = require("src.ui.battle.battle_panels")
+local Components = require("src.ui.components")
 local Theme = require("src.ui.theme")
+local BattleSystem = require("src.systems.battle.battle_system")
+local BattleAnimation = require("src.systems.battle.battle_animation")
+local Enemy = require("src.entities.enemy")
 
 local BattleUI = {}
-BattleUI.__index = BattleUI
 
-function BattleUI.new(assetManager)
-    local self = setmetatable({}, BattleUI)
+function BattleUI.create(assetManager)
+    local state = {}
 
-    self.screenWidth = love.graphics.getWidth()
-    self.screenHeight = love.graphics.getHeight()
+    state.screenWidth = love.graphics.getWidth()
+    state.screenHeight = love.graphics.getHeight()
     
-    self.assetManager = assetManager
+    state.assetManager = assetManager
 
-    self.actions = {
+    state.actions = {
         {name = "Attack", key = "attack"},
         {name = "Skill", key = "skill"},
         {name = "Defend", key = "defend"},
@@ -25,19 +26,19 @@ function BattleUI.new(assetManager)
         {name = "Escape", key = "escape"},
         {name = "Auto", key = "auto"}
     }
-    self.selectedAction = 1
-    self.selectedEnemy = 1
+    state.selectedAction = 1
+    state.selectedEnemy = 1
     
-    self.skillSelectMode = false
-    self.selectedSkillIndex = 1
-    self.availableSkills = {}
+    state.skillSelectMode = false
+    state.selectedSkillIndex = 1
+    state.availableSkills = {}
 
-    self.menuX = 0
-    self.menuY = 0
-    self.menuWidth = 200
-    self.menuHeight = 0
+    state.menuX = 0
+    state.menuY = 0
+    state.menuWidth = 200
+    state.menuHeight = 0
     
-    self.colors = {
+    state.colors = {
         background = Theme.colors.battle.background,
         panel = Theme.colors.battle.playerPanel,
         text = Theme.colors.text,
@@ -47,15 +48,15 @@ function BattleUI.new(assetManager)
         selected = Theme.colors.battle.enemySelected
     }
     
-    return self
+    return state
 end
 
-function BattleUI:draw(battleSystem, player, map)
-    local w = self.screenWidth
-    local h = self.screenHeight
+function BattleUI.draw(state, battleSystem, player, map)
+    local w = state.screenWidth
+    local h = state.screenHeight
     
     local mapType = BattleBackground.getMapType(map)
-    local bgImage = self.assetManager:getBattleBackground(mapType)
+    local bgImage = state.assetManager:getBattleBackground(mapType)
     
     if bgImage then
         local scaleX = w / bgImage:getWidth()
@@ -65,104 +66,95 @@ function BattleUI:draw(battleSystem, player, map)
         BattleBackground.draw(w, h, mapType)
     end
 
-    self:drawPlayer(player, w * 0.75, h * 0.7, battleSystem:getAnimationManager())
+    BattleUI.drawPlayer(state, player, w * 0.75, h * 0.7, BattleSystem.getAnimationManager(battleSystem))
 
-    -- Draw enemies (left top area)
-    local enemies = battleSystem:getEnemies()
+    local enemies = BattleSystem.getEnemies(battleSystem)
     local enemyCount = #enemies
 
-    -- Auto-adjust selected enemy if current one is dead
-    if enemies[self.selectedEnemy] and not enemies[self.selectedEnemy]:isAlive() then
-        -- Find next alive enemy
+    if enemies[state.selectedEnemy] and not Enemy.isAlive(enemies[state.selectedEnemy]) then
         for i, enemy in ipairs(enemies) do
-            if enemy:isAlive() then
-                self.selectedEnemy = i
+            if Enemy.isAlive(enemy) then
+                state.selectedEnemy = i
                 break
             end
         end
     end
 
-    -- Draw enemies diagonally from bottom-left to top-right
     for i, enemy in ipairs(enemies) do
-        -- Diagonal positioning: left-bottom to right-top
         local baseX = w * 0.2
         local baseY = h * 0.6
-        local x = baseX + (i - 1) * 100  -- Move right
-        local y = baseY - (i - 1) * 80   -- Move up
-        self:drawEnemy(enemy, x, y, i == self.selectedEnemy)
+        local x = baseX + (i - 1) * 100
+        local y = baseY - (i - 1) * 80
+        BattleUI.drawEnemy(state, enemy, x, y, i == state.selectedEnemy)
     end
     
-    BattlePanels.drawPlayerPanel(self.colors, player, 20, h - 180, self.assetManager)
+    BattlePanels.drawPlayerPanel(state.colors, player, 20, h - 180, state.assetManager)
 
-    local menuHeight = 40 + #self.actions * 30
+    local menuHeight = 40 + #state.actions * 30
     local menuY = (h - menuHeight) / 2
-    BattleMenu.draw(self, battleSystem, w - 220, menuY)
+    BattleMenu.draw(state, battleSystem, w - 220, menuY)
 
-    BattlePanels.drawBattleLog(self.colors, battleSystem, 20, 20, self.assetManager)
+    BattlePanels.drawBattleLog(state.colors, battleSystem, 20, 20, state.assetManager)
 
-    BattleMenu.drawTimer(battleSystem, w / 2 - 100, 20, self.assetManager)
+    BattleMenu.drawTimer(battleSystem, w / 2 - 100, 20, state.assetManager)
     
-    -- Draw turn indicator
-    local state = battleSystem:getState()
-    self:drawTurnIndicator(state, w / 2, 30)
+    local battleState = BattleSystem.getState(battleSystem)
+    BattleUI.drawTurnIndicator(state, battleState, w / 2, 30)
 
-    -- Draw animations
-    local animation = battleSystem:getAnimation()
+    local animation = BattleSystem.getAnimation(battleSystem)
     if animation then
-        animation:draw()
+        BattleAnimation.draw(animation)
     end
     
-    -- Draw skill selection panel if in skill mode
-    if self.skillSelectMode then
-        self:drawSkillSelectPanel(battleSystem, w, h)
+    if state.skillSelectMode then
+        BattleUI.drawSkillSelectPanel(state, battleSystem, w, h)
     end
 end
 
--- Draw player character
-function BattleUI:drawPlayer(player, x, y, animationManager)
-    -- Get character avatar color
+function BattleUI.drawPlayer(state, player, x, y, animationManager)
     local AccountManager = require("account.account_manager")
     local character = AccountManager.getCurrentCharacter()
     local avatarColor = character and character.avatarColor or {0.2, 0.6, 1.0}
+    local appearanceId = character and character.appearanceId or "blue_hero"
 
-    -- Get animation transform
     local offsetX, offsetY, rotation, scaleX, scaleY = 0, 0, 0, 1, 1
     if animationManager and player.animationId then
-        offsetX, offsetY, rotation, scaleX, scaleY = animationManager:getTransform(player.animationId)
+        offsetX, offsetY, rotation, scaleX, scaleY = AnimationManager.getTransform(animationManager, player.animationId)
     end
 
-    -- Apply transform
     love.graphics.push()
     love.graphics.translate(x + offsetX, y + offsetY)
     love.graphics.rotate(rotation)
     love.graphics.scale(scaleX, scaleY)
 
-    -- Draw shadow
     love.graphics.setColor(0, 0, 0, 0.3)
     love.graphics.ellipse("fill", 0, 40, 25, 10)
 
-    -- Draw player (use avatar color)
-    love.graphics.setColor(avatarColor)
-    love.graphics.circle("fill", 0, 0, 20)
+    local charSprite = state.assetManager and state.assetManager:getCharacterSprite(appearanceId, "south")
+    if charSprite then
+        love.graphics.setColor(1, 1, 1, 1)
+        local sw, sh = charSprite:getDimensions()
+        love.graphics.draw(charSprite, -sw / 2, -sh / 2)
+    else
+        love.graphics.setColor(avatarColor)
+        love.graphics.circle("fill", 0, 0, 20)
 
-    -- Draw direction indicator
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.circle("fill", 0, -10, 4)
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.circle("fill", 0, -10, 4)
 
-    -- Draw border
-    love.graphics.setColor(avatarColor[1] * 0.5, avatarColor[2] * 0.5, avatarColor[3] * 0.5)
-    love.graphics.setLineWidth(2)
-    love.graphics.circle("line", 0, 0, 20)
-    love.graphics.setLineWidth(1)
+        love.graphics.setColor(avatarColor[1] * 0.5, avatarColor[2] * 0.5, avatarColor[3] * 0.5)
+        love.graphics.setLineWidth(2)
+        love.graphics.circle("line", 0, 0, 20)
+        love.graphics.setLineWidth(1)
+    end
 
     love.graphics.pop()
 end
 
--- Draw enemy
-function BattleUI:drawEnemy(enemy, x, y, isSelected)
-    if not enemy:isAlive() then
-        if enemy:hasSprite() and self.assetManager then
-            local sprite = enemy:getSprite("south")
+function BattleUI.drawEnemy(state, enemy, x, y, isSelected)
+    if not Enemy.isAlive(enemy) then
+        if Enemy.hasSprite(enemy) and state.assetManager then
+            local sprite = Enemy.getSprite(enemy, "south")
             if sprite then
                 love.graphics.setColor(0.3, 0.3, 0.3, 0.3)
                 local sw, sh = sprite:getDimensions()
@@ -177,7 +169,7 @@ function BattleUI:drawEnemy(enemy, x, y, isSelected)
 
     local offsetX, offsetY, rotation, scaleX, scaleY = 0, 0, 0, 1, 1
     if enemy.animationManager and enemy.animationId then
-        offsetX, offsetY, rotation, scaleX, scaleY = enemy.animationManager:getTransform(enemy.animationId)
+        offsetX, offsetY, rotation, scaleX, scaleY = AnimationManager.getTransform(enemy.animationManager, enemy.animationId)
     end
 
     love.graphics.setColor(0, 0, 0, 0.3)
@@ -188,8 +180,8 @@ function BattleUI:drawEnemy(enemy, x, y, isSelected)
     love.graphics.rotate(rotation)
     love.graphics.scale(scaleX, scaleY)
 
-    if enemy:hasSprite() and self.assetManager then
-        local sprite = enemy:getSprite("south")
+    if Enemy.hasSprite(enemy) and state.assetManager then
+        local sprite = Enemy.getSprite(enemy, "south")
         if sprite then
             love.graphics.setColor(1, 1, 1, 1)
             local sw, sh = sprite:getDimensions()
@@ -207,15 +199,15 @@ function BattleUI:drawEnemy(enemy, x, y, isSelected)
     love.graphics.pop()
 
     if isSelected then
-        love.graphics.setColor(self.colors.selected)
+        love.graphics.setColor(state.colors.selected)
         love.graphics.setLineWidth(3)
         love.graphics.circle("line", x + offsetX, y + offsetY, 25)
         love.graphics.setLineWidth(1)
     end
 
-    BattlePanels.drawHPBar(self.colors, enemy, x + offsetX - 30, y + offsetY - 35, 60, 6)
+    BattlePanels.drawHPBar(state.colors, enemy, x + offsetX - 30, y + offsetY - 35, 60, 6)
     
-    if enemy:hasSprite() then
+    if Enemy.hasSprite(enemy) then
         love.graphics.setColor(1, 1, 1)
         local font = love.graphics.getFont()
         local name = enemy.name
@@ -224,31 +216,26 @@ function BattleUI:drawEnemy(enemy, x, y, isSelected)
     end
 end
 
--- (drawHPBar, drawPlayerPanel, drawActionMenu, drawBattleLog moved to BattlePanels and BattleMenu modules)
-
--- (Methods moved to BattlePanels and BattleMenu modules)
-
--- Draw turn indicator
-function BattleUI:drawTurnIndicator(state, x, y)
+function BattleUI.drawTurnIndicator(state, battleState, x, y)
     local text = ""
-    local color = self.colors.text
+    local color = state.colors.text
     
-    if state == "intro" then
+    if battleState == "intro" then
         text = "Battle Start!"
-        color = self.colors.selected
-    elseif state == "player" then
+        color = state.colors.selected
+    elseif battleState == "player" then
         text = "Your Turn"
         color = {0.2, 0.8, 1.0}
-    elseif state == "enemy" or state == "executing" then
+    elseif battleState == "enemy" or battleState == "executing" then
         text = "Enemy Turn"
         color = {1.0, 0.3, 0.3}
-    elseif state == "victory" then
+    elseif battleState == "victory" then
         text = "Victory!"
         color = {0.2, 1.0, 0.3}
-    elseif state == "defeat" then
+    elseif battleState == "defeat" then
         text = "Defeat..."
         color = {0.8, 0.2, 0.2}
-    elseif state == "escaped" then
+    elseif battleState == "escaped" then
         text = "Escaped!"
         color = {0.9, 0.9, 0.2}
     end
@@ -259,73 +246,58 @@ function BattleUI:drawTurnIndicator(state, x, y)
     love.graphics.print(text, x - textWidth / 2, y)
 end
 
--- Select action
-function BattleUI:selectAction(index)
-    self.selectedAction = index
+function BattleUI.selectAction(state, index)
+    state.selectedAction = index
 end
 
--- Select enemy
-function BattleUI:selectEnemy(index)
-    self.selectedEnemy = index
+function BattleUI.selectEnemy(state, index)
+    state.selectedEnemy = index
 end
 
--- Get selected action
-function BattleUI:getSelectedAction()
-    return self.actions[self.selectedAction].key
+function BattleUI.getSelectedAction(state)
+    return state.actions[state.selectedAction].key
 end
 
--- Get selected enemy
-function BattleUI:getSelectedEnemy()
-    return self.selectedEnemy
+function BattleUI.getSelectedEnemy(state)
+    return state.selectedEnemy
 end
 
--- Navigate menu
-function BattleUI:navigateUp()
-    self.selectedAction = math.max(1, self.selectedAction - 1)
+function BattleUI.navigateUp(state)
+    state.selectedAction = math.max(1, state.selectedAction - 1)
 end
 
-function BattleUI:navigateDown()
-    self.selectedAction = math.min(#self.actions, self.selectedAction + 1)
+function BattleUI.navigateDown(state)
+    state.selectedAction = math.min(#state.actions, state.selectedAction + 1)
 end
 
-function BattleUI:navigateLeft()
-    if self.selectedEnemy > 1 then
-        self.selectedEnemy = self.selectedEnemy - 1
+function BattleUI.navigateLeft(state)
+    if state.selectedEnemy > 1 then
+        state.selectedEnemy = state.selectedEnemy - 1
     end
 end
 
-function BattleUI:navigateRight(maxEnemies)
-    if self.selectedEnemy < maxEnemies then
-        self.selectedEnemy = self.selectedEnemy + 1
+function BattleUI.navigateRight(state, maxEnemies)
+    if state.selectedEnemy < maxEnemies then
+        state.selectedEnemy = state.selectedEnemy + 1
     end
 end
 
--- Set selected enemy (for mouse click)
-function BattleUI:setSelectedEnemy(index)
-    self.selectedEnemy = index
+function BattleUI.setSelectedEnemy(state, index)
+    state.selectedEnemy = index
 end
 
--- Handle mouse click on action menu (delegated to BattleMenu)
-function BattleUI:mousepressed(x, y, button, battleSystem)
-    return BattleMenu.mousepressed(self, x, y, button, battleSystem)
+function BattleUI.mousepressed(state, x, y, button, battleSystem)
+    return BattleMenu.mousepressed(state, x, y, button, battleSystem)
 end
 
--- Draw skill selection panel
-function BattleUI:drawSkillSelectPanel(battleSystem, w, h)
+function BattleUI.drawSkillSelectPanel(state, battleSystem, w, h)
     local panelW, panelH = 400, 300
     local panelX = (w - panelW) / 2
     local panelY = (h - panelH) / 2
     
-    love.graphics.setColor(0.1, 0.1, 0.15, 0.95)
-    love.graphics.rectangle("fill", panelX, panelY, panelW, panelH, 10, 10)
-    love.graphics.setColor(0.4, 0.5, 0.7)
-    love.graphics.setLineWidth(2)
-    love.graphics.rectangle("line", panelX, panelY, panelW, panelH, 10, 10)
+    Components.drawOrnatePanel(panelX, panelY, panelW, panelH, state.assetManager, {title="Select Skill", corners=true, glow=true})
     
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.printf("Select Skill", panelX, panelY + 10, panelW, "center")
-    
-    local skills = self.availableSkills
+    local skills = state.availableSkills
     if #skills == 0 then
         love.graphics.setColor(0.6, 0.6, 0.6)
         love.graphics.printf("No skills available", panelX, panelY + panelH/2, panelW, "center")
@@ -338,12 +310,16 @@ function BattleUI:drawSkillSelectPanel(battleSystem, w, h)
             local itemY = startY + (i - 1) * itemH
             if itemY + itemH > panelY + panelH - 40 then break end
             
-            local isSelected = (i == self.selectedSkillIndex)
+            local isSelected = (i == state.selectedSkillIndex)
             local skill = skillInfo.data
             
             if isSelected then
-                love.graphics.setColor(0.3, 0.4, 0.6, 0.8)
-                love.graphics.rectangle("fill", panelX + 10, itemY, panelW - 20, itemH - 5, 5, 5)
+                Components.drawOrnatePanel(panelX + 10, itemY, panelW - 20, itemH - 5, state.assetManager, {
+                    corners = false,
+                    glow = true,
+                    borderColor = Theme.colors.borderBright,
+                    glowIntensity = 0.15
+                })
             end
             
             love.graphics.setColor(1, 1, 1)
@@ -367,43 +343,37 @@ function BattleUI:drawSkillSelectPanel(battleSystem, w, h)
         end
     end
     
-    love.graphics.setColor(0.5, 0.5, 0.5)
+    love.graphics.setColor(Theme.colors.textDim)
     love.graphics.printf("↑↓ Select  Enter Confirm  ESC Cancel", panelX, panelY + panelH - 25, panelW, "center")
 end
 
--- Enter skill select mode
-function BattleUI:enterSkillMode(battleSystem)
-    self.skillSelectMode = true
-    self.selectedSkillIndex = 1
-    self.availableSkills = battleSystem:getAvailableSkills()
+function BattleUI.enterSkillMode(state, battleSystem)
+    state.skillSelectMode = true
+    state.selectedSkillIndex = 1
+    state.availableSkills = BattleSystem.getAvailableSkills(battleSystem)
 end
 
--- Exit skill select mode
-function BattleUI:exitSkillMode()
-    self.skillSelectMode = false
-    self.selectedSkillIndex = 1
+function BattleUI.exitSkillMode(state)
+    state.skillSelectMode = false
+    state.selectedSkillIndex = 1
 end
 
--- Check if in skill mode
-function BattleUI:isSkillMode()
-    return self.skillSelectMode
+function BattleUI.isSkillMode(state)
+    return state.skillSelectMode
 end
 
--- Navigate skill list
-function BattleUI:navigateSkillUp()
-    self.selectedSkillIndex = math.max(1, self.selectedSkillIndex - 1)
+function BattleUI.navigateSkillUp(state)
+    state.selectedSkillIndex = math.max(1, state.selectedSkillIndex - 1)
 end
 
-function BattleUI:navigateSkillDown()
-    self.selectedSkillIndex = math.min(#self.availableSkills, self.selectedSkillIndex + 1)
+function BattleUI.navigateSkillDown(state)
+    state.selectedSkillIndex = math.min(#state.availableSkills, state.selectedSkillIndex + 1)
 end
 
--- Get selected skill
-function BattleUI:getSelectedSkill()
-    if #self.availableSkills == 0 then return nil end
-    local skillInfo = self.availableSkills[self.selectedSkillIndex]
+function BattleUI.getSelectedSkill(state)
+    if #state.availableSkills == 0 then return nil end
+    local skillInfo = state.availableSkills[state.selectedSkillIndex]
     return skillInfo and skillInfo.id
 end
 
 return BattleUI
-

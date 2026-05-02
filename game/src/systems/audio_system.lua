@@ -4,7 +4,6 @@
 local EnhancedAudio = require("src.systems.enhanced_audio")
 
 local AudioSystem = {}
-AudioSystem.__index = AudioSystem
 
 local SFX_PATHS = {
     combat = {
@@ -42,32 +41,32 @@ local BGM_PATHS = {
     winter = {"assets/sounds/bgm/seasonal/winter.ogg", "assets/sounds/bgm/seasonal/winter.wav"}
 }
 
-function AudioSystem.new()
-    local self = setmetatable({}, AudioSystem)
+function AudioSystem.create()
+    local state = {}
 
-    self.bgm = nil
-    self.bgmVolume = 0.3
-    self.currentTheme = nil
-    self.sfx = {}
-    self.sfxVolume = 0.7
-    self.loadedFiles = { sfx = {}, bgm = {} }
+    state.bgm = nil
+    state.bgmVolume = 0.3
+    state.currentTheme = nil
+    state.sfx = {}
+    state.sfxVolume = 0.7
+    state.loadedFiles = { sfx = {}, bgm = {} }
 
-    self:loadSoundFiles()
+    AudioSystem.loadSoundFiles(state)
 
-    return self
+    return state
 end
 
-function AudioSystem:loadSoundFiles()
+function AudioSystem.loadSoundFiles(state)
     local loadedCount = 0
-    
+
     for category, sounds in pairs(SFX_PATHS) do
         for name, paths in pairs(sounds) do
             for _, path in ipairs(paths) do
                 if love.filesystem.getInfo(path) then
                     local success, source = pcall(love.audio.newSource, path, "static")
                     if success then
-                        self.sfx[name] = source
-                        self.loadedFiles.sfx[name] = true
+                        state.sfx[name] = source
+                        state.loadedFiles.sfx[name] = true
                         loadedCount = loadedCount + 1
                         break
                     end
@@ -75,9 +74,9 @@ function AudioSystem:loadSoundFiles()
             end
         end
     end
-    
-    self:generateFallbackSounds()
-    
+
+    AudioSystem.generateFallbackSounds(state)
+
     if loadedCount > 0 then
         print("  - Loaded " .. loadedCount .. " sound files")
     else
@@ -85,7 +84,7 @@ function AudioSystem:loadSoundFiles()
     end
 end
 
-function AudioSystem:generateFallbackSounds()
+function AudioSystem.generateFallbackSounds(state)
     local defaults = {
         attack = {0.1, 440},
         hit = {0.08, 220},
@@ -105,20 +104,20 @@ function AudioSystem:generateFallbackSounds()
         hurt = {0.15, 200},
         death = {0.5, 150}
     }
-    
+
     for name, params in pairs(defaults) do
-        if not self.sfx[name] then
-            self.sfx[name] = self:createBeep(params[1], params[2])
+        if not state.sfx[name] then
+            state.sfx[name] = AudioSystem.createBeep(state, params[1], params[2])
         end
     end
 end
 
 -- Create a simple beep sound
-function AudioSystem:createBeep(duration, frequency)
+function AudioSystem.createBeep(state, duration, frequency)
     local sampleRate = 44100
     local samples = math.floor(sampleRate * duration)
     local soundData = love.sound.newSoundData(samples, sampleRate, 16, 1)
-    
+
     for i = 0, samples - 1 do
         local t = i / sampleRate
         -- Simple sine wave with envelope
@@ -126,17 +125,17 @@ function AudioSystem:createBeep(duration, frequency)
         local value = math.sin(2 * math.pi * frequency * t) * envelope * 0.3
         soundData:setSample(i, value)
     end
-    
+
     return love.audio.newSource(soundData, "static")
 end
 
-function AudioSystem:playBGM(mode)
-    if self.currentTheme == mode and self.bgm and self.bgm:isPlaying() then
+function AudioSystem.playBGM(state, mode)
+    if state.currentTheme == mode and state.bgm and state.bgm:isPlaying() then
         return
     end
 
-    if self.bgm then
-        self.bgm:stop()
+    if state.bgm then
+        state.bgm:stop()
     end
 
     local bgmPaths = BGM_PATHS[mode]
@@ -145,27 +144,27 @@ function AudioSystem:playBGM(mode)
             if love.filesystem.getInfo(path) then
                 local success, source = pcall(love.audio.newSource, path, "stream")
                 if success then
-                    self.bgm = source
-                    self.loadedFiles.bgm[mode] = true
+                    state.bgm = source
+                    state.loadedFiles.bgm[mode] = true
                     break
                 end
             end
         end
     end
-    
-    if not self.bgm then
-        self.bgm = self:generateProceduralBGM(mode)
+
+    if not state.bgm then
+        state.bgm = AudioSystem.generateProceduralBGM(state, mode)
     end
 
-    if self.bgm then
-        self.bgm:setLooping(true)
-        self.bgm:setVolume(self.bgmVolume)
-        self.bgm:play()
-        self.currentTheme = mode
+    if state.bgm then
+        state.bgm:setLooping(true)
+        state.bgm:setVolume(state.bgmVolume)
+        state.bgm:play()
+        state.currentTheme = mode
     end
 end
 
-function AudioSystem:generateProceduralBGM(mode)
+function AudioSystem.generateProceduralBGM(state, mode)
     if mode == "battle" then
         return EnhancedAudio.generateBattleBGM(8.0)
     elseif mode == "spring" or mode == "summer" or mode == "autumn" or mode == "winter" then
@@ -176,7 +175,7 @@ function AudioSystem:generateProceduralBGM(mode)
 end
 
 -- Create a harmony melody (chords)
-function AudioSystem:createHarmonyMelody(chords, noteDuration)
+function AudioSystem.createHarmonyMelody(state, chords, noteDuration)
     local sampleRate = 44100
     local totalDuration = #chords * noteDuration
     local samples = math.floor(sampleRate * totalDuration)
@@ -225,38 +224,32 @@ function AudioSystem:createHarmonyMelody(chords, noteDuration)
 end
 
 -- Play sound effect
-function AudioSystem:playSFX(name)
-    if self.sfx[name] then
-        local sfx = self.sfx[name]:clone()
-        sfx:setVolume(self.sfxVolume)
+function AudioSystem.playSFX(state, name)
+    if state.sfx[name] then
+        local sfx = state.sfx[name]:clone()
+        sfx:setVolume(state.sfxVolume)
         sfx:play()
     end
 end
 
 -- Stop background music
-function AudioSystem:stopBGM()
-    if self.bgm then
-        self.bgm:stop()
+function AudioSystem.stopBGM(state)
+    if state.bgm then
+        state.bgm:stop()
     end
 end
 
 -- Set music volume
-function AudioSystem:setMusicVolume(volume)
-    self.bgmVolume = math.max(0, math.min(1, volume))
-    if self.bgm then
-        self.bgm:setVolume(self.bgmVolume)
+function AudioSystem.setMusicVolume(state, volume)
+    state.bgmVolume = math.max(0, math.min(1, volume))
+    if state.bgm then
+        state.bgm:setVolume(state.bgmVolume)
     end
 end
 
 -- Set SFX volume
-function AudioSystem:setSFXVolume(volume)
-    self.sfxVolume = math.max(0, math.min(1, volume))
-end
-
--- Update (for any time-based audio effects)
-function AudioSystem:update(dt)
-    -- Nothing to update for now
+function AudioSystem.setSFXVolume(state, volume)
+    state.sfxVolume = math.max(0, math.min(1, volume))
 end
 
 return AudioSystem
-

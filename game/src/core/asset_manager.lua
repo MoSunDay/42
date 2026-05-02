@@ -1,8 +1,4 @@
--- asset_manager.lua - 资源管理器
--- 统一管理所有游戏资源（图片、音效等）
-
 local AssetManager = {}
-AssetManager.__index = AssetManager
 
 local CHARACTER_IDS = {
     "warrior", "mage", "archer", "rogue", "cleric", "knight", "wizard", "ranger",
@@ -30,17 +26,17 @@ local DIRECTIONS_8 = {
     "north", "north-east", "east", "south-east"
 }
 
-function AssetManager.new()
-    local self = setmetatable({}, AssetManager)
-    
-    self.images = {}
-    self.fonts = {}
-    self.sounds = {}
-    self.characterSprites = {}
-    self.enemySprites = {}
-    self.npcSprites = {}
-    self.mapObjects = {}
-    self.uiAssets = {
+function AssetManager.create()
+    local state = {}
+
+    state.images = {}
+    state.fonts = {}
+    state.sounds = {}
+    state.characterSprites = {}
+    state.enemySprites = {}
+    state.npcSprites = {}
+    state.mapObjects = {}
+    state.uiAssets = {
         panels = {},
         buttons = {},
         icons = {},
@@ -54,8 +50,8 @@ function AssetManager.new()
         classes = {},
         effects = {}
     }
-    
-    self.paths = {
+
+    state.paths = {
         images = "assets/images/",
         fonts = "assets/fonts/",
         sounds = "assets/sounds/",
@@ -65,97 +61,83 @@ function AssetManager.new()
         tilesets = "assets/images/tilesets/",
         ui = "assets/images/ui/"
     }
-    
-    return self
+
+    return state
 end
 
--- 加载所有资源
-function AssetManager:loadAll()
+function AssetManager.loadAll(state)
     print("Loading resources...")
 
-    -- 加载字体
-    self:loadFonts()
+    AssetManager.loadFonts(state)
 
-    -- 加载图片
-    self:loadImages()
+    AssetManager.loadImages(state)
 
-    -- 加载音效
-    self:loadSounds()
+    AssetManager.loadSounds(state)
 
     print("Resource loading complete!")
 end
 
--- 加载字体
-function AssetManager:loadFonts()
-    -- 使用 Love2D 默认字体
-    self.fonts.default = love.graphics.newFont(14)
-    self.fonts.large = love.graphics.newFont(20)
-    self.fonts.small = love.graphics.newFont(12)
+function AssetManager.loadFonts(state)
+    state.fonts.default = love.graphics.newFont(14)
+    state.fonts.large = love.graphics.newFont(20)
+    state.fonts.small = love.graphics.newFont(12)
 
     print("  - Fonts loaded")
 end
 
--- Load image resources
-function AssetManager:loadImages()
-    self:loadCharacterSprites()
-    self:loadEnemySprites()
-    self:NPCSprites()
-    self:loadTilesets()
-    self:loadMapObjects()
-    self:loadUIAssets()
-    self.images.player = self:createPlayerSprite()
+function AssetManager.loadImages(state)
+    AssetManager.loadCharacterSprites(state)
+    AssetManager.loadEnemySprites(state)
+    AssetManager.loadNPCSprites(state)
+    AssetManager.loadTilesets(state)
+    AssetManager.loadMapObjects(state)
+    AssetManager.loadUIAssets(state)
+    state.images.player = AssetManager.createPlayerSprite()
     print("  - Image loading complete")
 end
 
-function AssetManager:loadCharacterSprites()
+local function loadSpritesForIds(state, ids, basePath, directions, targetTable, label)
     local loadedCount = 0
-    
-    for _, charId in ipairs(CHARACTER_IDS) do
-        local charPath = self.paths.characters .. charId
-        if love.filesystem.getInfo(charPath) then
-            self.characterSprites[charId] = {
-                rotations = {},
-                animations = {}
-            }
-            
-            local rotationsPath = charPath .. "/rotations"
+    for _, spriteId in ipairs(ids) do
+        local spritePath = basePath .. spriteId
+        if love.filesystem.getInfo(spritePath) then
+            targetTable[spriteId] = { rotations = {}, animations = {} }
+            local rotationsPath = spritePath .. "/rotations"
             if love.filesystem.getInfo(rotationsPath) then
-                for _, dir in ipairs(DIRECTIONS_8) do
-                    local spritePath = rotationsPath .. "/" .. dir .. ".png"
-                    if love.filesystem.getInfo(spritePath) then
-                        self.characterSprites[charId].rotations[dir] = love.graphics.newImage(spritePath)
+                for _, dir in ipairs(directions) do
+                    local imgPath = rotationsPath .. "/" .. dir .. ".png"
+                    if love.filesystem.getInfo(imgPath) then
+                        targetTable[spriteId].rotations[dir] = love.graphics.newImage(imgPath)
                     end
                 end
-            else
-                for _, dir in ipairs(DIRECTIONS_8) do
-                    local spritePath = charPath .. "/" .. dir .. ".png"
-                    if love.filesystem.getInfo(spritePath) then
-                        self.characterSprites[charId].rotations[dir] = love.graphics.newImage(spritePath)
+            elseif spritePath == basePath .. spriteId then
+                for _, dir in ipairs(directions) do
+                    local imgPath = spritePath .. "/" .. dir .. ".png"
+                    if love.filesystem.getInfo(imgPath) then
+                        targetTable[spriteId].rotations[dir] = love.graphics.newImage(imgPath)
                     end
                 end
             end
-            
-            local animPath = charPath .. "/animations"
+            local animPath = spritePath .. "/animations"
             if love.filesystem.getInfo(animPath) then
                 local animDirs = love.filesystem.getDirectoryItems(animPath)
                 for _, animName in ipairs(animDirs) do
                     local animFullPath = animPath .. "/" .. animName
                     local animInfo = love.filesystem.getInfo(animFullPath)
                     if animInfo and animInfo.type == "directory" then
-                        self.characterSprites[charId].animations[animName] = {}
+                        targetTable[spriteId].animations[animName] = {}
                         local directionDirs = love.filesystem.getDirectoryItems(animFullPath)
                         for _, dirName in ipairs(directionDirs) do
                             local dirPath = animFullPath .. "/" .. dirName
                             local dirInfo = love.filesystem.getInfo(dirPath)
                             if dirInfo and dirInfo.type == "directory" then
-                                self.characterSprites[charId].animations[animName][dirName] = {}
+                                targetTable[spriteId].animations[animName][dirName] = {}
                                 local frames = love.filesystem.getDirectoryItems(dirPath)
                                 table.sort(frames)
                                 for _, frameFile in ipairs(frames) do
                                     if frameFile:match("%.png$") then
-                                        local framePath = dirPath .. "/" .. frameFile
-                                        local frameImg = love.graphics.newImage(framePath)
-                                        table.insert(self.characterSprites[charId].animations[animName][dirName], frameImg)
+                                        local frameImg = love.graphics.newImage(dirPath .. "/" .. frameFile)
+                                        table.insert(targetTable[spriteId].animations[animName][dirName], frameImg)
                                     end
                                 end
                             end
@@ -163,227 +145,92 @@ function AssetManager:loadCharacterSprites()
                     end
                 end
             end
-            
             local hasRotations = false
-            for _ in pairs(self.characterSprites[charId].rotations) do
+            for _ in pairs(targetTable[spriteId].rotations) do
                 hasRotations = true
                 break
             end
-            
             if hasRotations then
                 loadedCount = loadedCount + 1
                 local animCount = 0
-                for _ in pairs(self.characterSprites[charId].animations) do
+                for _ in pairs(targetTable[spriteId].animations) do
                     animCount = animCount + 1
                 end
-                print("  - Loaded character sprites: " .. charId .. " (" .. animCount .. " animations)")
+                print("  - Loaded " .. label .. " sprites: " .. spriteId .. " (" .. animCount .. " animations)")
             else
-                self.characterSprites[charId] = nil
+                targetTable[spriteId] = nil
             end
         end
     end
-    
     if loadedCount == 0 then
-        print("  - No character sprites found, using generated sprites")
+        print("  - No " .. label .. " sprites found, using fallback")
     end
 end
 
-function AssetManager:loadEnemySprites()
-    local loadedCount = 0
-    
-    for _, enemyId in ipairs(ENEMY_IDS) do
-        local enemyPath = self.paths.enemies .. enemyId
-        if love.filesystem.getInfo(enemyPath) then
-            self.enemySprites[enemyId] = {
-                rotations = {},
-                animations = {}
-            }
-            
-            local rotationsPath = enemyPath .. "/rotations"
-            if love.filesystem.getInfo(rotationsPath) then
-                for _, dir in ipairs(DIRECTIONS_4) do
-                    local spritePath = rotationsPath .. "/" .. dir .. ".png"
-                    if love.filesystem.getInfo(spritePath) then
-                        self.enemySprites[enemyId].rotations[dir] = love.graphics.newImage(spritePath)
-                    end
-                end
-            end
-            
-            local animPath = enemyPath .. "/animations"
-            if love.filesystem.getInfo(animPath) then
-                local animDirs = love.filesystem.getDirectoryItems(animPath)
-                for _, animName in ipairs(animDirs) do
-                    local animFullPath = animPath .. "/" .. animName
-                    local animInfo = love.filesystem.getInfo(animFullPath)
-                    if animInfo and animInfo.type == "directory" then
-                        self.enemySprites[enemyId].animations[animName] = {}
-                        local directionDirs = love.filesystem.getDirectoryItems(animFullPath)
-                        for _, dirName in ipairs(directionDirs) do
-                            local dirPath = animFullPath .. "/" .. dirName
-                            local dirInfo = love.filesystem.getInfo(dirPath)
-                            if dirInfo and dirInfo.type == "directory" then
-                                self.enemySprites[enemyId].animations[animName][dirName] = {}
-                                local frames = love.filesystem.getDirectoryItems(dirPath)
-                                table.sort(frames)
-                                for _, frameFile in ipairs(frames) do
-                                    if frameFile:match("%.png$") then
-                                        local framePath = dirPath .. "/" .. frameFile
-                                        local frameImg = love.graphics.newImage(framePath)
-                                        table.insert(self.enemySprites[enemyId].animations[animName][dirName], frameImg)
-                                    end
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-            
-            local hasRotations = false
-            for _ in pairs(self.enemySprites[enemyId].rotations) do
-                hasRotations = true
-                break
-            end
-            
-            if hasRotations then
-                loadedCount = loadedCount + 1
-                local animCount = 0
-                for _ in pairs(self.enemySprites[enemyId].animations) do
-                    animCount = animCount + 1
-                end
-                print("  - Loaded enemy sprites: " .. enemyId .. " (" .. animCount .. " animations)")
-            else
-                self.enemySprites[enemyId] = nil
-            end
-        end
-    end
-    
-    if loadedCount == 0 then
-        print("  - No enemy sprites found, using fallback colors")
-    end
+function AssetManager.loadCharacterSprites(state)
+    loadSpritesForIds(state, CHARACTER_IDS, state.paths.characters, DIRECTIONS_8, state.characterSprites, "character")
 end
 
-function AssetManager:NPCSprites()
-    local loadedCount = 0
-    
-    for _, npcId in ipairs(NPC_IDS) do
-        local npcPath = self.paths.npcs .. npcId
-        if love.filesystem.getInfo(npcPath) then
-            self.npcSprites[npcId] = {
-                rotations = {},
-                animations = {}
-            }
-            
-            local rotationsPath = npcPath .. "/rotations"
-            if love.filesystem.getInfo(rotationsPath) then
-                for _, dir in ipairs(DIRECTIONS_4) do
-                    local spritePath = rotationsPath .. "/" .. dir .. ".png"
-                    if love.filesystem.getInfo(spritePath) then
-                        self.npcSprites[npcId].rotations[dir] = love.graphics.newImage(spritePath)
-                    end
-                end
-            end
-            
-            local animPath = npcPath .. "/animations"
-            if love.filesystem.getInfo(animPath) then
-                local animDirs = love.filesystem.getDirectoryItems(animPath)
-                for _, animName in ipairs(animDirs) do
-                    local animFullPath = animPath .. "/" .. animName
-                    local animInfo = love.filesystem.getInfo(animFullPath)
-                    if animInfo and animInfo.type == "directory" then
-                        self.npcSprites[npcId].animations[animName] = {}
-                        local directionDirs = love.filesystem.getDirectoryItems(animFullPath)
-                        for _, dirName in ipairs(directionDirs) do
-                            local dirPath = animFullPath .. "/" .. dirName
-                            local dirInfo = love.filesystem.getInfo(dirPath)
-                            if dirInfo and dirInfo.type == "directory" then
-                                self.npcSprites[npcId].animations[animName][dirName] = {}
-                                local frames = love.filesystem.getDirectoryItems(dirPath)
-                                table.sort(frames)
-                                for _, frameFile in ipairs(frames) do
-                                    if frameFile:match("%.png$") then
-                                        local framePath = dirPath .. "/" .. frameFile
-                                        local frameImg = love.graphics.newImage(framePath)
-                                        table.insert(self.npcSprites[npcId].animations[animName][dirName], frameImg)
-                                    end
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-            
-            local hasRotations = false
-            for _ in pairs(self.npcSprites[npcId].rotations) do
-                hasRotations = true
-                break
-            end
-            
-            if hasRotations then
-                loadedCount = loadedCount + 1
-                print("  - Loaded NPC sprites: " .. npcId)
-            else
-                self.npcSprites[npcId] = nil
-            end
-        end
-    end
-    
-    if loadedCount == 0 then
-        print("  - No NPC sprites found, using fallback colors")
-    end
+function AssetManager.loadEnemySprites(state)
+    loadSpritesForIds(state, ENEMY_IDS, state.paths.enemies, DIRECTIONS_4, state.enemySprites, "enemy")
 end
 
-function AssetManager:loadMapObjects()
+function AssetManager.loadNPCSprites(state)
+    loadSpritesForIds(state, NPC_IDS, state.paths.npcs, DIRECTIONS_4, state.npcSprites, "NPC")
+end
+
+function AssetManager.loadMapObjects(state)
     local objectCategories = {"trees", "buildings", "props"}
     local loadedCount = 0
-    
+
     for _, category in ipairs(objectCategories) do
-        local categoryPath = self.paths.tilesets .. "objects/" .. category
+        local categoryPath = state.paths.tilesets .. "objects/" .. category
         if love.filesystem.getInfo(categoryPath) then
             local files = love.filesystem.getDirectoryItems(categoryPath)
             for _, filename in ipairs(files) do
                 if filename:match("%.png$") then
                     local objectName = filename:gsub("%.png$", "")
                     local objectPath = categoryPath .. "/" .. filename
-                    self.mapObjects[objectName] = love.graphics.newImage(objectPath)
+                    state.mapObjects[objectName] = love.graphics.newImage(objectPath)
                     loadedCount = loadedCount + 1
                     print("  - Loaded map object: " .. objectName)
                 end
             end
         end
     end
-    
+
     if loadedCount == 0 then
         print("  - No map objects found")
     end
 end
 
-function AssetManager:loadTilesets()
+function AssetManager.loadTilesets(state)
     local tilesetFiles = {"grass_road.png", "grass_forest.png", "sand_ocean.png", "snow_ice.png"}
-    
+
     for _, filename in ipairs(tilesetFiles) do
-        local path = self.paths.tilesets .. filename
+        local path = state.paths.tilesets .. filename
         if love.filesystem.getInfo(path) then
             local name = filename:gsub("%.png$", "")
-            self.images["tileset_" .. name] = love.graphics.newImage(path)
+            state.images["tileset_" .. name] = love.graphics.newImage(path)
             print("  - Loaded tileset: " .. name)
         end
     end
-    
-    local townPath = self.paths.images .. "town.png"
-    local tilePath = self.paths.images .. "tileset.png"
+
+    local townPath = state.paths.images .. "town.png"
+    local tilePath = state.paths.images .. "tileset.png"
 
     if love.filesystem.getInfo(townPath) then
-        self.images.tileset = love.graphics.newImage(townPath)
+        state.images.tileset = love.graphics.newImage(townPath)
         print("  - Loaded town tileset: " .. townPath)
     elseif love.filesystem.getInfo(tilePath) then
-        self.images.tileset = love.graphics.newImage(tilePath)
+        state.images.tileset = love.graphics.newImage(tilePath)
         print("  - Loaded tileset: " .. tilePath)
     end
 end
 
-function AssetManager:loadUIAssets()
+function AssetManager.loadUIAssets(state)
     print("  - Loading UI assets...")
-    
+
     local uiCategories = {
         {name = "panels", path = "panels/"},
         {name = "buttons", path = "buttons/"},
@@ -398,40 +245,39 @@ function AssetManager:loadUIAssets()
         {name = "classes", path = "classes/"},
         {name = "effects", path = "effects/"}
     }
-    
+
     for _, category in ipairs(uiCategories) do
-        local categoryPath = self.paths.ui .. category.path
+        local categoryPath = state.paths.ui .. category.path
         if love.filesystem.getInfo(categoryPath) then
             local files = love.filesystem.getDirectoryItems(categoryPath)
             for _, filename in ipairs(files) do
                 if filename:match("%.png$") then
                     local assetName = filename:gsub("%.png$", "")
                     local assetPath = categoryPath .. filename
-                    self.uiAssets[category.name][assetName] = love.graphics.newImage(assetPath)
+                    state.uiAssets[category.name][assetName] = love.graphics.newImage(assetPath)
                 end
             end
         end
     end
-    
+
     local count = 0
-    for catName, cat in pairs(self.uiAssets) do
+    for catName, cat in pairs(state.uiAssets) do
         for _ in pairs(cat) do count = count + 1 end
     end
     print("  - Loaded " .. count .. " UI assets")
 end
 
--- 加载音效
-function AssetManager:loadSounds()
+function AssetManager.loadSounds(state)
     local loadedCount = 0
-    
+
     local soundCategories = {
-        {name = "combat", path = self.paths.sounds .. "sfx/combat/"},
-        {name = "ui", path = self.paths.sounds .. "sfx/ui/"},
-        {name = "character", path = self.paths.sounds .. "sfx/character/"},
-        {name = "bgm", path = self.paths.sounds .. "bgm/"},
-        {name = "seasonal", path = self.paths.sounds .. "bgm/seasonal/"}
+        {name = "combat", path = state.paths.sounds .. "sfx/combat/"},
+        {name = "ui", path = state.paths.sounds .. "sfx/ui/"},
+        {name = "character", path = state.paths.sounds .. "sfx/character/"},
+        {name = "bgm", path = state.paths.sounds .. "bgm/"},
+        {name = "seasonal", path = state.paths.sounds .. "bgm/seasonal/"}
     }
-    
+
     for _, category in ipairs(soundCategories) do
         if love.filesystem.getInfo(category.path) then
             local files = love.filesystem.getDirectoryItems(category.path)
@@ -443,65 +289,58 @@ function AssetManager:loadSounds()
                     local success, source = pcall(love.audio.newSource, soundPath, sourceType)
                     if success then
                         local key = category.name .. "_" .. soundName
-                        self.sounds[key] = source
+                        state.sounds[key] = source
                         loadedCount = loadedCount + 1
                     end
                 end
             end
         end
     end
-    
+
     print("  - Sounds loaded: " .. loadedCount .. " files")
 end
 
--- 程序生成玩家精灵
-function AssetManager:createPlayerSprite()
+function AssetManager.createPlayerSprite()
     local size = 32
     local canvas = love.graphics.newCanvas(size, size)
-    
+
     love.graphics.setCanvas(canvas)
     love.graphics.clear(0, 0, 0, 0)
-    
-    -- 绘制玩家身体（蓝色圆形）
+
     love.graphics.setColor(0.2, 0.6, 1.0)
     love.graphics.circle("fill", size/2, size/2, 12)
-    
-    -- 绘制方向指示器（白色小圆）
+
     love.graphics.setColor(1, 1, 1)
     love.graphics.circle("fill", size/2, size/2 - 6, 3)
-    
-    -- 绘制边框
+
     love.graphics.setColor(0.1, 0.4, 0.8)
     love.graphics.setLineWidth(2)
     love.graphics.circle("line", size/2, size/2, 12)
-    
+
     love.graphics.setCanvas()
     love.graphics.setColor(1, 1, 1)
     love.graphics.setLineWidth(1)
-    
+
     return canvas
 end
 
--- 获取图片
-function AssetManager:getImage(name)
-    return self.images[name]
+function AssetManager.getImage(state, name)
+    return state.images[name]
 end
 
--- 获取角色精灵
-function AssetManager:getCharacterSprite(charId, direction)
-    if self.characterSprites[charId] and self.characterSprites[charId].rotations then
-        return self.characterSprites[charId].rotations[direction]
+function AssetManager.getCharacterSprite(state, charId, direction)
+    if state.characterSprites[charId] and state.characterSprites[charId].rotations then
+        return state.characterSprites[charId].rotations[direction]
     end
     return nil
 end
 
--- 获取角色动画帧
-function AssetManager:getCharacterAnimation(charId, animName, direction, frameIndex)
-    if self.characterSprites[charId] and 
-       self.characterSprites[charId].animations and 
-       self.characterSprites[charId].animations[animName] and
-       self.characterSprites[charId].animations[animName][direction] then
-        local frames = self.characterSprites[charId].animations[animName][direction]
+function AssetManager.getCharacterAnimation(state, charId, animName, direction, frameIndex)
+    if state.characterSprites[charId] and
+       state.characterSprites[charId].animations and
+       state.characterSprites[charId].animations[animName] and
+       state.characterSprites[charId].animations[animName][direction] then
+        local frames = state.characterSprites[charId].animations[animName][direction]
         if frameIndex and frames[frameIndex] then
             return frames[frameIndex]
         end
@@ -510,23 +349,20 @@ function AssetManager:getCharacterAnimation(charId, animName, direction, frameIn
     return nil
 end
 
--- 检查角色是否有精灵
-function AssetManager:hasCharacterSprite(charId)
-    return self.characterSprites[charId] ~= nil and 
-           self.characterSprites[charId].rotations ~= nil
+function AssetManager.hasCharacterSprite(state, charId)
+    return state.characterSprites[charId] ~= nil and
+           state.characterSprites[charId].rotations ~= nil
 end
 
--- 检查角色是否有动画
-function AssetManager:hasCharacterAnimation(charId, animName)
-    return self.characterSprites[charId] ~= nil and
-           self.characterSprites[charId].animations ~= nil and
-           self.characterSprites[charId].animations[animName] ~= nil
+function AssetManager.hasCharacterAnimation(state, charId, animName)
+    return state.characterSprites[charId] ~= nil and
+           state.characterSprites[charId].animations ~= nil and
+           state.characterSprites[charId].animations[animName] ~= nil
 end
 
--- 获取动画帧数
-function AssetManager:getAnimationFrameCount(charId, animName, direction)
-    if self:hasCharacterAnimation(charId, animName) then
-        local anim = self.characterSprites[charId].animations[animName]
+function AssetManager.getAnimationFrameCount(state, charId, animName, direction)
+    if AssetManager.hasCharacterAnimation(state, charId, animName) then
+        local anim = state.characterSprites[charId].animations[animName]
         if anim[direction] then
             return #anim[direction]
         end
@@ -534,44 +370,40 @@ function AssetManager:getAnimationFrameCount(charId, animName, direction)
     return 0
 end
 
--- 获取所有可用方向
-function AssetManager:getAvailableDirections(charId)
+function AssetManager.getAvailableDirections(state, charId)
     local dirs = {}
-    if self.characterSprites[charId] then
-        for dir, _ in pairs(self.characterSprites[charId]) do
+    local sprite = state.characterSprites[charId]
+    if sprite and sprite.rotations then
+        for dir, _ in pairs(sprite.rotations) do
             table.insert(dirs, dir)
         end
     end
     return dirs
 end
 
--- 获取字体
-function AssetManager:getFont(name)
-    return self.fonts[name] or self.fonts.default
+function AssetManager.getFont(state, name)
+    return state.fonts[name] or state.fonts.default
 end
 
--- 获取音效
-function AssetManager:getSound(name)
-    return self.sounds[name]
+function AssetManager.getSound(state, name)
+    return state.sounds[name]
 end
 
--- 获取敌人精灵
-function AssetManager:getEnemySprite(enemyId, direction)
+function AssetManager.getEnemySprite(state, enemyId, direction)
     direction = direction or "south"
-    if self.enemySprites[enemyId] and self.enemySprites[enemyId].rotations then
-        return self.enemySprites[enemyId].rotations[direction]
+    if state.enemySprites[enemyId] and state.enemySprites[enemyId].rotations then
+        return state.enemySprites[enemyId].rotations[direction]
     end
     return nil
 end
 
--- 获取敌人动画帧
-function AssetManager:getEnemyAnimation(enemyId, animName, direction, frameIndex)
+function AssetManager.getEnemyAnimation(state, enemyId, animName, direction, frameIndex)
     direction = direction or "south"
-    if self.enemySprites[enemyId] and 
-       self.enemySprites[enemyId].animations and 
-       self.enemySprites[enemyId].animations[animName] and
-       self.enemySprites[enemyId].animations[animName][direction] then
-        local frames = self.enemySprites[enemyId].animations[animName][direction]
+    if state.enemySprites[enemyId] and
+       state.enemySprites[enemyId].animations and
+       state.enemySprites[enemyId].animations[animName] and
+       state.enemySprites[enemyId].animations[animName][direction] then
+        local frames = state.enemySprites[enemyId].animations[animName][direction]
         if frameIndex and frames[frameIndex] then
             return frames[frameIndex]
         end
@@ -580,24 +412,21 @@ function AssetManager:getEnemyAnimation(enemyId, animName, direction, frameIndex
     return nil
 end
 
--- 检查敌人是否有精灵
-function AssetManager:hasEnemySprite(enemyId)
-    return self.enemySprites[enemyId] ~= nil and 
-           next(self.enemySprites[enemyId].rotations) ~= nil
+function AssetManager.hasEnemySprite(state, enemyId)
+    return state.enemySprites[enemyId] ~= nil and
+           next(state.enemySprites[enemyId].rotations) ~= nil
 end
 
--- 检查敌人是否有动画
-function AssetManager:hasEnemyAnimation(enemyId, animName)
-    return self.enemySprites[enemyId] ~= nil and
-           self.enemySprites[enemyId].animations ~= nil and
-           self.enemySprites[enemyId].animations[animName] ~= nil
+function AssetManager.hasEnemyAnimation(state, enemyId, animName)
+    return state.enemySprites[enemyId] ~= nil and
+           state.enemySprites[enemyId].animations ~= nil and
+           state.enemySprites[enemyId].animations[animName] ~= nil
 end
 
--- 获取敌人动画帧数
-function AssetManager:getEnemyAnimationFrameCount(enemyId, animName, direction)
+function AssetManager.getEnemyAnimationFrameCount(state, enemyId, animName, direction)
     direction = direction or "south"
-    if self:hasEnemyAnimation(enemyId, animName) then
-        local anim = self.enemySprites[enemyId].animations[animName]
+    if AssetManager.hasEnemyAnimation(state, enemyId, animName) then
+        local anim = state.enemySprites[enemyId].animations[animName]
         if anim[direction] then
             return #anim[direction]
         end
@@ -605,76 +434,72 @@ function AssetManager:getEnemyAnimationFrameCount(enemyId, animName, direction)
     return 0
 end
 
--- 获取NPC精灵
-function AssetManager:getNPCSprite(npcId, direction)
+function AssetManager.getNPCSprite(state, npcId, direction)
     direction = direction or "south"
-    if self.npcSprites[npcId] and self.npcSprites[npcId].rotations then
-        return self.npcSprites[npcId].rotations[direction]
+    if state.npcSprites[npcId] and state.npcSprites[npcId].rotations then
+        return state.npcSprites[npcId].rotations[direction]
     end
     return nil
 end
 
--- 检查NPC是否有精灵
-function AssetManager:hasNPCSprite(npcId)
-    return self.npcSprites[npcId] ~= nil and 
-           next(self.npcSprites[npcId].rotations) ~= nil
+function AssetManager.hasNPCSprite(state, npcId)
+    return state.npcSprites[npcId] ~= nil and
+           next(state.npcSprites[npcId].rotations) ~= nil
 end
 
--- 获取地图物件
-function AssetManager:getMapObject(objectName)
-    return self.mapObjects[objectName]
+function AssetManager.getMapObject(state, objectName)
+    return state.mapObjects[objectName]
 end
 
-function AssetManager:hasMapObject(objectName)
-    return self.mapObjects[objectName] ~= nil
+function AssetManager.hasMapObject(state, objectName)
+    return state.mapObjects[objectName] ~= nil
 end
 
-function AssetManager:getUIAsset(category, name)
-    if self.uiAssets[category] then
-        return self.uiAssets[category][name]
+function AssetManager.getUIAsset(state, category, name)
+    if state.uiAssets[category] then
+        return state.uiAssets[category][name]
     end
     return nil
 end
 
-function AssetManager:getUIPanel(name)
-    return self:getUIAsset("panels", name)
+function AssetManager.getUIPanel(state, name)
+    return AssetManager.getUIAsset(state, "panels", name)
 end
 
-function AssetManager:getUIButton(name)
-    return self:getUIAsset("buttons", name)
+function AssetManager.getUIButton(state, name)
+    return AssetManager.getUIAsset(state, "buttons", name)
 end
 
-function AssetManager:getUIIcon(name)
-    return self:getUIAsset("icons", name)
+function AssetManager.getUIIcon(state, name)
+    return AssetManager.getUIAsset(state, "icons", name)
 end
 
-function AssetManager:getUIBar(name)
-    return self:getUIAsset("bars", name)
+function AssetManager.getUIBar(state, name)
+    return AssetManager.getUIAsset(state, "bars", name)
 end
 
-function AssetManager:getUISlot(name)
-    return self:getUIAsset("slots", name)
+function AssetManager.getUISlot(state, name)
+    return AssetManager.getUIAsset(state, "slots", name)
 end
 
-function AssetManager:getBattleBackground(name)
-    return self:getUIAsset("battleBg", name)
+function AssetManager.getBattleBackground(state, name)
+    return AssetManager.getUIAsset(state, "battleBg", name)
 end
 
-function AssetManager:getDialogAsset(name)
-    return self:getUIAsset("dialog", name)
+function AssetManager.getDialogAsset(state, name)
+    return AssetManager.getUIAsset(state, "dialog", name)
 end
 
-function AssetManager:getLoadingAsset(name)
-    return self:getUIAsset("loading", name)
+function AssetManager.getLoadingAsset(state, name)
+    return AssetManager.getUIAsset(state, "loading", name)
 end
 
-function AssetManager:getClassIcon(name)
-    return self:getUIAsset("classes", name)
+function AssetManager.getClassIcon(state, name)
+    return AssetManager.getUIAsset(state, "classes", name)
 end
 
-function AssetManager:getEffect(name)
-    return self:getUIAsset("effects", name)
+function AssetManager.getEffect(state, name)
+    return AssetManager.getUIAsset(state, "effects", name)
 end
 
 return AssetManager
-

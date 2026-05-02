@@ -1,6 +1,3 @@
--- render_system.lua - 渲染系统
--- 统一管理所有渲染逻辑，支持分层渲染
-
 local UI = require("ui.hud")
 local BattleUI = require("src.ui.battle.battle_ui")
 local FullscreenMap = require("src.ui.fullscreen_map")
@@ -10,191 +7,202 @@ local AvatarRenderer = require("account.avatar_renderer")
 local UnifiedMenu = require("src.ui.unified_menu")
 local SkillPanel = require("src.ui.skill_panel")
 local MapManager = require("map.map_manager")
+local Animation = require("src.ui.animation")
+local Particles = require("src.ui.particles")
+local Theme = require("src.ui.theme")
+local BattleBackground = require("src.ui.battle.battle_background")
+local Camera = require("core.camera")
+local Map = require("entities.map")
+local EncounterZone = require("entities.encounter_zone")
+local Player = require("entities.player")
+local MapData = require("map.map_data")
 
 local RenderSystem = {}
-RenderSystem.__index = RenderSystem
 
 function RenderSystem.new(gameState, assetManager)
-    local self = setmetatable({}, RenderSystem)
-
-    self.gameState = gameState
-    self.assetManager = assetManager
-
-    self.hud = UI.new(assetManager)
-    self.battleUI = BattleUI.new(assetManager)
-    self.fullscreenMap = FullscreenMap.new(assetManager)
-    self.partyUI = PartyUI.new(assetManager)
-    self.chatUI = ChatUI.new(assetManager)
-    self.unifiedMenu = UnifiedMenu.new(assetManager)
-
-    return self
+    return {
+        gameState = gameState,
+        assetManager = assetManager,
+        hud = UI.create(assetManager),
+        battleUI = BattleUI.create(assetManager),
+        fullscreenMap = FullscreenMap.create(assetManager),
+        partyUI = PartyUI.create(assetManager),
+        chatUI = ChatUI.create(assetManager),
+        unifiedMenu = UnifiedMenu.create(assetManager),
+    }
 end
 
-function RenderSystem:update(dt)
-    self.hud:update(dt)
+function RenderSystem.update(state, dt)
+    Animation.update(dt)
+    Theme.update(dt)
+    Particles.update(dt)
+    BattleBackground.update(dt)
+    UI.update(state.hud, dt)
     
     local screenWidth = love.graphics.getWidth()
-    MapManager.update(dt, self.gameState.camera, screenWidth)
+    MapManager.update(dt, state.gameState.camera, screenWidth)
 end
 
-function RenderSystem:render()
-    local mode = self.gameState:getMode()
+function RenderSystem.render(state)
+    local mode = state.gameState:getMode()
 
     if mode == "login" then
-        self:renderLogin()
+        RenderSystem.renderLogin(state)
     elseif mode == "character_select" then
-        self:renderCharacterSelect()
+        RenderSystem.renderCharacterSelect(state)
     elseif mode == "exploration" then
-        self:renderExploration()
+        RenderSystem.renderExploration(state)
     elseif mode == "battle" then
-        self:renderBattle()
+        RenderSystem.renderBattle(state)
     end
 end
 
-function RenderSystem:renderLogin()
-    local loginUI = self.gameState:getLoginUI()
+function RenderSystem.renderLogin(state)
+    local loginUI = state.gameState:getLoginUI()
     if loginUI then
         loginUI:draw()
     end
 end
 
-function RenderSystem:renderCharacterSelect()
-    local characterSelectUI = self.gameState:getCharacterSelectUI()
+function RenderSystem.renderCharacterSelect(state)
+    local characterSelectUI = state.gameState:getCharacterSelectUI()
 
     if characterSelectUI then
         characterSelectUI:draw()
     end
 end
 
-function RenderSystem:renderExploration()
-    if not self.gameState.camera or not self.gameState.map or not self.gameState.player then
+function RenderSystem.renderExploration(state)
+    if not state.gameState.camera or not state.gameState.map or not state.gameState.player then
         love.graphics.setColor(1, 1, 1)
         love.graphics.printf("Loading world...", 0, love.graphics.getHeight() / 2, love.graphics.getWidth(), "center")
         return
     end
 
-    self.gameState.camera:apply()
-    self:renderWorld()
-    self.gameState.camera:reset()
-    self:renderUI()
+    Camera.apply(state.gameState.camera)
+    RenderSystem.renderWorld(state)
+    Camera.reset(state.gameState.camera)
+    RenderSystem.renderUI(state)
 end
 
-function RenderSystem:renderBattle()
-    local battleSystem = self.gameState:getBattleSystem()
-    local player = self.gameState.player
-    local map = self.gameState.map
+function RenderSystem.renderBattle(state)
+    local battleSystem = state.gameState:getBattleSystem()
+    local player = state.gameState.player
+    local map = state.gameState.map
 
-    self.battleUI:draw(battleSystem, player, map)
+    BattleUI.draw(state.battleUI, battleSystem, player, map)
 end
 
-function RenderSystem:renderWorld()
-    self:renderGroundLayer()
-    self:renderObjectsLayer()
-    self:renderEntities()
-    self:renderParticles()
-    self:renderOverlayLayer()
+function RenderSystem.renderWorld(state)
+    RenderSystem.renderGroundLayer(state)
+    RenderSystem.renderObjectsLayer(state)
+    RenderSystem.renderEntities(state)
+    RenderSystem.renderParticles(state)
+    RenderSystem.renderOverlayLayer(state)
 end
 
-function RenderSystem:renderGroundLayer()
-    if self.gameState.map and self.gameState.map.draw then
-        self.gameState.map:draw(self.gameState.camera)
+function RenderSystem.renderGroundLayer(state)
+    if state.gameState.map and state.gameState.map.draw then
+        MapData.draw(state.gameState.map, state.gameState.camera)
     end
 end
 
-function RenderSystem:renderObjectsLayer()
-    if self.gameState.map and self.gameState.map.drawObjectsLayer then
-        self.gameState.map:drawObjectsLayer(self.gameState.camera)
+function RenderSystem.renderObjectsLayer(state)
+    if state.gameState.map and state.gameState.map.drawObjectsLayer then
+        MapData.drawObjectsLayer(state.gameState.map, state.gameState.camera)
     end
 end
 
-function RenderSystem:renderEntities()
-    if self.gameState.encounterZones then
-        for _, zone in ipairs(self.gameState.encounterZones) do
-            zone:draw(self.gameState.camera)
+function RenderSystem.renderEntities(state)
+    if state.gameState.encounterZones then
+        for _, zone in ipairs(state.gameState.encounterZones) do
+            EncounterZone.draw(zone, state.gameState.camera)
         end
     end
 
-    if self.gameState.player then
-        self.gameState.player:draw()
+    if state.gameState.player then
+        Player.draw(state.gameState.player)
     end
 
-    local chatSystem = self.gameState:getChatSystem()
+    local chatSystem = state.gameState:getChatSystem()
     if chatSystem then
         chatSystem:drawSpeechBubbles()
     end
 end
 
-function RenderSystem:renderParticles()
-    MapManager.drawParticles(self.gameState.camera)
+function RenderSystem.renderParticles(state)
+    MapManager.drawParticles(state.gameState.camera)
 end
 
-function RenderSystem:renderOverlayLayer()
-    if self.gameState.map and self.gameState.map.drawOverlayLayer then
-        self.gameState.map:drawOverlayLayer(self.gameState.camera)
+function RenderSystem.renderOverlayLayer(state)
+    if state.gameState.map and state.gameState.map.drawOverlayLayer then
+        MapData.drawOverlayLayer(state.gameState.map, state.gameState.camera)
     end
     
-    if self.gameState.map and self.gameState.map.drawBorder then
-        self.gameState.map:drawBorder()
+    if state.gameState.map and state.gameState.map.drawBorder then
+        MapData.drawBorder(state.gameState.map)
     end
 end
 
-function RenderSystem:renderUI()
-    local playerX, playerY = self.gameState:getPlayerPosition()
-    self.hud:draw(playerX, playerY, self.gameState.map)
+function RenderSystem.renderUI(state)
+    local playerX, playerY = state.gameState:getPlayerPosition()
+    UI.draw(state.hud, playerX, playerY, state.gameState.map)
 
     local AccountManager = require("account.account_manager")
     local character = AccountManager.getCurrentCharacter()
     if character then
         local w, h = love.graphics.getDimensions()
-        AvatarRenderer.drawCharacterPanel(10, 10, 200, 200, character, self.assetManager.fonts.default)
+        AvatarRenderer.drawCharacterPanel(10, 10, 200, 200, character, state.assetManager.fonts.default, state.assetManager)
     end
 
-    local partySystem = self.gameState:getPartySystem()
+    local partySystem = state.gameState:getPartySystem()
     if partySystem then
-        self.partyUI:draw(partySystem)
+        PartyUI.draw(state.partyUI, partySystem)
     end
 
-    local chatSystem = self.gameState:getChatSystem()
+    local chatSystem = state.gameState:getChatSystem()
     if chatSystem then
-        self.chatUI:draw(chatSystem)
+        ChatUI.draw(state.chatUI, chatSystem)
     end
 
-    if self.fullscreenMap:isMapOpen() then
-        self.fullscreenMap:draw(playerX, playerY, self.gameState.map)
+    if FullscreenMap.isMapOpen(state.fullscreenMap) then
+        FullscreenMap.draw(state.fullscreenMap, playerX, playerY, state.gameState.map)
     end
 
-    if self.unifiedMenu:isMenuOpen() then
-        self.unifiedMenu:draw(self.gameState)
+    if UnifiedMenu.isMenuOpen(state.unifiedMenu) then
+        UnifiedMenu.draw(state.unifiedMenu, state.gameState)
     end
 
-    local skillPanel = self.gameState:getSkillPanel()
+    local skillPanel = state.gameState:getSkillPanel()
     if skillPanel and skillPanel.isOpen then
-        skillPanel:draw()
+        SkillPanel.draw(skillPanel)
     end
+
+    Particles.draw()
 end
 
-function RenderSystem:getBattleUI()
-    return self.battleUI
+function RenderSystem.getBattleUI(state)
+    return state.battleUI
 end
 
-function RenderSystem:getFullscreenMap()
-    return self.fullscreenMap
+function RenderSystem.getFullscreenMap(state)
+    return state.fullscreenMap
 end
 
-function RenderSystem:getHUD()
-    return self.hud
+function RenderSystem.getHUD(state)
+    return state.hud
 end
 
-function RenderSystem:getPartyUI()
-    return self.partyUI
+function RenderSystem.getPartyUI(state)
+    return state.partyUI
 end
 
-function RenderSystem:getChatUI()
-    return self.chatUI
+function RenderSystem.getChatUI(state)
+    return state.chatUI
 end
 
-function RenderSystem:getUnifiedMenu()
-    return self.unifiedMenu
+function RenderSystem.getUnifiedMenu(state)
+    return state.unifiedMenu
 end
 
 return RenderSystem

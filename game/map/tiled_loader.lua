@@ -3,7 +3,6 @@
 -- 支持 STI (Simple Tiled Implementation) 库
 
 local TiledLoader = {}
-TiledLoader.__index = TiledLoader
 
 local json = require("lib.json")
 local STI = nil
@@ -17,7 +16,7 @@ end)
 local function parseXML(xml)
     local result = {}
     local stack = {{children = result}}
-    
+
     for tag, attrs, content in xml:gmatch("<(%w+)([^>]-)>([^<]*)") do
         local node = {
             name = tag,
@@ -25,18 +24,18 @@ local function parseXML(xml)
             children = {},
             content = content or ""
         }
-        
+
         for key, value in attrs:gmatch('(%w+)=["\']([^"\']*)["\']') do
             node.attrs[key] = value
         end
-        
+
         table.insert(stack[#stack].children, node)
-        
+
         if not attrs:match("/>") then
             table.insert(stack, node)
         end
     end
-    
+
     return result
 end
 
@@ -58,9 +57,9 @@ local function decodeBase64(data)
     for i = 1, #mapping do
         revMapping[mapping:sub(i, i)] = i - 1
     end
-    
+
     data = data:gsub("[^" .. mapping .. "=]", "")
-    
+
     for i = 1, #data, 4 do
         local chunk = data:sub(i, i + 3)
         local n = 0
@@ -72,32 +71,48 @@ local function decodeBase64(data)
                 n = n * 64 + (revMapping[c] or 0)
             end
         end
-        
+
         table.insert(decoded, n % 256)
         table.insert(decoded, math.floor(n / 256) % 256)
         table.insert(decoded, math.floor(n / 65536) % 256)
         table.insert(decoded, math.floor(n / 16777216) % 256)
     end
-    
+
     return decoded
 end
 
 local function decompressGZIP(data)
-    return data
+    local dataStr = ""
+    for _, b in ipairs(data) do
+        dataStr = dataStr .. string.char(b)
+    end
+    local success, result = pcall(love.math.decompress, dataStr, "gzip")
+    if not success then
+        success, result = pcall(love.math.decompress, dataStr, "zlib")
+    end
+    if not success then
+        print("Warning: decompression failed, returning raw data")
+        return data
+    end
+    local decoded = {}
+    for i = 1, #result do
+        decoded[i] = string.byte(result, i)
+    end
+    return decoded
 end
 
 local function decodeLayerData(encoding, compression, data, width, height)
     local tiles = {}
-    
+
     if encoding == "csv" then
         tiles = decodeCSV(data)
     elseif encoding == "base64" then
         local decoded = decodeBase64(data)
-        
+
         if compression == "gzip" or compression == "zlib" then
             decoded = decompressGZIP(decoded)
         end
-        
+
         for i = 1, #decoded, 4 do
             local tileId = decoded[i] + decoded[i + 1] * 256 + decoded[i + 2] * 65536 + decoded[i + 3] * 16777216
             if tileId > 0 then
@@ -111,7 +126,7 @@ local function decodeLayerData(encoding, compression, data, width, height)
             end
         end
     end
-    
+
     return tiles
 end
 
@@ -119,24 +134,24 @@ local function getLayerData(layer, width, height)
     if layer.data and #layer.data > 0 then
         return layer.data
     end
-    
+
     local encoding = layer.encoding or "csv"
     local compression = layer.compression
     local rawData = layer.rawData or ""
-    
+
     return decodeLayerData(encoding, compression, rawData, width, height)
 end
 
 function TiledLoader.load(filepath)
     local MapData = require("map.map_data")
-    
+
     if not love.filesystem.getInfo(filepath) then
         print("Warning: Tiled map file not found: " .. filepath)
         return nil
     end
-    
+
     local isJson = filepath:match("%.json$") ~= nil
-    
+
     if isJson then
         return TiledLoader.loadJSON(filepath)
     else
@@ -149,27 +164,27 @@ function TiledLoader.loadWithSTI(filepath)
         print("Warning: STI library not available, falling back to built-in loader")
         return TiledLoader.load(filepath)
     end
-    
+
     if not love.filesystem.getInfo(filepath) then
         print("Warning: Tiled map file not found: " .. filepath)
         return nil
     end
-    
+
     local success, stiMap = pcall(function()
         return STI(filepath)
     end)
-    
+
     if not success or not stiMap then
         print("Warning: STI failed to load map: " .. filepath)
         return TiledLoader.load(filepath)
     end
-    
+
     return TiledLoader.convertSTIToMapData(stiMap)
 end
 
 function TiledLoader.convertSTIToMapData(stiMap)
     local MapData = require("map.map_data")
-    
+
     local mapInfo = {
         width = stiMap.width * stiMap.tilewidth,
         height = stiMap.height * stiMap.tileheight,
@@ -186,7 +201,7 @@ function TiledLoader.convertSTIToMapData(stiMap)
         season = "spring",
         stiMap = stiMap
     }
-    
+
     if stiMap.properties then
         if stiMap.properties.season then
             mapInfo.season = stiMap.properties.season
@@ -195,7 +210,7 @@ function TiledLoader.convertSTIToMapData(stiMap)
             mapInfo.name = stiMap.properties.name
         end
     end
-    
+
     local tilesX = stiMap.width
     local tilesY = stiMap.height
     mapInfo.collisionMap = {}
@@ -205,7 +220,7 @@ function TiledLoader.convertSTIToMapData(stiMap)
             mapInfo.collisionMap[y][x] = 0
         end
     end
-    
+
     for layerName, layer in pairs(stiMap.layers) do
         if layer.type == "tilelayer" and layer.data then
             mapInfo.layers[layerName] = {
@@ -221,15 +236,15 @@ function TiledLoader.convertSTIToMapData(stiMap)
             end
         end
     end
-    
+
     if #mapInfo.spawnPoints == 0 then
         mapInfo.spawnPoints = {{x = mapInfo.width / 2, y = mapInfo.height / 2}}
     end
-    
-    local map = MapData.new(mapInfo)
+
+    local map = MapData.create(mapInfo)
     map.stiMap = stiMap
     map.useSTI = true
-    
+
     return map
 end
 
@@ -239,13 +254,13 @@ function TiledLoader.loadTMX(filepath)
         print("Warning: Failed to read Tiled map file: " .. filepath)
         return nil
     end
-    
+
     local map = TiledLoader.parseTMX(content)
     if not map then
         print("Warning: Failed to parse Tiled map: " .. filepath)
         return nil
     end
-    
+
     return map
 end
 
@@ -255,19 +270,19 @@ function TiledLoader.loadJSON(filepath)
         print("Warning: Failed to read Tiled JSON file: " .. filepath)
         return nil
     end
-    
+
     local jsonData = json.decode(content)
     if not jsonData then
         print("Warning: Failed to parse Tiled JSON: " .. filepath)
         return nil
     end
-    
+
     return TiledLoader.parseJSON(jsonData)
 end
 
 function TiledLoader.parseJSON(data)
     local MapData = require("map.map_data")
-    
+
     local mapInfo = {
         width = (data.width or 32) * (data.tilewidth or 32),
         height = (data.height or 32) * (data.tileheight or 32),
@@ -283,7 +298,7 @@ function TiledLoader.parseJSON(data)
         teleports = {},
         season = "spring"
     }
-    
+
     if data.properties then
         if data.properties.season then
             mapInfo.season = data.properties.season
@@ -292,7 +307,7 @@ function TiledLoader.parseJSON(data)
             mapInfo.name = data.properties.name
         end
     end
-    
+
     if data.tilesets then
         for _, ts in ipairs(data.tilesets) do
             table.insert(mapInfo.tilesets, {
@@ -307,7 +322,7 @@ function TiledLoader.parseJSON(data)
             })
         end
     end
-    
+
     local tilesX = data.width or 32
     local tilesY = data.height or 32
     mapInfo.collisionMap = {}
@@ -317,7 +332,7 @@ function TiledLoader.parseJSON(data)
             mapInfo.collisionMap[y][x] = 0
         end
     end
-    
+
     if data.layers then
         for _, layer in ipairs(data.layers) do
             if layer.type == "tilelayer" then
@@ -331,7 +346,7 @@ function TiledLoader.parseJSON(data)
                         tiles = layer.data
                     end
                 end
-                
+
                 mapInfo.layers[layer.name] = {
                     width = layer.width,
                     height = layer.height,
@@ -346,23 +361,23 @@ function TiledLoader.parseJSON(data)
             end
         end
     end
-    
+
     if #mapInfo.spawnPoints == 0 then
         mapInfo.spawnPoints = {{x = mapInfo.width / 2, y = mapInfo.height / 2}}
     end
-    
-    return MapData.new(mapInfo)
+
+    return MapData.create(mapInfo)
 end
 
 function TiledLoader.decodeBase64Layer(data, compression, width, height)
     local decoded = TiledLoader.decodeBase64(data)
     local tiles = {}
-    
+
     for i = 1, #decoded, 4 do
         local tileId = decoded[i] + decoded[i + 1] * 256 + decoded[i + 2] * 65536 + decoded[i + 3] * 16777216
         table.insert(tiles, tileId)
     end
-    
+
     return tiles
 end
 
@@ -376,13 +391,13 @@ function TiledLoader.processTiledObject(obj, layerName, mapInfo)
     local tileSize = mapInfo.tileSize
     local tilesX = math.floor(mapInfo.width / tileSize)
     local tilesY = math.floor(mapInfo.height / tileSize)
-    
+
     if layerName == "collision" or objType == "collision" then
         local tileX = math.floor(objX / tileSize)
         local tileY = math.floor(objY / tileSize)
         local tilesW = math.ceil(objWidth / tileSize)
         local tilesH = math.ceil(objHeight / tileSize)
-        
+
         for ty = tileY, math.min(tileY + tilesH - 1, tilesY - 1) do
             for tx = tileX, math.min(tileX + tilesW - 1, tilesX - 1) do
                 if mapInfo.collisionMap[ty] then
@@ -438,7 +453,7 @@ end
 
 function TiledLoader.parseTMX(content)
     local MapData = require("map.map_data")
-    
+
     local mapInfo = {
         width = 0,
         height = 0,
@@ -454,7 +469,7 @@ function TiledLoader.parseTMX(content)
         teleports = {},
         season = "spring"
     }
-    
+
     local mapTag = content:match('<map[^>]*>')
     if mapTag then
         mapInfo.width = tonumber(mapTag:match('width="(%d+)"')) or 32
@@ -463,7 +478,7 @@ function TiledLoader.parseTMX(content)
         mapInfo.width = mapInfo.width * mapInfo.tileSize
         mapInfo.height = mapInfo.height * mapInfo.tileSize
     end
-    
+
     local properties = content:match('<properties>(.-)</properties>')
     if properties then
         for name, value in properties:gmatch('<property name="([^"]+)" value="([^"]+)"/>') do
@@ -474,19 +489,19 @@ function TiledLoader.parseTMX(content)
             end
         end
     end
-    
+
     for tileset in content:gmatch('<tileset[^>]*>(.-)</tileset>') do
         local firstgid = tonumber(tileset:match('firstgid="(%d+)"')) or 1
         local name = tileset:match('name="([^"]*)"') or "tileset"
         local source = tileset:match('source="([^"]*)"')
-        
+
         table.insert(mapInfo.tilesets, {
             firstgid = firstgid,
             name = name,
             source = source
         })
     end
-    
+
     local tilesX = math.floor(mapInfo.width / mapInfo.tileSize)
     local tilesY = math.floor(mapInfo.height / mapInfo.tileSize)
     mapInfo.collisionMap = {}
@@ -496,24 +511,24 @@ function TiledLoader.parseTMX(content)
             mapInfo.collisionMap[y][x] = 0
         end
     end
-    
+
     for layer in content:gmatch('<layer[^>]*>(.-)</layer>') do
         local layerName = layer:match('name="([^"]*)"') or "unnamed"
         local layerWidth = tonumber(layer:match('width="(%d+)"')) or tilesX
         local layerHeight = tonumber(layer:match('height="(%d+)"')) or tilesY
-        
+
         local encoding = layer:match('encoding="([^"]*)"')
         local compression = layer:match('compression="([^"]*)"')
         local rawData = layer:match('<data[^>]*>(.-)</data>')
         if rawData then
             rawData = rawData:gsub("^%s+", ""):gsub("%s+$", "")
         end
-        
+
         local tiles = {}
         if encoding then
             tiles = decodeLayerData(encoding, compression, rawData or "", layerWidth, layerHeight)
         end
-        
+
         mapInfo.layers[layerName] = {
             width = layerWidth,
             height = layerHeight,
@@ -521,10 +536,10 @@ function TiledLoader.parseTMX(content)
             encoding = encoding
         }
     end
-    
+
     for objectGroup in content:gmatch('<objectgroup[^>]*>(.-)</objectgroup>') do
         local groupName = objectGroup:match('name="([^"]*)"') or "objects"
-        
+
         for obj in objectGroup:gmatch('<object[^>]*/>') do
             local objType = obj:match('type="([^"]*)"') or "generic"
             local objX = tonumber(obj:match('x="(%d+)"')) or 0
@@ -532,7 +547,7 @@ function TiledLoader.parseTMX(content)
             local objWidth = tonumber(obj:match('width="(%d+)"')) or mapInfo.tileSize
             local objHeight = tonumber(obj:match('height="(%d+)"')) or mapInfo.tileSize
             local objName = obj:match('name="([^"]*)"') or ""
-            
+
             local newObj = {
                 type = objType,
                 name = objName,
@@ -541,13 +556,13 @@ function TiledLoader.parseTMX(content)
                 width = objWidth,
                 height = objHeight
             }
-            
+
             if groupName == "collision" or objType == "collision" then
                 local tileX = math.floor(objX / mapInfo.tileSize)
                 local tileY = math.floor(objY / mapInfo.tileSize)
                 local tilesW = math.ceil(objWidth / mapInfo.tileSize)
                 local tilesH = math.ceil(objHeight / mapInfo.tileSize)
-                
+
                 for ty = tileY, math.min(tileY + tilesH - 1, tilesY - 1) do
                     for tx = tileX, math.min(tileX + tilesW - 1, tilesX - 1) do
                         if mapInfo.collisionMap[ty] then
@@ -591,12 +606,12 @@ function TiledLoader.parseTMX(content)
             end
         end
     end
-    
+
     if #mapInfo.spawnPoints == 0 then
         mapInfo.spawnPoints = {{x = mapInfo.width / 2, y = mapInfo.height / 2}}
     end
-    
-    return MapData.new(mapInfo)
+
+    return MapData.create(mapInfo)
 end
 
 function TiledLoader.loadTileset(filepath)
@@ -604,12 +619,12 @@ function TiledLoader.loadTileset(filepath)
         print("Warning: Tileset file not found: " .. filepath)
         return nil
     end
-    
+
     local content = love.filesystem.read(filepath)
     if not content then
         return nil
     end
-    
+
     local tileset = {
         name = "",
         image = "",
@@ -619,12 +634,12 @@ function TiledLoader.loadTileset(filepath)
         columns = 0,
         firstgid = 1
     }
-    
+
     local imageTag = content:match('<image[^>]*>')
     if imageTag then
         tileset.image = imageTag:match('source="([^"]*)"') or ""
     end
-    
+
     local tsTag = content:match('<tileset[^>]*>')
     if tsTag then
         tileset.name = tsTag:match('name="([^"]*)"') or ""
@@ -633,7 +648,7 @@ function TiledLoader.loadTileset(filepath)
         tileset.tileCount = tonumber(tsTag:match('tilecount="(%d+)"')) or 0
         tileset.columns = tonumber(tsTag:match('columns="(%d+)"')) or 0
     end
-    
+
     if tileset.image ~= "" then
         local imagePath = filepath:match("(.-)[^/]+$") .. tileset.image
         local success, image = pcall(love.graphics.newImage, imagePath)
@@ -641,7 +656,7 @@ function TiledLoader.loadTileset(filepath)
             tileset.imageData = image
         end
     end
-    
+
     return tileset
 end
 
@@ -657,7 +672,7 @@ end
 
 function TiledLoader.exportToTMX(map, filepath)
     local tmx = {}
-    
+
     table.insert(tmx, '<?xml version="1.0" encoding="UTF-8"?>')
     table.insert(tmx, string.format(
         '<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" ' ..
@@ -666,7 +681,7 @@ function TiledLoader.exportToTMX(map, filepath)
         math.floor(map.height / map.tileSize),
         map.tileSize, map.tileSize
     ))
-    
+
     table.insert(tmx, '  <properties>')
     if map.season then
         table.insert(tmx, string.format('    <property name="season" value="%s"/>', map.season))
@@ -675,7 +690,7 @@ function TiledLoader.exportToTMX(map, filepath)
         table.insert(tmx, string.format('    <property name="name" value="%s"/>', map.name))
     end
     table.insert(tmx, '  </properties>')
-    
+
     for _, layer in pairs(map.layers or {}) do
         table.insert(tmx, string.format(
             '  <layer name="%s" width="%d" height="%d">',
@@ -690,22 +705,22 @@ function TiledLoader.exportToTMX(map, filepath)
         table.insert(tmx, '    </data>')
         table.insert(tmx, '  </layer>')
     end
-    
+
     table.insert(tmx, '</map>')
-    
+
     local content = table.concat(tmx, "\n")
-    
+
     if filepath then
         love.filesystem.write(filepath, content)
     end
-    
+
     return content
 end
 
 function TiledLoader.exportToJSON(map, filepath)
     local tilesX = math.floor(map.width / map.tileSize)
     local tilesY = math.floor(map.height / map.tileSize)
-    
+
     local jsonData = {
         compressionlevel = -1,
         height = tilesY,
@@ -724,14 +739,14 @@ function TiledLoader.exportToJSON(map, filepath)
         width = tilesX,
         properties = {}
     }
-    
+
     if map.season then
         jsonData.properties.season = map.season
     end
     if map.name then
         jsonData.properties.name = map.name
     end
-    
+
     local layerId = 1
     for layerName, layer in pairs(map.layers or {}) do
         table.insert(jsonData.layers, {
@@ -748,13 +763,13 @@ function TiledLoader.exportToJSON(map, filepath)
         })
         layerId = layerId + 1
     end
-    
+
     local content = json.encode(jsonData)
-    
+
     if filepath then
         love.filesystem.write(filepath, content)
     end
-    
+
     return content
 end
 

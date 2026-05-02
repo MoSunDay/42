@@ -2,7 +2,6 @@ local constants = require("network.constants")
 local bit = require("bit")
 
 local packet = {}
-packet.__index = packet
 
 local function pack_u16(value)
     return string.char(
@@ -42,40 +41,42 @@ local function unpack_u32(data, offset)
     return b1 * 16777216 + b2 * 65536 + b3 * 256 + b4
 end
 
-function packet.new(msg_type, seq, ack, ack_mask, payload, flags)
-    local self = setmetatable({}, packet)
-    self.msg_type = msg_type or 0
-    self.seq = seq or 0
-    self.ack = ack or 0
-    self.ack_mask = ack_mask or 0
-    self.payload = payload or ""
-    self.flags = flags or 0
-    self.timestamp = 0
-    return self
+function packet.create(msg_type, seq, ack, ack_mask, payload, flags)
+    return {
+        msg_type = msg_type or 0,
+        seq = seq or 0,
+        ack = ack or 0,
+        ack_mask = ack_mask or 0,
+        payload = payload or "",
+        flags = flags or 0,
+        timestamp = 0,
+    }
 end
 
-function packet:is_reliable()
-    if constants.ReliableTypes[self.msg_type] then
+packet.new = packet.create
+
+function packet.is_reliable(pkt)
+    if constants.ReliableTypes[pkt.msg_type] then
         return true
     end
-    return bit.band(self.flags, 0x01) ~= 0
+    return bit.band(pkt.flags, 0x01) ~= 0
 end
 
-function packet:needs_ack()
-    return self:is_reliable() and self.msg_type ~= constants.PacketType.ACK
+function packet.needs_ack(pkt)
+    return packet.is_reliable(pkt) and pkt.msg_type ~= constants.PacketType.ACK
 end
 
-function packet:pack()
-    local total_len = constants.HEADER_SIZE + #self.payload
+function packet.pack(pkt)
+    local total_len = constants.HEADER_SIZE + #pkt.payload
     
     local header = pack_u16(total_len)
-        .. pack_u8(self.msg_type)
-        .. pack_u8(self.flags)
-        .. pack_u32(self.seq)
-        .. pack_u32(self.ack)
-        .. pack_u8(self.ack_mask)
+        .. pack_u8(pkt.msg_type)
+        .. pack_u8(pkt.flags)
+        .. pack_u32(pkt.seq)
+        .. pack_u32(pkt.ack)
+        .. pack_u8(pkt.ack_mask)
     
-    return header .. self.payload
+    return header .. pkt.payload
 end
 
 function packet.unpack(data)
@@ -99,20 +100,20 @@ function packet.unpack(data)
         payload = data:sub(14, total_len)
     end
     
-    return packet.new(msg_type, seq, ack, ack_mask, payload, flags)
+    return packet.create(msg_type, seq, ack, ack_mask, payload, flags)
 end
 
-function packet:set_payload_json(data)
+function packet.set_payload_json(pkt, data)
     local json = require("lib.json")
-    self.payload = json.encode(data)
+    pkt.payload = json.encode(data)
 end
 
-function packet:get_payload_json()
-    if not self.payload or #self.payload == 0 then
+function packet.get_payload_json(pkt)
+    if not pkt.payload or #pkt.payload == 0 then
         return nil
     end
     local json = require("lib.json")
-    local ok, result = pcall(json.decode, self.payload)
+    local ok, result = pcall(json.decode, pkt.payload)
     if ok then
         return result
     end

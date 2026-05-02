@@ -1,97 +1,69 @@
--- pet_ui.lua - Pet UI for battle display
--- Shows pet status and renders pet in battle
-
+local AnimationManager = require("src.animations.animation_manager")
 local Theme = require("src.ui.theme")
+local Components = require("src.ui.components")
 
 local PetUI = {}
-PetUI.__index = PetUI
 
-function PetUI.new()
-    local self = setmetatable({}, PetUI)
-    
-    self.colors = Theme.colors.pet
-    
-    return self
+function PetUI.create()
+    local state = {}
+    state.colors = Theme.colors.pet
+    return state
 end
 
--- Draw pet in battle (in front of player)
-function PetUI:drawPet(pet, playerX, playerY, animationManager)
-    if not pet then
-        return
-    end
-    
-    -- Position pet in front of player (slightly forward and to the side)
+function PetUI.drawPet(state, pet, playerX, playerY, animationManager, assetManager)
+    if not pet then return end
+
     local petX = playerX - 40
     local petY = playerY + 10
-    
-    -- Get animation transform
+
     local offsetX, offsetY, rotation, scaleX, scaleY = 0, 0, 0, 1, 1
     if animationManager and pet.animationId then
-        offsetX, offsetY, rotation, scaleX, scaleY = animationManager:getTransform(pet.animationId)
+        offsetX, offsetY, rotation, scaleX, scaleY = AnimationManager.getTransform(animationManager, pet.animationId)
     end
-    
-    -- Apply transform
+
     love.graphics.push()
     love.graphics.translate(petX + offsetX, petY + offsetY)
     love.graphics.rotate(rotation)
     love.graphics.scale(scaleX, scaleY)
-    
-    -- Draw pet body
+
     love.graphics.setColor(pet.color)
     love.graphics.circle("fill", 0, 0, pet.size)
-    
-    -- Draw eyes
+
     love.graphics.setColor(0, 0, 0)
     love.graphics.circle("fill", -pet.size * 0.3, -pet.size * 0.2, pet.size * 0.15)
     love.graphics.circle("fill", pet.size * 0.3, -pet.size * 0.2, pet.size * 0.15)
-    
+
     love.graphics.pop()
-    
-    -- Draw HP bar above pet
-    self:drawPetHPBar(pet, petX, petY - pet.size - 15)
-end
 
-function PetUI:drawPetHPBar(pet, x, y)
-    local barWidth = 50
-    local barHeight = 6
-    
-    love.graphics.setColor(self.colors.hpBarBg)
-    love.graphics.rectangle("fill", x - barWidth/2, y, barWidth, barHeight, 2, 2)
-    
+    local barW, barH = 60, 10
     local hpPercent = pet.hp / pet.maxHp
-    love.graphics.setColor(Theme.getHpColor(hpPercent))
-    love.graphics.rectangle("fill", x - barWidth/2, y, barWidth * hpPercent, barHeight, 2, 2)
-    
-    love.graphics.setColor(Theme.colors.borderDim)
-    love.graphics.setLineWidth(1)
-    love.graphics.rectangle("line", x - barWidth/2, y, barWidth, barHeight, 2, 2)
+    Components.drawOrnateHPBar(
+        petX - barW / 2, petY - pet.size - 20,
+        barW, barH, hpPercent, nil, assetManager
+    )
 end
 
-function PetUI:drawPetPanel(pet, x, y, width, height)
-    if not pet then
-        return
-    end
-    
-    love.graphics.setColor(self.colors.panel)
-    love.graphics.rectangle("fill", x, y, width, height, 5, 5)
-    
-    love.graphics.setColor(Theme.colors.border)
-    love.graphics.setLineWidth(2)
-    love.graphics.rectangle("line", x, y, width, height, 5, 5)
-    love.graphics.setLineWidth(1)
-    
-    love.graphics.setColor(pet.color)
-    love.graphics.circle("fill", x + 25, y + 25, 15)
-    
-    love.graphics.setColor(self.colors.text)
-    love.graphics.print(pet.name, x + 50, y + 10)
-    
-    love.graphics.setColor(Theme.colors.error)
-    love.graphics.print("HP: " .. pet.hp .. "/" .. pet.maxHp, x + 50, y + 30)
-    
+function PetUI.drawPetPanel(state, pet, x, y, width, height, assetManager)
+    if not pet then return end
+
+    Components.drawOrnatePanel(x, y, width, height, assetManager, {
+        title = pet.name,
+        corners = true,
+        glow = true,
+        shimmer = true
+    })
+
+    Theme.drawGemIcon(x + 25, y + 25, 12, Theme.gem.emerald)
+
+    love.graphics.setColor(Theme.gold.bright)
+    love.graphics.setFont(love.graphics.getFont())
+    love.graphics.print(pet.name, x + 45, y + 12)
+
+    local hpPercent = pet.hp / pet.maxHp
+    Components.drawOrnateHPBar(x + 10, y + 35, width - 20, 12, hpPercent, nil, assetManager)
+
     love.graphics.setColor(Theme.colors.textDim)
-    love.graphics.print("ATK:" .. pet.attack .. " DEF:" .. pet.defense, x + 10, y + 55)
+    love.graphics.print("ATK:" .. pet.attack .. "  DEF:" .. pet.defense, x + 10, y + 55)
 end
 
 return PetUI
-

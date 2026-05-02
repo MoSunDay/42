@@ -20,10 +20,10 @@ MapManager.debugMode = false
 MapManager.useSTI = false
 
 function MapManager.init()
-    MapManager.tilesetManager = TilesetManager.new()
+    MapManager.tilesetManager = TilesetManager.create()
     MapManager.tileAnimator = TileAnimator.new()
-    MapManager.autotile = Autotile.new()
-    MapManager.particleSystem = ParticleSystem.new()
+    MapManager.autotile = Autotile.create()
+    MapManager.particleSystem = ParticleSystem.create()
 end
 
 function MapManager.loadMap(mapId, useTiled)
@@ -60,7 +60,7 @@ function MapManager.loadMap(mapId, useTiled)
         end
         
         if MapManager.particleSystem and map.season then
-            MapManager.particleSystem:setSeason(map.season)
+            ParticleSystem.setSeason(MapManager.particleSystem, map.season)
         end
         
         if MapManager.debugMode then
@@ -83,7 +83,7 @@ function MapManager.loadLuaMap(mapId)
         return nil
     end
     
-    return MapData.new(mapConfig)
+    return MapData.create(mapConfig)
 end
 
 function MapManager.loadTiledMap(mapId)
@@ -118,7 +118,7 @@ function MapManager.loadTiledMap(mapId)
                 if layer.tiles and #layer.tiles > 0 then
                     local width = math.floor(map.width / map.tileSize)
                     local height = math.floor(map.height / map.tileSize)
-                    layer.tiles = MapManager.autotile:processMap(layer.tiles, width, height)
+                    layer.tiles = Autotile.processMap(MapManager.autotile, layer.tiles, width, height)
                 end
             end
         end
@@ -196,8 +196,9 @@ function MapManager.update(dt, camera, screenWidth)
     end
     
     if MapManager.particleSystem and camera and MapManager.currentMap then
-        MapManager.particleSystem:update(dt)
-        MapManager.particleSystem:emitFromTop(
+        ParticleSystem.update(MapManager.particleSystem, dt)
+        ParticleSystem.emitFromTop(
+            MapManager.particleSystem,
             screenWidth or 1280,
             camera.x,
             camera.y,
@@ -209,13 +210,13 @@ end
 
 function MapManager.drawParticles(camera)
     if MapManager.particleSystem then
-        MapManager.particleSystem:draw(camera)
+        ParticleSystem.draw(MapManager.particleSystem, camera)
     end
 end
 
 function MapManager.getTilesetManager()
     if not MapManager.tilesetManager then
-        MapManager.tilesetManager = TilesetManager.new()
+        MapManager.tilesetManager = TilesetManager.create()
     end
     return MapManager.tilesetManager
 end
@@ -229,21 +230,21 @@ end
 
 function MapManager.getAutotile()
     if not MapManager.autotile then
-        MapManager.autotile = Autotile.new()
+        MapManager.autotile = Autotile.create()
     end
     return MapManager.autotile
 end
 
 function MapManager.getParticleSystem()
     if not MapManager.particleSystem then
-        MapManager.particleSystem = ParticleSystem.new()
+        MapManager.particleSystem = ParticleSystem.create()
     end
     return MapManager.particleSystem
 end
 
 function MapManager.setParticlesEnabled(enabled)
     if MapManager.particleSystem then
-        MapManager.particleSystem:setEnabled(enabled)
+        ParticleSystem.setEnabled(MapManager.particleSystem, enabled)
     end
 end
 

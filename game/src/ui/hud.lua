@@ -1,104 +1,84 @@
--- hud.lua - Game HUD interface
--- Display coordinates, minimap, etc.
-
 local MapRenderer = require("src.ui.map_renderer")
 local Theme = require("src.ui.theme")
 local Components = require("src.ui.components")
+local Animation = require("src.ui.animation")
 
 local HUD = {}
-HUD.__index = HUD
 
-function HUD.new(assetManager)
-    local self = setmetatable({}, HUD)
+function HUD.create(assetManager)
+    local state = {}
 
-    self.assetManager = assetManager
+    state.assetManager = assetManager
+    state.screenWidth = love.graphics.getWidth()
+    state.screenHeight = love.graphics.getHeight()
 
-    -- Screen size
-    self.screenWidth = love.graphics.getWidth()
-    self.screenHeight = love.graphics.getHeight()
-
-    -- Minimap config
-    self.minimap = {
+    state.minimap = {
         size = 180,
-        x = self.screenWidth - 200,
+        x = state.screenWidth - 200,
         y = 20,
         padding = 10
     }
 
-    -- Bottom-right buttons
-    self.buttons = {
+    state.buttons = {
         {
             name = "Menu",
             key = "menu",
-            x = self.screenWidth - 110,
-            y = self.screenHeight - 60,
+            gem = Theme.gem.topaz,
             width = 100,
-            height = 50,
-            color = Theme.colors.button,
-            hoverColor = Theme.colors.buttonHover,
-            icon = "M"
+            height = 50
         },
         {
             name = "Party",
             key = "party",
-            x = self.screenWidth - 220,
-            y = self.screenHeight - 60,
+            gem = Theme.gem.sapphire,
             width = 100,
-            height = 50,
-            color = Theme.colors.accent,
-            hoverColor = {Theme.colors.accent[1] * 1.2, Theme.colors.accent[2] * 1.2, Theme.colors.accent[3] * 1.2},
-            icon = "P"
+            height = 50
         },
         {
             name = "Pet",
             key = "pet",
-            x = self.screenWidth - 330,
-            y = self.screenHeight - 60,
+            gem = Theme.gem.emerald,
             width = 100,
-            height = 50,
-            color = Theme.colors.accentAlt,
-            hoverColor = {Theme.colors.accentAlt[1] * 1.2, Theme.colors.accentAlt[2] * 1.2, Theme.colors.accentAlt[3] * 1.2},
-            icon = "Pet"
+            height = 50
         }
     }
 
-    self.hoveredButton = nil
+    state.hoveredButton = nil
+    state.font = assetManager:getFont("default")
+    state.fontLarge = assetManager:getFont("large")
+    state.minimapHintAlpha = 0
+    state.minimapHintTimer = 0
+    state.panelState = Animation.createPanelState()
+    state.pulseState = Animation.createPulseState(3)
 
-    -- Fonts
-    self.font = assetManager:getFont("default")
-    self.fontLarge = assetManager:getFont("large")
-
-    -- Minimap click hint
-    self.minimapHintAlpha = 0
-    self.minimapHintTimer = 0
-
-    return self
+    return state
 end
 
--- Update HUD (for animations)
-function HUD:update(dt)
+function HUD.update(state, dt)
     MapRenderer.update(dt)
-    
-    if self.minimapHintTimer > 0 then
-        self.minimapHintTimer = self.minimapHintTimer - dt
-        self.minimapHintAlpha = math.max(0, self.minimapHintTimer / 2.0)
+    Animation.updatePulse(state.pulseState or {}, dt)
+
+    if state.minimapHintTimer > 0 then
+        state.minimapHintTimer = state.minimapHintTimer - dt
+        state.minimapHintAlpha = math.max(0, state.minimapHintTimer / 2.0)
     end
 end
 
--- Draw HUD
-function HUD:draw(playerX, playerY, map)
-    -- Draw minimap with coordinates below
-    self:drawMinimap(playerX, playerY, map)
-
-    -- Draw bottom-right buttons
-    self:drawButtons()
+function HUD.draw(state, playerX, playerY, map)
+    HUD.drawMinimap(state, playerX, playerY, map)
+    HUD.drawButtons(state)
 end
 
--- Draw minimap
-function HUD:drawMinimap(playerX, playerY, map)
-    local mm = self.minimap
+function HUD.drawMinimap(state, playerX, playerY, map)
+    local mm = state.minimap
+    local borderPad = 6
 
-    MapRenderer.drawMinimapFrame(mm.x, mm.y, mm.size, mm.size, "modern")
+    Components.drawOrnatePanel(
+        mm.x - borderPad, mm.y - borderPad,
+        mm.size + borderPad * 2, mm.size + borderPad * 2,
+        state.assetManager,
+        { corners = true, glow = true, shimmer = true }
+    )
 
     MapRenderer.render(map, mm.x, mm.y, mm.size, mm.size, playerX, playerY, {
         showPlayer = true,
@@ -110,69 +90,84 @@ function HUD:drawMinimap(playerX, playerY, map)
 
     local coordY = mm.y + mm.size + 10
 
-    love.graphics.setColor(Theme.colors.minimap.background[1], Theme.colors.minimap.background[2], Theme.colors.minimap.background[3], 0.7)
-    MapRenderer.drawRoundedRect(mm.x, coordY, mm.size, 28, 5)
-    
-    love.graphics.setColor(Theme.colors.minimap.border[1], Theme.colors.minimap.border[2], Theme.colors.minimap.border[3], 0.7)
-    love.graphics.setLineWidth(1.5)
-    MapRenderer.drawRoundedRectLine(mm.x, coordY, mm.size, 28, 5)
-    love.graphics.setLineWidth(1)
+    Components.drawOrnatePanel(mm.x, coordY, mm.size, 28, state.assetManager, {
+        corners = false,
+        glow = false
+    })
 
-    love.graphics.setFont(self.font)
+    love.graphics.setFont(state.font)
     love.graphics.setColor(Theme.colors.text)
     love.graphics.print(string.format("X: %.0f  Y: %.0f", playerX, playerY), mm.x + 10, coordY + 7)
 
     if map and map.name then
-        local mapName = map.name
-        local nameY = mm.y - 18
-        
-        love.graphics.setColor(Theme.colors.minimap.background[1], Theme.colors.minimap.background[2], Theme.colors.minimap.background[3], 0.7)
-        MapRenderer.drawRoundedRect(mm.x, nameY, mm.size, 16, 3)
-        
-        love.graphics.setColor(Theme.colors.textBright)
-        love.graphics.printf(mapName, mm.x, nameY + 2, mm.size, "center")
+        local nameY = mm.y - 22
+        Components.drawOrnatePanel(mm.x, nameY, mm.size, 20, state.assetManager, {
+            corners = false,
+            glow = false
+        })
+
+        love.graphics.setColor(Theme.gold.bright)
+        love.graphics.printf(map.name, mm.x, nameY + 3, mm.size, "center")
     end
 
-    if self.minimapHintAlpha > 0 then
-        love.graphics.setColor(Theme.colors.warning[1], Theme.colors.warning[2], Theme.colors.warning[3], self.minimapHintAlpha * 0.8)
-        love.graphics.setFont(self.font)
+    if state.minimapHintAlpha > 0 then
+        love.graphics.setColor(Theme.colors.warning[1], Theme.colors.warning[2], Theme.colors.warning[3], state.minimapHintAlpha * 0.8)
+        love.graphics.setFont(state.font)
         love.graphics.printf("Click to open map", mm.x, mm.y + mm.size / 2 - 8, mm.size, "center")
     end
 
     love.graphics.setColor(1, 1, 1)
 end
 
--- Check if mouse is over minimap
-function HUD:isMouseOverMinimap(x, y)
-    local mm = self.minimap
+function HUD.isMouseOverMinimap(state, x, y)
+    local mm = state.minimap
     return x >= mm.x and x <= mm.x + mm.size and
            y >= mm.y and y <= mm.y + mm.size
 end
 
--- Show minimap hint
-function HUD:showMinimapHint()
-    self.minimapHintTimer = 2.0
-    self.minimapHintAlpha = 1.0
+function HUD.showMinimapHint(state)
+    state.minimapHintTimer = 2.0
+    state.minimapHintAlpha = 1.0
 end
 
-function HUD:drawButtons()
+function HUD.drawButtons(state)
     local mouseX, mouseY = love.mouse.getPosition()
+    local totalWidth = 0
+    local gap = 10
+    for _, btn in ipairs(state.buttons) do
+        totalWidth = totalWidth + btn.width + gap
+    end
+    totalWidth = totalWidth - gap
 
-    for _, button in ipairs(self.buttons) do
-        local isHovered = mouseX >= button.x and mouseX <= button.x + button.width and
-                         mouseY >= button.y and mouseY <= button.y + button.height
+    local startX = state.screenWidth - totalWidth - 20
+    local startY = state.screenHeight - 60
 
-        Components.drawButton(button.x, button.y, button.width, button.height, button.name, 
-            isHovered and "hover" or "normal", self.assetManager, self.font)
+    local btnX = startX
+    for _, btn in ipairs(state.buttons) do
+        btn.x = btnX
+        btn.y = startY
+        local isHovered = mouseX >= btn.x and mouseX <= btn.x + btn.width and
+                         mouseY >= btn.y and mouseY <= btn.y + btn.height
+
+        Components.drawOrnateButton(
+            btn.x, btn.y, btn.width, btn.height,
+            btn.name,
+            isHovered and "hover" or "normal",
+            state.assetManager,
+            state.font,
+            { gemColor = btn.gem }
+        )
+
+        btnX = btnX + btn.width + gap
     end
 
     love.graphics.setColor(1, 1, 1)
 end
 
--- Check if mouse is over any button
-function HUD:isMouseOverButton(x, y)
-    for _, button in ipairs(self.buttons) do
-        if x >= button.x and x <= button.x + button.width and
+function HUD.isMouseOverButton(state, x, y)
+    for _, button in ipairs(state.buttons) do
+        if button.x and button.y and
+           x >= button.x and x <= button.x + button.width and
            y >= button.y and y <= button.y + button.height then
             return button.key
         end
@@ -181,4 +176,3 @@ function HUD:isMouseOverButton(x, y)
 end
 
 return HUD
-

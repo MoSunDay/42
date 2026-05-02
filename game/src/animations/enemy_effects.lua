@@ -1,10 +1,5 @@
--- enemy_effects.lua - Enemy-specific visual effects
--- Different enemies have different attack and movement effects
-
 local EnemyEffects = {}
-EnemyEffects.__index = EnemyEffects
 
--- Effect database for different enemy types
 local EFFECT_DATABASE = {
     slime = {
         breathSpeed = 1.2,
@@ -57,24 +52,19 @@ local EFFECT_DATABASE = {
     }
 }
 
-function EnemyEffects.new()
-    local self = setmetatable({}, EnemyEffects)
-    
-    self.activeEffects = {}
-    
-    return self
+function EnemyEffects.create()
+    return {
+        activeEffects = {}
+    }
 end
 
--- Get effect data for enemy type
 function EnemyEffects.getEffectData(enemyType)
-    -- Try to match enemy type
     for key, effect in pairs(EFFECT_DATABASE) do
         if string.find(string.lower(enemyType), key) then
             return effect
         end
     end
-    
-    -- Default effect
+
     return {
         breathSpeed = 1.5,
         breathAmount = 0.05,
@@ -84,10 +74,9 @@ function EnemyEffects.getEffectData(enemyType)
     }
 end
 
--- Create attack effect particles
-function EnemyEffects:createAttackEffect(enemyType, x, y, targetX, targetY)
+function EnemyEffects.createAttackEffect(state, enemyType, x, y, targetX, targetY)
     local effect = EnemyEffects.getEffectData(enemyType)
-    
+
     local attackEffect = {
         type = effect.attackParticles,
         color = effect.attackColor,
@@ -99,8 +88,7 @@ function EnemyEffects:createAttackEffect(enemyType, x, y, targetX, targetY)
         duration = 0.3,
         particles = {}
     }
-    
-    -- Generate particles based on type
+
     if effect.attackParticles == "bounce" then
         for i = 1, 5 do
             table.insert(attackEffect.particles, {
@@ -132,53 +120,49 @@ function EnemyEffects:createAttackEffect(enemyType, x, y, targetX, targetY)
             })
         end
     end
-    
-    table.insert(self.activeEffects, attackEffect)
+
+    table.insert(state.activeEffects, attackEffect)
 end
 
--- Update all active effects
-function EnemyEffects:update(dt)
-    for i = #self.activeEffects, 1, -1 do
-        local effect = self.activeEffects[i]
+function EnemyEffects.update(state, dt)
+    for i = #state.activeEffects, 1, -1 do
+        local effect = state.activeEffects[i]
         effect.time = effect.time + dt
-        
-        -- Update particles
+
         for j = #effect.particles, 1, -1 do
             local p = effect.particles[j]
             p.life = p.life - dt
-            
+
             if effect.type == "bounce" then
                 p.x = p.x + p.vx * dt
                 p.y = p.y + p.vy * dt
-                p.vy = p.vy + 200 * dt  -- Gravity
+                p.vy = p.vy + 200 * dt
             elseif effect.type == "slash" then
                 p.distance = p.distance + 100 * dt
             elseif effect.type == "fire" then
                 p.x = p.x + p.vx * dt
                 p.y = p.y + p.vy * dt
             end
-            
+
             if p.life <= 0 then
                 table.remove(effect.particles, j)
             end
         end
-        
-        -- Remove finished effects
+
         if effect.time >= effect.duration and #effect.particles == 0 then
-            table.remove(self.activeEffects, i)
+            table.remove(state.activeEffects, i)
         end
     end
 end
 
--- Draw all active effects
-function EnemyEffects:draw()
-    for _, effect in ipairs(self.activeEffects) do
+function EnemyEffects.draw(state)
+    for _, effect in ipairs(state.activeEffects) do
         love.graphics.setColor(effect.color)
-        
+
         for _, p in ipairs(effect.particles) do
             local alpha = p.life / 0.5
             love.graphics.setColor(effect.color[1], effect.color[2], effect.color[3], alpha)
-            
+
             if effect.type == "bounce" then
                 love.graphics.circle("fill", p.x, p.y, 4)
             elseif effect.type == "slash" then
@@ -194,11 +178,10 @@ function EnemyEffects:draw()
     end
 end
 
--- Get movement offset for enemy type
 function EnemyEffects.getMovementOffset(enemyType, time)
     local effect = EnemyEffects.getEffectData(enemyType)
     local offsetX, offsetY = 0, 0
-    
+
     if effect.moveStyle == "bounce" then
         offsetY = math.abs(math.sin(time * 3)) * -5
     elseif effect.moveStyle == "float" then
@@ -214,9 +197,8 @@ function EnemyEffects.getMovementOffset(enemyType, time)
             offsetY = -2
         end
     end
-    
+
     return offsetX, offsetY
 end
 
 return EnemyEffects
-

@@ -2,7 +2,6 @@
 -- 程序化地图生成器
 
 local MapGenerator = {}
-MapGenerator.__index = MapGenerator
 
 local THEMES = {
     forest = {
@@ -154,21 +153,21 @@ local function generateBuildings(theme, mapWidth, mapHeight, count)
     local themeData = THEMES[theme]
     local bTypes = themeData.buildingTypes
     local bColors = themeData.buildingColors
-    
+
     for i = 1, count do
         local bType = bTypes[math.random(#bTypes)]
         local template = BUILDING_TEMPLATES[bType] or {width = 100, height = 100}
         local color = bColors[math.random(#bColors)]
-        
+
         local x, y, attempts = 0, 0, 0
         local maxAttempts = 50
-        
+
         repeat
             x = math.random(150, mapWidth - template.width - 150)
             y = math.random(150, mapHeight - template.height - 150)
             attempts = attempts + 1
         until not checkOverlap(x, y, template.width, template.height, buildings, 80) or attempts >= maxAttempts
-        
+
         if attempts < maxAttempts then
             table.insert(buildings, {
                 type = bType,
@@ -181,7 +180,7 @@ local function generateBuildings(theme, mapWidth, mapHeight, count)
             })
         end
     end
-    
+
     return buildings
 end
 
@@ -189,12 +188,12 @@ local function generateEncounterZones(theme, mapWidth, mapHeight, count, level)
     local zones = {}
     local themeData = THEMES[theme]
     local monsters = themeData.monsters
-    
+
     for i = 1, count do
         local x = math.random(200, mapWidth - 200)
         local y = math.random(200, mapHeight - 200)
         local radius = math.random(80, 150)
-        
+
         table.insert(zones, {
             x = x,
             y = y,
@@ -204,19 +203,19 @@ local function generateEncounterZones(theme, mapWidth, mapHeight, count, level)
             monsters = monsters
         })
     end
-    
+
     return zones
 end
 
 local function generateSpawnPoints(mapWidth, mapHeight, count)
     local spawns = {}
-    
+
     table.insert(spawns, {
         x = mapWidth / 2,
         y = mapHeight / 2,
         name = "Center Spawn"
     })
-    
+
     for i = 2, count do
         local angle = (i - 1) * (2 * math.pi / (count - 1))
         local dist = math.min(mapWidth, mapHeight) * 0.3
@@ -226,7 +225,7 @@ local function generateSpawnPoints(mapWidth, mapHeight, count)
             name = "Spawn Point " .. i
         })
     end
-    
+
     return spawns
 end
 
@@ -234,7 +233,7 @@ local function generateCollisionMap(mapWidth, mapHeight, tileSize)
     local tilesX = math.floor(mapWidth / tileSize)
     local tilesY = math.floor(mapHeight / tileSize)
     local collisionMap = {}
-    
+
     for y = 0, tilesY - 1 do
         collisionMap[y] = {}
         for x = 0, tilesX - 1 do
@@ -245,7 +244,7 @@ local function generateCollisionMap(mapWidth, mapHeight, tileSize)
             end
         end
     end
-    
+
     return collisionMap
 end
 
@@ -255,20 +254,20 @@ function MapGenerator.generate(config)
     if not themeData then
         themeData = THEMES.forest
     end
-    
+
     local minTiles = config.minTiles or 30
     local maxTiles = config.maxTiles or 60
     local tilesX = math.random(minTiles, maxTiles)
     local tilesY = math.random(minTiles, maxTiles)
     local tileSize = config.tileSize or 64
-    
+
     local mapWidth = tilesX * tileSize
     local mapHeight = tilesY * tileSize
-    
+
     local buildingCount = math.random(5, 8)
     local encounterCount = math.random(4, 6)
     local spawnCount = math.random(2, 3)
-    
+
     local map = {
         id = config.id or "generated_map",
         name = config.name or "Generated Map",
@@ -277,25 +276,25 @@ function MapGenerator.generate(config)
         tileSize = tileSize,
         season = themeData.season,
         backgroundColor = themeData.bgColor,
-        
+
         buildings = generateBuildings(theme, mapWidth, mapHeight, buildingCount),
         encounterZones = generateEncounterZones(theme, mapWidth, mapHeight, encounterCount, config.level or 1),
         spawnPoints = generateSpawnPoints(mapWidth, mapHeight, spawnCount),
         collisionMap = generateCollisionMap(mapWidth, mapHeight, tileSize),
-        
+
         npcs = {},
         objects = {},
         layers = {
             ground = {}
         },
-        
+
         metadata = {
             theme = theme,
             level = config.level or 1,
             generated = true
         }
     }
-    
+
     if config.includeTeleporter ~= false then
         table.insert(map.npcs, {
             id = "teleporter",
@@ -306,7 +305,7 @@ function MapGenerator.generate(config)
             dialogue = "I can guide you to other realms. Where would you like to go?"
         })
     end
-    
+
     return map
 end
 

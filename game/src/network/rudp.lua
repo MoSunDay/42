@@ -3,44 +3,44 @@ local Packet = require("network.packet")
 local bit = require("bit")
 
 local rudp = {}
-rudp.__index = rudp
 
-function rudp.new(send_func)
-    local self = setmetatable({}, rudp)
-    self.send_func = send_func
-    self.next_seq = 1
-    self.remote_seq = 0
-    self.send_buffer = {}
-    self.recv_window = {}
-    self.ack_mask = 0
-    self.last_recv_time = 0
-    self.last_send_time = 0
-    self.connected = true
-    self:reset_time()
-    return self
+function rudp.create(send_func)
+    local state = {
+        send_func = send_func,
+        next_seq = 1,
+        remote_seq = 0,
+        send_buffer = {},
+        recv_window = {},
+        ack_mask = 0,
+        last_recv_time = 0,
+        last_send_time = 0,
+        connected = true,
+    }
+    rudp.reset_time(state)
+    return state
 end
 
-function rudp:reset_time()
+function rudp.reset_time(state)
     local now = love.timer.getTime() * 1000
-    self.last_recv_time = now
-    self.last_send_time = now
+    state.last_recv_time = now
+    state.last_send_time = now
 end
 
-function rudp:_now_ms()
+function rudp._now_ms()
     return love.timer.getTime() * 1000
 end
 
-function rudp:_next_sequence()
-    local seq = self.next_seq
-    self.next_seq = bit.band(self.next_seq + 1, 0xFFFFFFFF)
+function rudp._next_sequence(state)
+    local seq = state.next_seq
+    state.next_seq = bit.band(state.next_seq + 1, 0xFFFFFFFF)
     return seq
 end
 
-function rudp:_calculate_ack_mask()
-    local ack = self.remote_seq
+function rudp._calculate_ack_mask(state)
+    local ack = state.remote_seq
     local ack_mask = 0
     
-    for seq, _ in pairs(self.recv_window) do
+    for seq, _ in pairs(state.recv_window) do
         local diff = ack - seq
         if diff > 0 and diff <= 32 then
             ack_mask = bit.bor(ack_mask, bit.lshift(1, diff - 1))
@@ -50,23 +50,23 @@ function rudp:_calculate_ack_mask()
     return ack, ack_mask
 end
 
-function rudp:send(pkt)
-    local now = self:_now_ms()
-    self.last_send_time = now
+function rudp.send(state, pkt)
+    local now = rudp._now_ms()
+    state.last_send_time = now
     
     if pkt.seq == 0 then
-        pkt.seq = self:_next_sequence()
+        pkt.seq = rudp._next_sequence(state)
     end
     
-    local ack, ack_mask = self:_calculate_ack_mask()
+    local ack, ack_mask = rudp._calculate_ack_mask(state)
     pkt.ack = ack
     pkt.ack_mask = ack_mask
     
-    local data = pkt:pack()
-    self.send_func(data)
+    local data = Packet.pack(pkt)
+    state.send_func(data)
     
-    if pkt:needs_ack() then
-        self.send_buffer[pkt.seq] = {
+    if Packet.needs_ack(pkt) then
+        state.send_buffer[pkt.seq] = {
             packet = pkt,
             send_time = now,
             retries = 0,
@@ -77,54 +77,54 @@ function rudp:send(pkt)
     return true
 end
 
-function rudp:send_immediate(pkt)
-    local now = self:_now_ms()
-    self.last_send_time = now
+function rudp.send_immediate(state, pkt)
+    local now = rudp._now_ms()
+    state.last_send_time = now
     
-    local ack, ack_mask = self:_calculate_ack_mask()
+    local ack, ack_mask = rudp._calculate_ack_mask(state)
     pkt.ack = ack
     pkt.ack_mask = ack_mask
     
-    self.send_func(pkt:pack())
+    state.send_func(Packet.pack(pkt))
 end
 
-function rudp:recv(pkt)
-    local now = self:_now_ms()
-    self.last_recv_time = now
+function rudp.recv(state, pkt)
+    local now = rudp._now_ms()
+    state.last_recv_time = now
     
-    self:_process_acks(pkt.ack, pkt.ack_mask)
+    rudp._process_acks(state, pkt.ack, pkt.ack_mask)
     
     if pkt.msg_type == constants.PacketType.ACK then
         return nil
     end
     
     if pkt.seq > 0 then
-        if pkt.seq <= self.remote_seq then
-            local diff = self.remote_seq - pkt.seq
+        if pkt.seq <= state.remote_seq then
+            local diff = state.remote_seq - pkt.seq
             if diff < constants.RECV_WINDOW_SIZE then
                 return nil
             end
-        elseif pkt.seq > self.remote_seq then
-            self.remote_seq = pkt.seq
+        elseif pkt.seq > state.remote_seq then
+            state.remote_seq = pkt.seq
         end
         
-        self.recv_window[pkt.seq] = pkt
-        self:_clean_recv_window()
+        state.recv_window[pkt.seq] = pkt
+        rudp._clean_recv_window(state)
     end
     
-    if pkt:needs_ack() then
-        local ack, ack_mask = self:_calculate_ack_mask()
+    if Packet.needs_ack(pkt) then
+        local ack, ack_mask = rudp._calculate_ack_mask(state)
         local ack_packet = Packet.new(constants.PacketType.ACK, 0, pkt.seq, ack_mask)
-        self:send_immediate(ack_packet)
+        rudp.send_immediate(state, ack_packet)
     end
     
     return pkt
 end
 
-function rudp:_process_acks(ack, ack_mask)
+function rudp._process_acks(state, ack, ack_mask)
     local to_remove = {}
     
-    for seq, pending in pairs(self.send_buffer) do
+    for seq, pending in pairs(state.send_buffer) do
         if seq == ack then
             table.insert(to_remove, seq)
         else
@@ -138,33 +138,33 @@ function rudp:_process_acks(ack, ack_mask)
     end
     
     for _, seq in ipairs(to_remove) do
-        self.send_buffer[seq] = nil
+        state.send_buffer[seq] = nil
     end
 end
 
-function rudp:_clean_recv_window()
-    local threshold = self.remote_seq - constants.RECV_WINDOW_SIZE
+function rudp._clean_recv_window(state)
+    local threshold = state.remote_seq - constants.RECV_WINDOW_SIZE
     local to_remove = {}
     
-    for seq, _ in pairs(self.recv_window) do
+    for seq, _ in pairs(state.recv_window) do
         if seq <= threshold then
             table.insert(to_remove, seq)
         end
     end
     
     for _, seq in ipairs(to_remove) do
-        self.recv_window[seq] = nil
+        state.recv_window[seq] = nil
     end
 end
 
-function rudp:update()
-    local now = self:_now_ms()
+function rudp.update(state)
+    local now = rudp._now_ms()
     local timeout_ms = constants.RETRY_TIMEOUT_MS
     
     local failed = {}
     local to_remove = {}
     
-    for seq, pending in pairs(self.send_buffer) do
+    for seq, pending in pairs(state.send_buffer) do
         local elapsed = now - pending.last_send
         
         if elapsed >= timeout_ms then
@@ -175,35 +175,35 @@ function rudp:update()
                 pending.retries = pending.retries + 1
                 pending.last_send = now
                 
-                local ack, ack_mask = self:_calculate_ack_mask()
+                local ack, ack_mask = rudp._calculate_ack_mask(state)
                 pending.packet.ack = ack
                 pending.packet.ack_mask = ack_mask
                 
-                self.send_func(pending.packet:pack())
+                state.send_func(Packet.pack(pending.packet))
             end
         end
     end
     
     for _, seq in ipairs(to_remove) do
-        self.send_buffer[seq] = nil
+        state.send_buffer[seq] = nil
     end
     
     return failed
 end
 
-function rudp:is_timed_out()
-    local elapsed = self:_now_ms() - self.last_recv_time
+function rudp.is_timed_out(state)
+    local elapsed = rudp._now_ms() - state.last_recv_time
     return elapsed >= constants.CONNECTION_TIMEOUT_MS
 end
 
-function rudp:needs_heartbeat()
-    local elapsed = self:_now_ms() - self.last_send_time
+function rudp.needs_heartbeat(state)
+    local elapsed = rudp._now_ms() - state.last_send_time
     return elapsed >= constants.HEARTBEAT_INTERVAL_MS
 end
 
-function rudp:get_pending_count()
+function rudp.get_pending_count(state)
     local count = 0
-    for _ in pairs(self.send_buffer) do
+    for _ in pairs(state.send_buffer) do
         count = count + 1
     end
     return count

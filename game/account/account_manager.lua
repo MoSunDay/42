@@ -28,7 +28,7 @@ end
 -- Create default test accounts
 function AccountManager.createDefaultAccounts()
     -- Account 1: test/123 (with multiple characters)
-    local char1 = CharacterData.new({
+    local char1 = CharacterData.create({
         username = "test",
         characterName = "Test Hero",
         maxHp = 150,
@@ -49,7 +49,7 @@ function AccountManager.createDefaultAccounts()
     }
 
     -- Account 2: admin/admin (with multiple characters)
-    local char2 = CharacterData.new({
+    local char2 = CharacterData.create({
         username = "admin",
         characterName = "Admin",
         maxHp = 250,
@@ -64,7 +64,7 @@ function AccountManager.createDefaultAccounts()
     char2.id = "char_admin_001"
     char2.appearanceId = "yellow_mage"
 
-    local char3 = CharacterData.new({
+    local char3 = CharacterData.create({
         username = "admin",
         characterName = "Warrior",
         maxHp = 200,
@@ -85,7 +85,7 @@ function AccountManager.createDefaultAccounts()
     }
 
     -- Account 3: player/pass (single character)
-    local char4 = CharacterData.new({
+    local char4 = CharacterData.create({
         username = "player",
         characterName = "Brave Knight",
         maxHp = 100,
@@ -174,7 +174,13 @@ function AccountManager.saveCharacter()
     
     local username = AccountManager.currentCharacter.username
     if AccountManager.accounts[username] then
-        AccountManager.accounts[username].character = AccountManager.currentCharacter
+        local account = AccountManager.accounts[username]
+        for i, char in ipairs(account.characters) do
+            if char.id == AccountManager.currentCharacter.id then
+                account.characters[i] = AccountManager.currentCharacter
+                break
+            end
+        end
         print("Character data saved for: " .. username)
         return true
     end

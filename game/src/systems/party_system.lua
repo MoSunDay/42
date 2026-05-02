@@ -1,65 +1,48 @@
--- party_system.lua - Party/Team system
--- Manage party members (max 5 members)
-
 local PartySystem = {}
-PartySystem.__index = PartySystem
 
--- Party constants
 local MAX_PARTY_SIZE = 5
 
 function PartySystem.new()
-    local self = setmetatable({}, PartySystem)
-    
-    -- Party members (array of player data)
-    self.members = {}
-    
-    -- Party leader (index in members array)
-    self.leaderIndex = 1
-    
-    -- Party name
-    self.partyName = "Party"
-    
-    return self
+    return {
+        members = {},
+        leaderIndex = 1,
+        partyName = "Party",
+    }
 end
 
--- Add a member to the party
-function PartySystem:addMember(memberData)
-    if #self.members >= MAX_PARTY_SIZE then
+function PartySystem.addMember(state, memberData)
+    if #state.members >= MAX_PARTY_SIZE then
         print("Party is full! Maximum " .. MAX_PARTY_SIZE .. " members.")
         return false
     end
     
-    -- Check if member already in party
-    for _, member in ipairs(self.members) do
+    for _, member in ipairs(state.members) do
         if member.id == memberData.id then
             print("Member already in party: " .. memberData.name)
             return false
         end
     end
     
-    table.insert(self.members, memberData)
+    table.insert(state.members, memberData)
     print("Added to party: " .. memberData.name)
     
-    -- If this is the first member, make them leader
-    if #self.members == 1 then
-        self.leaderIndex = 1
+    if #state.members == 1 then
+        state.leaderIndex = 1
     end
     
     return true
 end
 
--- Remove a member from the party
-function PartySystem:removeMember(memberId)
-    for i, member in ipairs(self.members) do
+function PartySystem.removeMember(state, memberId)
+    for i, member in ipairs(state.members) do
         if member.id == memberId then
-            local removedMember = table.remove(self.members, i)
+            local removedMember = table.remove(state.members, i)
             print("Removed from party: " .. removedMember.name)
             
-            -- Adjust leader index if needed
-            if i == self.leaderIndex then
-                self.leaderIndex = 1
-            elseif i < self.leaderIndex then
-                self.leaderIndex = self.leaderIndex - 1
+            if i == state.leaderIndex then
+                state.leaderIndex = 1
+            elseif i < state.leaderIndex then
+                state.leaderIndex = state.leaderIndex - 1
             end
             
             return true
@@ -70,47 +53,40 @@ function PartySystem:removeMember(memberId)
     return false
 end
 
--- Set party leader
-function PartySystem:setLeader(memberIndex)
-    if memberIndex >= 1 and memberIndex <= #self.members then
-        self.leaderIndex = memberIndex
-        print("New party leader: " .. self.members[memberIndex].name)
+function PartySystem.setLeader(state, memberIndex)
+    if memberIndex >= 1 and memberIndex <= #state.members then
+        state.leaderIndex = memberIndex
+        print("New party leader: " .. state.members[memberIndex].name)
         return true
     end
     return false
 end
 
--- Get party leader
-function PartySystem:getLeader()
-    if #self.members > 0 and self.leaderIndex <= #self.members then
-        return self.members[self.leaderIndex]
+function PartySystem.getLeader(state)
+    if #state.members > 0 and state.leaderIndex <= #state.members then
+        return state.members[state.leaderIndex]
     end
     return nil
 end
 
--- Get all party members
-function PartySystem:getMembers()
-    return self.members
+function PartySystem.getMembers(state)
+    return state.members
 end
 
--- Get party size
-function PartySystem:getSize()
-    return #self.members
+function PartySystem.getSize(state)
+    return #state.members
 end
 
--- Check if party is full
-function PartySystem:isFull()
-    return #self.members >= MAX_PARTY_SIZE
+function PartySystem.isFull(state)
+    return #state.members >= MAX_PARTY_SIZE
 end
 
--- Check if party is empty
-function PartySystem:isEmpty()
-    return #self.members == 0
+function PartySystem.isEmpty(state)
+    return #state.members == 0
 end
 
--- Get member by ID
-function PartySystem:getMember(memberId)
-    for _, member in ipairs(self.members) do
+function PartySystem.getMember(state, memberId)
+    for _, member in ipairs(state.members) do
         if member.id == memberId then
             return member
         end
@@ -118,29 +94,24 @@ function PartySystem:getMember(memberId)
     return nil
 end
 
--- Clear all members
-function PartySystem:clear()
-    self.members = {}
-    self.leaderIndex = 1
+function PartySystem.clear(state)
+    state.members = {}
+    state.leaderIndex = 1
     print("Party cleared")
 end
 
--- Set party name
-function PartySystem:setPartyName(name)
-    self.partyName = name
+function PartySystem.setPartyName(state, name)
+    state.partyName = name
 end
 
--- Get party name
-function PartySystem:getPartyName()
-    return self.partyName
+function PartySystem.getPartyName(state)
+    return state.partyName
 end
 
--- Get max party size
 function PartySystem.getMaxSize()
     return MAX_PARTY_SIZE
 end
 
--- Create member data structure
 function PartySystem.createMemberData(id, name, hp, maxHp, avatarColor)
     return {
         id = id,
@@ -153,4 +124,3 @@ function PartySystem.createMemberData(id, name, hp, maxHp, avatarColor)
 end
 
 return PartySystem
-

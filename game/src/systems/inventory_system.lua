@@ -4,81 +4,80 @@
 local ItemDatabase = require("src.systems.item_database")
 
 local InventorySystem = {}
-InventorySystem.__index = InventorySystem
 
 local MAX_SLOTS = 30
 
-function InventorySystem.new()
-    local self = setmetatable({}, InventorySystem)
-    
-    self.maxSlots = MAX_SLOTS
-    self.slots = {}
-    
-    for i = 1, self.maxSlots do
-        self.slots[i] = nil
+function InventorySystem.create()
+    local state = {}
+
+    state.maxSlots = MAX_SLOTS
+    state.slots = {}
+
+    for i = 1, state.maxSlots do
+        state.slots[i] = nil
     end
-    
-    return self
+
+    return state
 end
 
 -- Add item to inventory
 -- Returns: success, slotIndex or error message
-function InventorySystem:addItem(itemId)
+function InventorySystem.addItem(state, itemId)
     local itemData = ItemDatabase.getItem(itemId)
     if not itemData then
         return false, "Unknown item: " .. tostring(itemId)
     end
-    
+
     local emptySlot = nil
-    for i = 1, self.maxSlots do
-        if self.slots[i] == nil then
+    for i = 1, state.maxSlots do
+        if state.slots[i] == nil then
             emptySlot = i
             break
         end
     end
-    
+
     if not emptySlot then
         return false, "Inventory is full"
     end
-    
-    self.slots[emptySlot] = {
+
+    state.slots[emptySlot] = {
         id = itemId,
         name = itemData.name,
         type = itemData.type,
         slot = itemData.slot
     }
-    
+
     return true, emptySlot
 end
 
 -- Remove item from slot
 -- Returns: removed item or nil
-function InventorySystem:removeItem(slotIndex)
-    if slotIndex < 1 or slotIndex > self.maxSlots then
+function InventorySystem.removeItem(state, slotIndex)
+    if slotIndex < 1 or slotIndex > state.maxSlots then
         return nil
     end
-    
-    local item = self.slots[slotIndex]
-    self.slots[slotIndex] = nil
+
+    local item = state.slots[slotIndex]
+    state.slots[slotIndex] = nil
     return item
 end
 
 -- Get item at slot
-function InventorySystem:getItem(slotIndex)
-    if slotIndex < 1 or slotIndex > self.maxSlots then
+function InventorySystem.getItem(state, slotIndex)
+    if slotIndex < 1 or slotIndex > state.maxSlots then
         return nil
     end
-    return self.slots[slotIndex]
+    return state.slots[slotIndex]
 end
 
 -- Get all items (non-nil slots)
-function InventorySystem:getItems()
+function InventorySystem.getItems(state)
     local items = {}
-    for i = 1, self.maxSlots do
-        if self.slots[i] then
+    for i = 1, state.maxSlots do
+        if state.slots[i] then
             table.insert(items, {
                 slot = i,
-                item = self.slots[i]
+                item = state.slots[i]
             })
         end
     end
@@ -86,15 +85,15 @@ function InventorySystem:getItems()
 end
 
 -- Get all slots (including empty)
-function InventorySystem:getAllSlots()
-    return self.slots
+function InventorySystem.getAllSlots(state)
+    return state.slots
 end
 
 -- Get count of used slots
-function InventorySystem:getUsedSlots()
+function InventorySystem.getUsedSlots(state)
     local count = 0
-    for i = 1, self.maxSlots do
-        if self.slots[i] then
+    for i = 1, state.maxSlots do
+        if state.slots[i] then
             count = count + 1
         end
     end
@@ -102,25 +101,25 @@ function InventorySystem:getUsedSlots()
 end
 
 -- Get count of free slots
-function InventorySystem:getFreeSlots()
-    return self.maxSlots - self:getUsedSlots()
+function InventorySystem.getFreeSlots(state)
+    return state.maxSlots - InventorySystem.getUsedSlots(state)
 end
 
 -- Check if inventory is full
-function InventorySystem:isFull()
-    return self:getFreeSlots() == 0
+function InventorySystem.isFull(state)
+    return InventorySystem.getFreeSlots(state) == 0
 end
 
 -- Check if inventory is empty
-function InventorySystem:isEmpty()
-    return self:getUsedSlots() == 0
+function InventorySystem.isEmpty(state)
+    return InventorySystem.getUsedSlots(state) == 0
 end
 
 -- Find item by ID
 -- Returns: slotIndex or nil
-function InventorySystem:findItem(itemId)
-    for i = 1, self.maxSlots do
-        if self.slots[i] and self.slots[i].id == itemId then
+function InventorySystem.findItem(state, itemId)
+    for i = 1, state.maxSlots do
+        if state.slots[i] and state.slots[i].id == itemId then
             return i
         end
     end
@@ -128,78 +127,78 @@ function InventorySystem:findItem(itemId)
 end
 
 -- Find all items of a type
-function InventorySystem:findItemsByType(itemType)
+function InventorySystem.findItemsByType(state, itemType)
     local results = {}
-    for i = 1, self.maxSlots do
-        if self.slots[i] and self.slots[i].type == itemType then
-            table.insert(results, { slot = i, item = self.slots[i] })
+    for i = 1, state.maxSlots do
+        if state.slots[i] and state.slots[i].type == itemType then
+            table.insert(results, { slot = i, item = state.slots[i] })
         end
     end
     return results
 end
 
 -- Find all items for a specific equipment slot
-function InventorySystem:findEquipmentForSlot(equipSlot)
+function InventorySystem.findEquipmentForSlot(state, equipSlot)
     local results = {}
-    for i = 1, self.maxSlots do
-        if self.slots[i] and self.slots[i].slot == equipSlot then
-            table.insert(results, { slot = i, item = self.slots[i] })
+    for i = 1, state.maxSlots do
+        if state.slots[i] and state.slots[i].slot == equipSlot then
+            table.insert(results, { slot = i, item = state.slots[i] })
         end
     end
     return results
 end
 
 -- Get all equipment items in inventory
-function InventorySystem:getEquipmentItems()
-    return self:findItemsByType(ItemDatabase.TYPE.EQUIPMENT)
+function InventorySystem.getEquipmentItems(state)
+    return InventorySystem.findItemsByType(state, ItemDatabase.TYPE.EQUIPMENT)
 end
 
 -- Get all consumable items in inventory
-function InventorySystem:getConsumableItems()
-    return self:findItemsByType(ItemDatabase.TYPE.CONSUMABLE)
+function InventorySystem.getConsumableItems(state)
+    return InventorySystem.findItemsByType(state, ItemDatabase.TYPE.CONSUMABLE)
 end
 
 -- Swap two items in inventory
-function InventorySystem:swapItems(slotA, slotB)
-    if slotA < 1 or slotA > self.maxSlots or 
-       slotB < 1 or slotB > self.maxSlots then
+function InventorySystem.swapItems(state, slotA, slotB)
+    if slotA < 1 or slotA > state.maxSlots or
+       slotB < 1 or slotB > state.maxSlots then
         return false
     end
-    
-    self.slots[slotA], self.slots[slotB] = self.slots[slotB], self.slots[slotA]
+
+    state.slots[slotA], state.slots[slotB] = state.slots[slotB], state.slots[slotA]
     return true
 end
 
 -- Clear all items
-function InventorySystem:clear()
-    for i = 1, self.maxSlots do
-        self.slots[i] = nil
+function InventorySystem.clear(state)
+    for i = 1, state.maxSlots do
+        state.slots[i] = nil
     end
 end
 
 -- Serialize for saving
-function InventorySystem:serialize()
+function InventorySystem.serialize(state)
     local data = {}
-    for i = 1, self.maxSlots do
-        if self.slots[i] then
-            data[i] = self.slots[i].id
+    for i = 1, state.maxSlots do
+        if state.slots[i] then
+            data[i] = state.slots[i].id
         end
     end
     return data
 end
 
 -- Deserialize from saved data
-function InventorySystem:deserialize(data)
+function InventorySystem.deserialize(state, data)
     if not data then return end
-    
-    self:clear()
-    
+
+    InventorySystem.clear(state)
+
     for slotIdx, itemId in pairs(data) do
         local slotNum = tonumber(slotIdx)
-        if slotNum and slotNum >= 1 and slotNum <= self.maxSlots then
+        if slotNum and slotNum >= 1 and slotNum <= state.maxSlots then
             local itemData = ItemDatabase.getItem(itemId)
             if itemData then
-                self.slots[slotNum] = {
+                state.slots[slotNum] = {
                     id = itemId,
                     name = itemData.name,
                     type = itemData.type,
@@ -211,8 +210,8 @@ function InventorySystem:deserialize(data)
 end
 
 -- Get max slots
-function InventorySystem:getMaxSlots()
-    return self.maxSlots
+function InventorySystem.getMaxSlots(state)
+    return state.maxSlots
 end
 
 return InventorySystem

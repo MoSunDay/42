@@ -1,108 +1,82 @@
--- equipment_ui.lua - Equipment UI panel
--- Displays equipment slots and allows equipping/unequipping items
-
 local Theme = require("src.ui.theme")
+local Components = require("src.ui.components")
+local SlotUtils = require("src.ui.slot_utils")
+local EquipmentSystem = require("src.systems.equipment_system")
 
 local EquipmentUI = {}
-EquipmentUI.__index = EquipmentUI
 
-function EquipmentUI.new()
-    local self = setmetatable({}, EquipmentUI)
+function EquipmentUI.create(assetManager)
+    local state = {}
     
-    self.visible = false
-    self.selectedSlot = 1
+    state.assetManager = assetManager
+    state.visible = false
+    state.selectedSlot = 1
     
-    self.colors = Theme.colors.equipmentUI
-    self.equipColors = Theme.colors.equipment
+    state.equipColors = Theme.colors.equipment
     
-    return self
+    return state
 end
 
--- Toggle visibility
-function EquipmentUI:toggle()
-    self.visible = not self.visible
+function EquipmentUI.toggle(state)
+    state.visible = not state.visible
 end
 
--- Show UI
-function EquipmentUI:show()
-    self.visible = true
+function EquipmentUI.show(state)
+    state.visible = true
 end
 
--- Hide UI
-function EquipmentUI:hide()
-    self.visible = false
+function EquipmentUI.hide(state)
+    state.visible = false
 end
 
--- Draw equipment UI
-function EquipmentUI:draw(equipmentSystem, x, y, width, height)
-    if not self.visible then
+function EquipmentUI.draw(state, equipmentSystem, x, y, width, height)
+    if not state.visible then
         return
     end
     
     local EquipmentSlots = require("src.systems.equipment_system").SLOTS
     
     local w, h = love.graphics.getDimensions()
-    love.graphics.setColor(Theme.colors.map.overlay)
-    love.graphics.rectangle("fill", 0, 0, w, h)
+    Components.drawOverlay(w, h, 0.7)
     
-    love.graphics.setColor(self.colors.panel)
-    love.graphics.rectangle("fill", x, y, width, height, 10, 10)
-    
-    love.graphics.setColor(self.colors.border)
-    love.graphics.setLineWidth(3)
-    love.graphics.rectangle("line", x, y, width, height, 10, 10)
-    love.graphics.setLineWidth(1)
-    
-    love.graphics.setColor(self.colors.text)
-    love.graphics.print("Equipment", x + 20, y + 15, 0, 1.5, 1.5)
+    Components.drawOrnatePanel(x, y, width, height, state.assetManager, {title="Equipment", corners=true, glow=true})
     
     love.graphics.setColor(Theme.colors.textDim)
     love.graphics.print("Press E to close", x + width - 150, y + 20)
     
-    -- Equipment slots
     local slotY = y + 60
     local slotHeight = 80
     local slotIndex = 1
     
-    -- Weapon slot
-    self:drawEquipmentSlot(equipmentSystem, EquipmentSlots.WEAPON, "Weapon", 
-        x + 20, slotY, width - 40, slotHeight, slotIndex == self.selectedSlot)
+    EquipmentUI.drawEquipmentSlot(state, equipmentSystem, EquipmentSlots.WEAPON, "Weapon", 
+        x + 20, slotY, width - 40, slotHeight, slotIndex == state.selectedSlot)
     slotY = slotY + slotHeight + 10
     slotIndex = slotIndex + 1
     
-    -- Armor slot
-    self:drawEquipmentSlot(equipmentSystem, EquipmentSlots.ARMOR, "Armor", 
-        x + 20, slotY, width - 40, slotHeight, slotIndex == self.selectedSlot)
+    EquipmentUI.drawEquipmentSlot(state, equipmentSystem, EquipmentSlots.ARMOR, "Armor", 
+        x + 20, slotY, width - 40, slotHeight, slotIndex == state.selectedSlot)
     slotY = slotY + slotHeight + 10
     slotIndex = slotIndex + 1
     
-    -- Necklace slot
-    self:drawEquipmentSlot(equipmentSystem, EquipmentSlots.NECKLACE, "Necklace", 
-        x + 20, slotY, width - 40, slotHeight, slotIndex == self.selectedSlot)
+    EquipmentUI.drawEquipmentSlot(state, equipmentSystem, EquipmentSlots.NECKLACE, "Necklace", 
+        x + 20, slotY, width - 40, slotHeight, slotIndex == state.selectedSlot)
     
-    -- Total stats
-    self:drawTotalStats(equipmentSystem, x + 20, y + height - 100, width - 40)
+    EquipmentUI.drawTotalStats(state, equipmentSystem, x + 20, y + height - 100, width - 40)
 end
 
-function EquipmentUI:drawEquipmentSlot(equipmentSystem, slot, slotName, x, y, width, height, isSelected)
-    if isSelected then
-        love.graphics.setColor(self.colors.selected)
-    else
-        love.graphics.setColor(self.colors.background)
-    end
-    love.graphics.rectangle("fill", x, y, width, height, 5, 5)
+function EquipmentUI.drawEquipmentSlot(state, equipmentSystem, slot, slotName, x, y, width, height, isSelected)
+    Components.drawOrnatePanel(x, y, width, height, state.assetManager, {
+        corners = false,
+        glow = isSelected,
+        borderColor = isSelected and Theme.gold.bright or Theme.colors.borderDim
+    })
     
-    love.graphics.setColor(Theme.colors.borderDim)
-    love.graphics.setLineWidth(2)
-    love.graphics.rectangle("line", x, y, width, height, 5, 5)
-    love.graphics.setLineWidth(1)
-    
-    love.graphics.setColor(self.colors.text)
+    love.graphics.setColor(Theme.colors.text)
     love.graphics.print(slotName, x + 10, y + 10)
     
-    local item = equipmentSystem:getEquipped(slot)
+    local item = EquipmentSystem.getEquipped(equipmentSystem, slot)
     if item then
-        love.graphics.setColor(self:getSlotColor(slot))
+        love.graphics.setColor(SlotUtils.getSlotColor(slot))
         love.graphics.print(item.name, x + 10, y + 30, 0, 1.2, 1.2)
         
         love.graphics.setColor(Theme.colors.textDim)
@@ -118,63 +92,39 @@ function EquipmentUI:drawEquipmentSlot(equipmentSystem, slot, slotName, x, y, wi
         end
         love.graphics.print(statsText, x + 10, y + 55)
     else
-        love.graphics.setColor(self.colors.empty)
+        love.graphics.setColor(Theme.colors.textDim)
         love.graphics.print("(Empty)", x + 10, y + 35)
     end
 end
 
-function EquipmentUI:drawTotalStats(equipmentSystem, x, y, width)
-    local stats = equipmentSystem:getTotalStats()
+function EquipmentUI.drawTotalStats(state, equipmentSystem, x, y, width)
+    local stats = EquipmentSystem.getTotalStats(equipmentSystem)
     
-    love.graphics.setColor(self.colors.panel)
-    love.graphics.rectangle("fill", x, y, width, 80, 5, 5)
+    Components.drawOrnatePanel(x, y, width, 80, state.assetManager, {corners=false, glow=false})
     
-    love.graphics.setColor(self.colors.border)
-    love.graphics.setLineWidth(2)
-    love.graphics.rectangle("line", x, y, width, 80, 5, 5)
-    love.graphics.setLineWidth(1)
-    
-    love.graphics.setColor(self.colors.text)
+    love.graphics.setColor(Theme.colors.text)
     love.graphics.print("Total Equipment Bonus", x + 10, y + 10)
     
-    love.graphics.setColor(self.equipColors.weapon)
+    love.graphics.setColor(state.equipColors.weapon)
     love.graphics.print("ATK: +" .. stats.attack, x + 10, y + 35)
     
-    love.graphics.setColor(self.equipColors.clothes)
+    love.graphics.setColor(state.equipColors.clothes)
     love.graphics.print("DEF: +" .. stats.defense, x + 120, y + 35)
     
     love.graphics.setColor(Theme.colors.success)
     love.graphics.print("SPD: " .. (stats.speed >= 0 and "+" or "") .. stats.speed, x + 230, y + 35)
 end
 
-function EquipmentUI:getSlotColor(slot)
-    local EquipmentSlots = require("src.systems.equipment_system").SLOTS
-    
-    if slot == EquipmentSlots.WEAPON then
-        return self.equipColors.weapon
-    elseif slot == EquipmentSlots.ARMOR then
-        return self.equipColors.clothes
-    elseif slot == EquipmentSlots.NECKLACE then
-        return self.equipColors.necklace
-    end
-    
-    return self.colors.text
+function EquipmentUI.navigateUp(state)
+    state.selectedSlot = math.max(1, state.selectedSlot - 1)
 end
 
--- Navigate up
-function EquipmentUI:navigateUp()
-    self.selectedSlot = math.max(1, self.selectedSlot - 1)
+function EquipmentUI.navigateDown(state)
+    state.selectedSlot = math.min(3, state.selectedSlot + 1)
 end
 
--- Navigate down
-function EquipmentUI:navigateDown()
-    self.selectedSlot = math.min(3, self.selectedSlot + 1)
-end
-
--- Check if visible
-function EquipmentUI:isVisible()
-    return self.visible
+function EquipmentUI.isVisible(state)
+    return state.visible
 end
 
 return EquipmentUI
-

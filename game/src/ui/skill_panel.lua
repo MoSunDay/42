@@ -5,83 +5,79 @@ local Theme = require("src.ui.theme")
 local Components = require("src.ui.components")
 
 local SkillPanel = {}
-SkillPanel.__index = SkillPanel
 
-function SkillPanel.new()
-    local self = setmetatable({}, SkillPanel)
+function SkillPanel.create(assetManager)
+    local state = {}
     
-    self.isOpen = false
-    self.selectedSkillIndex = 1
-    self.tab = "unlocked"
-    self.message = ""
-    self.messageTimer = 0
+    state.assetManager = assetManager
+    state.isOpen = false
+    state.selectedSkillIndex = 1
+    state.tab = "unlocked"
+    state.message = ""
+    state.messageTimer = 0
     
-    return self
+    return state
 end
 
-function SkillPanel:open(player)
-    self.player = player
-    self.isOpen = true
-    self.selectedSkillIndex = 1
-    self.tab = "unlocked"
-    self:updateSkillLists()
+function SkillPanel.open(state, player)
+    state.player = player
+    state.isOpen = true
+    state.selectedSkillIndex = 1
+    state.tab = "unlocked"
+    SkillPanel.updateSkillLists(state)
 end
 
-function SkillPanel:close()
-    self.isOpen = false
-    self.player = nil
+function SkillPanel.close(state)
+    state.isOpen = false
+    state.player = nil
 end
 
-function SkillPanel:updateSkillLists()
-    if not self.player then return end
+function SkillPanel.updateSkillLists(state)
+    if not state.player then return end
     
-    self.unlockedSkills = SkillSystem.getAvailableSkills(self.player)
-    self.lockedSkills = SkillSystem.getLockedSkills(self.player)
+    state.unlockedSkills = SkillSystem.getAvailableSkills(state.player)
+    state.lockedSkills = SkillSystem.getLockedSkills(state.player)
 end
 
-function SkillPanel:toggle(player)
-    if self.isOpen then
-        self:close()
+function SkillPanel.toggle(state, player)
+    if state.isOpen then
+        SkillPanel.close(state)
     else
-        self:open(player)
+        SkillPanel.open(state, player)
     end
 end
 
-function SkillPanel:showMessage(msg)
-    self.message = msg
-    self.messageTimer = 3
+function SkillPanel.showMessage(state, msg)
+    state.message = msg
+    state.messageTimer = 3
 end
 
-function SkillPanel:update(dt)
-    if self.messageTimer > 0 then
-        self.messageTimer = self.messageTimer - dt
-        if self.messageTimer <= 0 then
-            self.message = ""
+function SkillPanel.update(state, dt)
+    if state.messageTimer > 0 then
+        state.messageTimer = state.messageTimer - dt
+        if state.messageTimer <= 0 then
+            state.message = ""
         end
     end
 end
 
-function SkillPanel:draw()
-    if not self.isOpen or not self.player then return end
+function SkillPanel.draw(state)
+    if not state.isOpen or not state.player then return end
     
     local w, h = love.graphics.getDimensions()
     
-    love.graphics.setColor(0, 0, 0, 0.7)
-    love.graphics.rectangle("fill", 0, 0, w, h)
+    Components.drawOverlay(w, h, 0.7)
     
     local panelW, panelH = 700, 500
     local panelX = (w - panelW) / 2
     local panelY = (h - panelH) / 2
     
-    Components.drawPanelSimple(panelX, panelY, panelW, panelH, 10)
-    
-    love.graphics.setColor(1, 1, 1)
-    local class = self.player:getClass()
+    local class = ClassDatabase.getClass(state.player.classId)
     local title = string.format("技能面板 - %s", class and class.name or "Unknown")
-    love.graphics.printf(title, panelX, panelY + 15, panelW, "center")
+    Components.drawOrnatePanel(panelX, panelY, panelW, panelH, state.assetManager, {title = title, corners = true, glow = true})
     
     love.graphics.setColor(0.8, 0.6, 0.2)
-    love.graphics.printf(string.format("灵晶: %d", self.player.skillCrystals or 0), panelX, panelY + 40, panelW, "center")
+    love.graphics.printf(string.format("灵晶: %d", state.player.skillCrystals or 0), panelX, panelY + 40, panelW, "center")
     
     local tabW = 120
     local tabH = 35
@@ -90,29 +86,21 @@ function SkillPanel:draw()
     local unlockedTabX = panelX + panelW/2 - tabW - 10
     local lockedTabX = panelX + panelW/2 + 10
     
-    love.graphics.setColor(self.tab == "unlocked" and {0.3, 0.5, 0.7} or {0.2, 0.2, 0.2})
-    love.graphics.rectangle("fill", unlockedTabX, tabY, tabW, tabH, 5, 5)
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.printf("已解锁", unlockedTabX, tabY + 10, tabW, "center")
-    
-    love.graphics.setColor(self.tab == "locked" and {0.3, 0.5, 0.7} or {0.2, 0.2, 0.2})
-    love.graphics.rectangle("fill", lockedTabX, tabY, tabW, tabH, 5, 5)
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.printf("未解锁", lockedTabX, tabY + 10, tabW, "center")
+    Components.drawTab(unlockedTabX, tabY, tabW, tabH, "已解锁", state.tab == "unlocked", state.assetManager, love.graphics.getFont())
+    Components.drawTab(lockedTabX, tabY, tabW, tabH, "未解锁", state.tab == "locked", state.assetManager, love.graphics.getFont())
     
     local listY = tabY + tabH + 15
     local listH = 280
     local listX = panelX + 20
     local listW = panelW - 40
     
-    love.graphics.setColor(0.15, 0.15, 0.15)
-    love.graphics.rectangle("fill", listX, listY, listW, listH, 5, 5)
+    Components.drawOrnatePanel(listX, listY, listW, listH, state.assetManager, {corners=false, glow=false, borderColor={0.2, 0.2, 0.2}})
     
-    local skills = self.tab == "unlocked" and self.unlockedSkills or self.lockedSkills
+    local skills = state.tab == "unlocked" and state.unlockedSkills or state.lockedSkills
     
     if #skills == 0 then
         love.graphics.setColor(0.6, 0.6, 0.6)
-        love.graphics.printf(self.tab == "unlocked" and "暂无已解锁技能" or "所有技能已解锁", listX, listY + listH/2, listW, "center")
+        love.graphics.printf(state.tab == "unlocked" and "暂无已解锁技能" or "所有技能已解锁", listX, listY + listH/2, listW, "center")
     else
         local itemH = 65
         local maxVisible = math.floor(listH / itemH)
@@ -122,17 +110,21 @@ function SkillPanel:draw()
             if i > maxVisible then break end
             
             local itemY = startY + (i - 1) * itemH
-            local isSelected = (i == self.selectedSkillIndex)
+            local isSelected = (i == state.selectedSkillIndex)
             
             if isSelected then
-                love.graphics.setColor(0.3, 0.4, 0.6, 0.5)
-                love.graphics.rectangle("fill", listX + 5, itemY, listW - 10, itemH - 5, 5, 5)
+                Components.drawOrnatePanel(listX + 5, itemY, listW - 10, itemH - 5, state.assetManager, {
+                    corners = false,
+                    glow = true,
+                    borderColor = Theme.colors.borderBright,
+                    glowIntensity = 0.15
+                })
             end
             
             love.graphics.setColor(1, 1, 1)
             local skill = skillData.data
             
-            if self.tab == "unlocked" then
+            if state.tab == "unlocked" then
                 love.graphics.print(string.format("%s Lv.%d", skill.name, skillData.level), listX + 15, itemY + 5)
                 
                 love.graphics.setColor(0.7, 0.7, 0.7)
@@ -167,63 +159,63 @@ function SkillPanel:draw()
         end
     end
     
-    if self.message ~= "" then
+    if state.message ~= "" then
         love.graphics.setColor(0.2, 0.8, 0.4)
-        love.graphics.printf(self.message, panelX, panelY + panelH - 80, panelW, "center")
+        love.graphics.printf(state.message, panelX, panelY + panelH - 80, panelW, "center")
     end
     
     local btnY = panelY + panelH - 50
     local btnW = 120
     local btnH = 35
     
-    if self.tab == "unlocked" and #self.unlockedSkills > 0 then
-        Components.drawButtonSimple(panelX + 50, btnY, btnW, btnH, "升级技能", false, false, love.graphics.getFont())
-    elseif self.tab == "locked" and #self.lockedSkills > 0 then
-        Components.drawButtonSimple(panelX + 50, btnY, btnW, btnH, "解锁技能", false, false, love.graphics.getFont())
+    if state.tab == "unlocked" and #state.unlockedSkills > 0 then
+        Components.drawOrnateButton(panelX + 50, btnY, btnW, btnH, "升级技能", "normal", state.assetManager, love.graphics.getFont())
+    elseif state.tab == "locked" and #state.lockedSkills > 0 then
+        Components.drawOrnateButton(panelX + 50, btnY, btnW, btnH, "解锁技能", "normal", state.assetManager, love.graphics.getFont())
     end
     
-    Components.drawButtonSimple(panelX + panelW - 170, btnY, btnW, btnH, "关闭", false, false, love.graphics.getFont())
+    Components.drawOrnateButton(panelX + panelW - 170, btnY, btnW, btnH, "关闭", "normal", state.assetManager, love.graphics.getFont())
     
     love.graphics.setColor(0.5, 0.5, 0.5)
     love.graphics.printf("↑↓选择  Enter确认  Tab切换  ESC关闭", panelX, panelY + panelH - 20, panelW, "center")
 end
 
-function SkillPanel:keypressed(key)
-    if not self.isOpen then return false end
+function SkillPanel.keypressed(state, key)
+    if not state.isOpen then return false end
     
     if key == "escape" then
-        self:close()
+        SkillPanel.close(state)
         return true
     end
     
     if key == "tab" then
-        self.tab = self.tab == "unlocked" and "locked" or "unlocked"
-        self.selectedSkillIndex = 1
+        state.tab = state.tab == "unlocked" and "locked" or "unlocked"
+        state.selectedSkillIndex = 1
         return true
     end
     
-    local skills = self.tab == "unlocked" and self.unlockedSkills or self.lockedSkills
+    local skills = state.tab == "unlocked" and state.unlockedSkills or state.lockedSkills
     
     if key == "up" then
-        self.selectedSkillIndex = math.max(1, self.selectedSkillIndex - 1)
+        state.selectedSkillIndex = math.max(1, state.selectedSkillIndex - 1)
         return true
     elseif key == "down" then
-        self.selectedSkillIndex = math.min(#skills, self.selectedSkillIndex + 1)
+        state.selectedSkillIndex = math.min(#skills, state.selectedSkillIndex + 1)
         return true
     elseif key == "return" then
-        if #skills > 0 and self.selectedSkillIndex <= #skills then
-            local skillData = skills[self.selectedSkillIndex]
-            if self.tab == "unlocked" then
-                local success, msg = SkillSystem.upgradeSkill(self.player, skillData.id)
-                self:showMessage(msg)
+        if #skills > 0 and state.selectedSkillIndex <= #skills then
+            local skillData = skills[state.selectedSkillIndex]
+            if state.tab == "unlocked" then
+                local success, msg = SkillSystem.upgradeSkill(state.player, skillData.id)
+                SkillPanel.showMessage(state, msg)
                 if success then
-                    self:updateSkillLists()
+                    SkillPanel.updateSkillLists(state)
                 end
             else
-                local success, msg = SkillSystem.unlockSkill(self.player, skillData.id)
-                self:showMessage(msg)
+                local success, msg = SkillSystem.unlockSkill(state.player, skillData.id)
+                SkillPanel.showMessage(state, msg)
                 if success then
-                    self:updateSkillLists()
+                    SkillPanel.updateSkillLists(state)
                 end
             end
         end
@@ -233,8 +225,8 @@ function SkillPanel:keypressed(key)
     return true
 end
 
-function SkillPanel:mousepressed(x, y, button)
-    if not self.isOpen then return false end
+function SkillPanel.mousepressed(state, x, y, button)
+    if not state.isOpen then return false end
     
     local w, h = love.graphics.getDimensions()
     local panelW, panelH = 700, 500
@@ -243,7 +235,7 @@ function SkillPanel:mousepressed(x, y, button)
     
     if button == 1 then
         if x < panelX or x > panelX + panelW or y < panelY or y > panelY + panelH then
-            self:close()
+            SkillPanel.close(state)
             return true
         end
         
@@ -256,12 +248,12 @@ function SkillPanel:mousepressed(x, y, button)
         
         if y >= tabY and y <= tabY + tabH then
             if x >= unlockedTabX and x <= unlockedTabX + tabW then
-                self.tab = "unlocked"
-                self.selectedSkillIndex = 1
+                state.tab = "unlocked"
+                state.selectedSkillIndex = 1
                 return true
             elseif x >= lockedTabX and x <= lockedTabX + tabW then
-                self.tab = "locked"
-                self.selectedSkillIndex = 1
+                state.tab = "locked"
+                state.selectedSkillIndex = 1
                 return true
             end
         end
@@ -274,9 +266,9 @@ function SkillPanel:mousepressed(x, y, button)
         
         if x >= listX and x <= listX + listW and y >= listY and y <= listY + listH then
             local clickedIndex = math.floor((y - listY) / itemH) + 1
-            local skills = self.tab == "unlocked" and self.unlockedSkills or self.lockedSkills
+            local skills = state.tab == "unlocked" and state.unlockedSkills or state.lockedSkills
             if clickedIndex >= 1 and clickedIndex <= #skills then
-                self.selectedSkillIndex = clickedIndex
+                state.selectedSkillIndex = clickedIndex
             end
             return true
         end
@@ -287,20 +279,20 @@ function SkillPanel:mousepressed(x, y, button)
         
         if y >= btnY and y <= btnY + btnH then
             if x >= panelX + 50 and x <= panelX + 50 + btnW then
-                local skills = self.tab == "unlocked" and self.unlockedSkills or self.lockedSkills
-                if #skills > 0 and self.selectedSkillIndex <= #skills then
-                    local skillData = skills[self.selectedSkillIndex]
-                    if self.tab == "unlocked" then
-                        local success, msg = SkillSystem.upgradeSkill(self.player, skillData.id)
-                        self:showMessage(msg)
+                local skills = state.tab == "unlocked" and state.unlockedSkills or state.lockedSkills
+                if #skills > 0 and state.selectedSkillIndex <= #skills then
+                    local skillData = skills[state.selectedSkillIndex]
+                    if state.tab == "unlocked" then
+                        local success, msg = SkillSystem.upgradeSkill(state.player, skillData.id)
+                        SkillPanel.showMessage(state, msg)
                         if success then
-                            self:updateSkillLists()
+                            SkillPanel.updateSkillLists(state)
                         end
                     else
-                        local success, msg = SkillSystem.unlockSkill(self.player, skillData.id)
-                        self:showMessage(msg)
+                        local success, msg = SkillSystem.unlockSkill(state.player, skillData.id)
+                        SkillPanel.showMessage(state, msg)
                         if success then
-                            self:updateSkillLists()
+                            SkillPanel.updateSkillLists(state)
                         end
                     end
                 end
@@ -308,7 +300,7 @@ function SkillPanel:mousepressed(x, y, button)
             end
             
             if x >= panelX + panelW - 170 and x <= panelX + panelW - 170 + btnW then
-                self:close()
+                SkillPanel.close(state)
                 return true
             end
         end

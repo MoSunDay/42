@@ -1,5 +1,5 @@
-from .auth_handler import AuthHandler
-from .character_handler import CharacterHandler
-from .sync_handler import SyncHandler
+from . import auth_handler
+from . import character_handler
+from . import sync_handler
 
-__all__ = ["AuthHandler", "CharacterHandler", "SyncHandler"]
+__all__ = ["auth_handler", "character_handler", "sync_handler"]

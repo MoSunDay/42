@@ -1,5 +1,4 @@
 local TutorialSystem = {}
-TutorialSystem.__index = TutorialSystem
 
 local TUTORIALS = {
     basic_combat = {
@@ -129,151 +128,148 @@ local TUTORIALS = {
 }
 
 function TutorialSystem.new()
-    local self = setmetatable({}, TutorialSystem)
-    
-    self.completedTutorials = {}
-    self.currentTutorial = nil
-    self.currentPage = 1
-    self.isActive = false
-    self.highlightElement = nil
-    
-    self.onCompleteCallback = nil
-    self.onSkipCallback = nil
-    
-    return self
+    return {
+        completedTutorials = {},
+        currentTutorial = nil,
+        currentPage = 1,
+        isActive = false,
+        highlightElement = nil,
+        onCompleteCallback = nil,
+        onSkipCallback = nil,
+    }
 end
 
-function TutorialSystem:startTutorial(tutorialId)
+function TutorialSystem.startTutorial(state, tutorialId)
     local tutorial = TUTORIALS[tutorialId]
     if not tutorial then
         print("Tutorial not found: " .. tutorialId)
         return false
     end
     
-    if self.completedTutorials[tutorialId] then
+    if state.completedTutorials[tutorialId] then
         return false
     end
     
-    self.currentTutorial = tutorial
-    self.currentPage = 1
-    self.isActive = true
-    self.highlightElement = tutorial.pages[1].highlight
+    state.currentTutorial = tutorial
+    state.currentPage = 1
+    state.isActive = true
+    state.highlightElement = tutorial.pages[1].highlight
     
     return true
 end
 
-function TutorialSystem:nextPage()
-    if not self.isActive or not self.currentTutorial then return end
+function TutorialSystem.nextPage(state)
+    if not state.isActive or not state.currentTutorial then return end
     
-    if self.currentPage < #self.currentTutorial.pages then
-        self.currentPage = self.currentPage + 1
-        self.highlightElement = self.currentTutorial.pages[self.currentPage].highlight
+    if state.currentPage < #state.currentTutorial.pages then
+        state.currentPage = state.currentPage + 1
+        state.highlightElement = state.currentTutorial.pages[state.currentPage].highlight
     else
-        self:completeTutorial()
+        TutorialSystem.completeTutorial(state)
     end
 end
 
-function TutorialSystem:prevPage()
-    if not self.isActive or not self.currentTutorial then return end
+function TutorialSystem.prevPage(state)
+    if not state.isActive or not state.currentTutorial then return end
     
-    if self.currentPage > 1 then
-        self.currentPage = self.currentPage - 1
-        self.highlightElement = self.currentTutorial.pages[self.currentPage].highlight
+    if state.currentPage > 1 then
+        state.currentPage = state.currentPage - 1
+        state.highlightElement = state.currentTutorial.pages[state.currentPage].highlight
     end
 end
 
-function TutorialSystem:skipTutorial()
-    if not self.currentTutorial then return end
+function TutorialSystem.skipTutorial(state)
+    if not state.currentTutorial then return end
     
-    if not self.currentTutorial.skipable then
+    if not state.currentTutorial.skipable then
         return false
     end
     
-    self.completedTutorials[self.currentTutorial.id] = true
-    self.isActive = false
+    state.completedTutorials[state.currentTutorial.id] = true
+    state.isActive = false
     
-    if self.onSkipCallback then
-        self.onSkipCallback(self.currentTutorial.id)
+    if state.onSkipCallback then
+        state.onSkipCallback(state.currentTutorial.id)
     end
     
-    self.currentTutorial = nil
-    self.currentPage = 1
-    self.highlightElement = nil
+    state.currentTutorial = nil
+    state.currentPage = 1
+    state.highlightElement = nil
     
     return true
 end
 
-function TutorialSystem:completeTutorial()
-    if not self.currentTutorial then return end
+function TutorialSystem.completeTutorial(state)
+    if not state.currentTutorial then return end
     
-    self.completedTutorials[self.currentTutorial.id] = true
-    self.isActive = false
+    state.completedTutorials[state.currentTutorial.id] = true
+    state.isActive = false
     
-    if self.onCompleteCallback then
-        self.onCompleteCallback(self.currentTutorial.id)
+    if state.onCompleteCallback then
+        state.onCompleteCallback(state.currentTutorial.id)
     end
     
-    self.currentTutorial = nil
-    self.currentPage = 1
-    self.highlightElement = nil
+    state.currentTutorial = nil
+    state.currentPage = 1
+    state.highlightElement = nil
 end
 
-function TutorialSystem:isTutorialActive()
-    return self.isActive
+function TutorialSystem.isTutorialActive(state)
+    return state.isActive
 end
 
-function TutorialSystem:getCurrentPage()
-    if not self.currentTutorial then return nil end
-    return self.currentTutorial.pages[self.currentPage]
+function TutorialSystem.getCurrentPage(state)
+    if not state.currentTutorial then return nil end
+    return state.currentTutorial.pages[state.currentPage]
 end
 
-function TutorialSystem:getCurrentHighlight()
-    return self.highlightElement
+function TutorialSystem.getCurrentHighlight(state)
+    return state.highlightElement
 end
 
-function TutorialSystem:isFirstPage()
-    return self.currentPage == 1
+function TutorialSystem.isFirstPage(state)
+    return state.currentPage == 1
 end
 
-function TutorialSystem:isLastPage()
-    if not self.currentTutorial then return true end
-    return self.currentPage == #self.currentTutorial.pages
+function TutorialSystem.isLastPage(state)
+    if not state.currentTutorial then return true end
+    return state.currentPage == #state.currentTutorial.pages
 end
 
-function TutorialSystem:canSkip()
-    return self.currentTutorial and self.currentTutorial.skipable
+function TutorialSystem.canSkip(state)
+    return state.currentTutorial and state.currentTutorial.skipable
 end
 
-function TutorialSystem:getProgress()
-    if not self.currentTutorial then return 0, 0 end
-    return self.currentPage, #self.currentTutorial.pages
+function TutorialSystem.getProgress(state)
+    if not state.currentTutorial then return 0, 0 end
+    return state.currentPage, #state.currentTutorial.pages
 end
 
-function TutorialSystem:isCompleted(tutorialId)
-    return self.completedTutorials[tutorialId] == true
+function TutorialSystem.isCompleted(state, tutorialId)
+    return state.completedTutorials[tutorialId] == true
 end
 
-function TutorialSystem:setOnCompleteCallback(callback)
-    self.onCompleteCallback = callback
+function TutorialSystem.setOnCompleteCallback(state, callback)
+    state.onCompleteCallback = callback
 end
 
-function TutorialSystem:setOnSkipCallback(callback)
-    self.onSkipCallback = callback
+function TutorialSystem.setOnSkipCallback(state, callback)
+    state.onSkipCallback = callback
 end
 
-function TutorialSystem:getAllTutorials()
+function TutorialSystem.getAllTutorials()
     return TUTORIALS
 end
 
-function TutorialSystem:serialize()
+function TutorialSystem.serialize(state)
     return {
-        completedTutorials = self.completedTutorials
+        completedTutorials = state.completedTutorials
     }
 end
 
-function TutorialSystem:deserialize(data)
+function TutorialSystem.deserialize(state, data)
     if not data then return end
-    self.completedTutorials = data.completedTutorials or {}
+    state.completedTutorials = data.completedTutorials or {}
 end
 
 return TutorialSystem

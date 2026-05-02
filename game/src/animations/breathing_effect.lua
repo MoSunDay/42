@@ -1,45 +1,32 @@
--- breathing_effect.lua - Breathing animation for characters and NPCs
--- Creates a subtle breathing effect by scaling the character
-
 local BreathingEffect = {}
-BreathingEffect.__index = BreathingEffect
 
-function BreathingEffect.new()
-    local self = setmetatable({}, BreathingEffect)
-    
-    self.time = 0
-    self.breathSpeed = 1.5  -- Breathing cycle speed (seconds per breath)
-    self.breathAmount = 0.05  -- How much to scale (5%)
-    
-    return self
+function BreathingEffect.create()
+    return {
+        time = 0,
+        breathSpeed = 1.5,
+        breathAmount = 0.05
+    }
 end
 
--- Update breathing animation
-function BreathingEffect:update(dt)
-    self.time = self.time + dt
+function BreathingEffect.update(state, dt)
+    state.time = state.time + dt
 end
 
--- Get current scale factor
-function BreathingEffect:getScale()
-    -- Use sine wave for smooth breathing
-    local breathCycle = math.sin(self.time * math.pi * 2 / self.breathSpeed)
-    return 1.0 + breathCycle * self.breathAmount
+function BreathingEffect.getScale(state)
+    local breathCycle = math.sin(state.time * math.pi * 2 / state.breathSpeed)
+    return 1.0 + breathCycle * state.breathAmount
 end
 
--- Reset animation
-function BreathingEffect:reset()
-    self.time = 0
+function BreathingEffect.reset(state)
+    state.time = 0
 end
 
--- Set breathing speed
-function BreathingEffect:setSpeed(speed)
-    self.breathSpeed = speed
+function BreathingEffect.setSpeed(state, speed)
+    state.breathSpeed = speed
 end
 
--- Set breathing amount
-function BreathingEffect:setAmount(amount)
-    self.breathAmount = amount
+function BreathingEffect.setAmount(state, amount)
+    state.breathAmount = amount
 end
 
 return BreathingEffect
-

@@ -1,20 +1,18 @@
-local SimulatedCombatant = require("src.systems.battle_simulator.simulated_combatant")
+local SimCombatant = require("src.systems.battle_simulator.sim_combatant")
 
 local SimulationEngine = {}
-SimulationEngine.__index = SimulationEngine
 
 function SimulationEngine.new()
-    local self = setmetatable({}, SimulationEngine)
-    return self
+    return {}
 end
 
-function SimulationEngine:run(partyConfigs, enemyConfigs, maxTurns)
+function SimulationEngine.run(state, partyConfigs, enemyConfigs, maxTurns)
     maxTurns = maxTurns or 100
     
-    local party = self:buildTeam(partyConfigs)
-    local enemies = self:buildTeam(enemyConfigs)
+    local party = SimulationEngine.buildTeam(state, partyConfigs)
+    local enemies = SimulationEngine.buildTeam(state, enemyConfigs)
     
-    local state = {
+    local simState = {
         turn = 0,
         turnLog = {},
         totalDamageDealt = { party = 0, enemy = 0 },
@@ -25,51 +23,51 @@ function SimulationEngine:run(partyConfigs, enemyConfigs, maxTurns)
         skillUses = {},
     }
     
-    while state.turn < maxTurns do
-        state.turn = state.turn + 1
+    while simState.turn < maxTurns do
+        simState.turn = simState.turn + 1
         local turnActions = {}
         
-        local turnOrder = self:getTurnOrder(party, enemies)
+        local turnOrder = SimulationEngine.getTurnOrder(state, party, enemies)
         
         for _, combatant in ipairs(turnOrder) do
             if combatant.isAlive then
-                local action = combatant:decideAction({
+                local action = SimCombatant.decideAction(combatant, {
                     party = party,
                     enemies = enemies,
-                    state = state,
+                    state = simState,
                 })
                 
-                local actionResult = self:executeAction(combatant, action, party, enemies, state)
+                local actionResult = SimulationEngine.executeAction(state, combatant, action, party, enemies, simState)
                 table.insert(turnActions, actionResult)
                 
-                if self:checkBattleEnd(party, enemies) then
-                    return self:buildResult(state, party, enemies, turnActions)
+                if SimulationEngine.checkBattleEnd(state, party, enemies) then
+                    return SimulationEngine.buildResult(state, simState, party, enemies, turnActions)
                 end
             end
         end
         
-        self:endTurn(party, enemies)
-        table.insert(state.turnLog, turnActions)
+        SimulationEngine.endTurn(state, party, enemies)
+        table.insert(simState.turnLog, turnActions)
         
-        if self:checkBattleEnd(party, enemies) then
-            return self:buildResult(state, party, enemies, turnActions)
+        if SimulationEngine.checkBattleEnd(state, party, enemies) then
+            return SimulationEngine.buildResult(state, simState, party, enemies, turnActions)
         end
     end
     
-    return self:buildResult(state, party, enemies, state.turnLog[#state.turnLog], "timeout")
+    return SimulationEngine.buildResult(state, simState, party, enemies, simState.turnLog[#simState.turnLog], "timeout")
 end
 
-function SimulationEngine:buildTeam(configs)
+function SimulationEngine.buildTeam(state, configs)
     local team = {}
     for _, config in ipairs(configs) do
         local combatant
         if type(config) == "table" then
             if config.type == "enemy" then
-                combatant = SimulatedCombatant.fromEnemyType(config.id)
+                combatant = SimCombatant.new(config)
             elseif config.type == "class" then
-                combatant = SimulatedCombatant.fromClassId(config.id)
+                combatant = SimCombatant.fromClass(config.id, config.level)
             else
-                combatant = SimulatedCombatant.new(config)
+                combatant = SimCombatant.new(config)
             end
         end
         if combatant then
@@ -79,7 +77,7 @@ function SimulationEngine:buildTeam(configs)
     return team
 end
 
-function SimulationEngine:getTurnOrder(party, enemies)
+function SimulationEngine.getTurnOrder(state, party, enemies)
     local all = {}
     for _, c in ipairs(party) do
         if c.isAlive then table.insert(all, c) end
@@ -95,7 +93,7 @@ function SimulationEngine:getTurnOrder(party, enemies)
     return all
 end
 
-function SimulationEngine:executeAction(actor, action, party, enemies, state)
+function SimulationEngine.executeAction(state, actor, action, party, enemies, simState)
     local result = {
         actor = actor.id,
         action = action.type,
@@ -104,26 +102,26 @@ function SimulationEngine:executeAction(actor, action, party, enemies, state)
     
     if action.type == "attack" then
         local targets = actor.team == "party" and enemies or party
-        local target = self:getAliveTarget(targets)
+        local target = SimulationEngine.getAliveTarget(state, targets)
         
         if target then
-            if target:checkEvade() then
+            if SimCombatant.checkEvade(target) then
                 result.evaded = true
                 result.target = target.id
-                state.evadeCount[target.team] = (state.evadeCount[target.team] or 0) + 1
+                simState.evadeCount[target.team] = (simState.evadeCount[target.team] or 0) + 1
             else
-                local damage, isCrit = actor:calculateDamage(false)
-                local actualDamage = target:takeDamage(damage)
+                local damage, isCrit = SimCombatant.calculateDamage(actor, false)
+                local actualDamage = SimCombatant.takeDamage(target, damage)
                 
                 result.damage = actualDamage
                 result.isCrit = isCrit
                 result.target = target.id
                 
-                state.totalDamageDealt[actor.team] = state.totalDamageDealt[actor.team] + actualDamage
-                state.totalDamageTaken[target.team] = state.totalDamageTaken[target.team] + actualDamage
+                simState.totalDamageDealt[actor.team] = simState.totalDamageDealt[actor.team] + actualDamage
+                simState.totalDamageTaken[target.team] = simState.totalDamageTaken[target.team] + actualDamage
                 
                 if isCrit then
-                    state.critCount[actor.team] = state.critCount[actor.team] + 1
+                    simState.critCount[actor.team] = simState.critCount[actor.team] + 1
                 end
             end
         end
@@ -132,57 +130,57 @@ function SimulationEngine:executeAction(actor, action, party, enemies, state)
         local skill = action.skill
         result.skillName = skill.name or "unknown"
         
-        if actor:useMana(skill.cost or 10) then
-            state.skillUses[result.skillName] = (state.skillUses[result.skillName] or 0) + 1
+        if SimCombatant.useMana(actor, skill.cost or 10) then
+            simState.skillUses[result.skillName] = (simState.skillUses[result.skillName] or 0) + 1
             
             local targets = actor.team == "party" and enemies or party
             local allies = actor.team == "party" and party or enemies
             
             if skill.targetType == "heal" then
-                local healTarget = self:getMostDamagedAlly(allies)
+                local healTarget = SimulationEngine.getMostDamagedAlly(state, allies)
                 if healTarget then
                     local healAmount = skill:calculateEffect(actor) or actor.magicAttack * 2
-                    healTarget:heal(healAmount)
+                    SimCombatant.heal(healTarget, healAmount)
                     result.healAmount = healAmount
                     result.target = healTarget.id
-                    state.totalHealing[actor.team] = state.totalHealing[actor.team] + healAmount
+                    simState.totalHealing[actor.team] = simState.totalHealing[actor.team] + healAmount
                 end
             else
-                local target = self:getAliveTarget(targets)
+                local target = SimulationEngine.getAliveTarget(state, targets)
                 if target then
-                    if not target:checkEvade() then
-                        local damage, isCrit = actor:calculateDamage(skill.isMagic or false)
+                    if not SimCombatant.checkEvade(target) then
+                        local damage, isCrit = SimCombatant.calculateDamage(actor, skill.isMagic or false)
                         local multiplier = skill.damageMultiplier or 1.5
                         damage = math.floor(damage * multiplier)
-                        local actualDamage = target:takeDamage(damage)
+                        local actualDamage = SimCombatant.takeDamage(target, damage)
                         
                         result.damage = actualDamage
                         result.isCrit = isCrit
                         result.target = target.id
                         
-                        state.totalDamageDealt[actor.team] = state.totalDamageDealt[actor.team] + actualDamage
-                        state.totalDamageTaken[target.team] = state.totalDamageTaken[target.team] + actualDamage
+                        simState.totalDamageDealt[actor.team] = simState.totalDamageDealt[actor.team] + actualDamage
+                        simState.totalDamageTaken[target.team] = simState.totalDamageTaken[target.team] + actualDamage
                         
                         if isCrit then
-                            state.critCount[actor.team] = state.critCount[actor.team] + 1
+                            simState.critCount[actor.team] = simState.critCount[actor.team] + 1
                         end
                     else
                         result.evaded = true
-                        state.evadeCount[target.team] = (state.evadeCount[target.team] or 0) + 1
+                        simState.evadeCount[target.team] = (simState.evadeCount[target.team] or 0) + 1
                     end
                 end
             end
         end
         
     elseif action.type == "defend" then
-        actor:setDefending(true)
+        SimCombatant.setDefending(actor, true)
         result.defended = true
     end
     
     return result
 end
 
-function SimulationEngine:getAliveTarget(targets)
+function SimulationEngine.getAliveTarget(state, targets)
     local alive = {}
     for _, t in ipairs(targets) do
         if t.isAlive then
@@ -193,13 +191,13 @@ function SimulationEngine:getAliveTarget(targets)
     return alive[math.random(#alive)]
 end
 
-function SimulationEngine:getMostDamagedAlly(allies)
+function SimulationEngine.getMostDamagedAlly(state, allies)
     local mostDamaged = nil
     local lowestHpPercent = 1.0
     
     for _, ally in ipairs(allies) do
-        if ally.isAlive and ally:getHPPercent() < lowestHpPercent then
-            lowestHpPercent = ally:getHPPercent()
+        if ally.isAlive and SimCombatant.getHPPercent(ally) < lowestHpPercent then
+            lowestHpPercent = SimCombatant.getHPPercent(ally)
             mostDamaged = ally
         end
     end
@@ -207,7 +205,7 @@ function SimulationEngine:getMostDamagedAlly(allies)
     return mostDamaged
 end
 
-function SimulationEngine:checkBattleEnd(party, enemies)
+function SimulationEngine.checkBattleEnd(state, party, enemies)
     local partyAlive = false
     for _, c in ipairs(party) do
         if c.isAlive then partyAlive = true end
@@ -221,16 +219,16 @@ function SimulationEngine:checkBattleEnd(party, enemies)
     return not partyAlive or not enemiesAlive
 end
 
-function SimulationEngine:endTurn(party, enemies)
+function SimulationEngine.endTurn(state, party, enemies)
     for _, c in ipairs(party) do
-        c:setDefending(false)
+        SimCombatant.setDefending(c, false)
     end
     for _, c in ipairs(enemies) do
-        c:setDefending(false)
+        SimCombatant.setDefending(c, false)
     end
 end
 
-function SimulationEngine:buildResult(state, party, enemies, lastTurnActions, endReason)
+function SimulationEngine.buildResult(state, simState, party, enemies, lastTurnActions, endReason)
     local partyAlive = false
     local enemiesAlive = false
     
@@ -253,20 +251,20 @@ function SimulationEngine:buildResult(state, party, enemies, lastTurnActions, en
     return {
         winner = winner,
         endReason = endReason or (winner == "party" and "victory" or "defeat"),
-        turns = state.turn,
-        damageDealt = state.totalDamageDealt,
-        damageTaken = state.totalDamageTaken,
-        healing = state.totalHealing,
-        critCount = state.critCount,
-        evadeCount = state.evadeCount,
-        skillUses = state.skillUses,
-        partySurvivors = self:countAlive(party),
-        enemySurvivors = self:countAlive(enemies),
-        turnLog = state.turnLog,
+        turns = simState.turn,
+        damageDealt = simState.totalDamageDealt,
+        damageTaken = simState.totalDamageTaken,
+        healing = simState.totalHealing,
+        critCount = simState.critCount,
+        evadeCount = simState.evadeCount,
+        skillUses = simState.skillUses,
+        partySurvivors = SimulationEngine.countAlive(state, party),
+        enemySurvivors = SimulationEngine.countAlive(state, enemies),
+        turnLog = simState.turnLog,
     }
 end
 
-function SimulationEngine:countAlive(team)
+function SimulationEngine.countAlive(state, team)
     local count = 0
     for _, c in ipairs(team) do
         if c.isAlive then count = count + 1 end

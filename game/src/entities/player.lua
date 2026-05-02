@@ -4,11 +4,11 @@
 local AnimationManager = require("src.animations.animation_manager")
 local AppearanceSystem = require("src.systems.appearance_system")
 local SpriteAnimator = require("src.systems.sprite_animator")
+local CombatUtils = require("src.systems.combat_utils")
+local CollisionSystem = require("src.systems.collision_system")
+local EquipmentSystem = require("src.systems.equipment_system")
 
 local Player = {}
-Player.__index = Player
-
-local MAX_DEF_PERCENT = 50
 
 local DIRECTION_MAP = {
     ["down"] = "south",
@@ -21,146 +21,146 @@ local DIRECTION_MAP = {
     ["down-right"] = "south-east"
 }
 
-function Player.new(x, y, assetManager)
-    local self = setmetatable({}, Player)
+function Player.create(x, y, assetManager)
+    local state = {}
 
-    self.x = x or 0
-    self.y = y or 0
+    state.x = x or 0
+    state.y = y or 0
 
-    self.targetX = self.x
-    self.targetY = self.y
+    state.targetX = state.x
+    state.targetY = state.y
 
-    self.speed = 250
+    state.speed = 250
 
-    self.isMoving = false
+    state.isMoving = false
 
-    self.width = 48
-    self.height = 48
+    state.width = 48
+    state.height = 48
 
-    self.direction = "down"
-    self.angle = 0
+    state.direction = "down"
+    state.angle = 0
 
-    self.animationTime = 0
-    self.animationFrame = 0
+    state.animationTime = 0
+    state.animationFrame = 0
 
-    self.mapWidth = 2000
-    self.mapHeight = 2000
+    state.mapWidth = 2000
+    state.mapHeight = 2000
 
-    self.collisionRadius = 16
+    state.collisionRadius = 16
 
-    self.assetManager = assetManager
-    self.sprite = assetManager:getImage("player")
+    state.assetManager = assetManager
+    state.sprite = assetManager:getImage("player")
 
-    self.collisionSystem = nil
+    state.collisionSystem = nil
 
-    self.baseHp = 100
-    self.hp = 100
-    self.maxHp = 100
-    self.baseAttack = 15
-    self.attack = 15
-    self.baseDefense = 5
-    self.defense = 5
-    self.defPercent = 1
-    self.battleSpeed = 6
-    self.isDefending = false
-    
-    self.baseCrit = 5
-    self.crit = 5
-    self.baseEva = 3
-    self.eva = 3
-    
-    self.mp = 100
-    self.maxMp = 100
-    self.baseMp = 100
-    self.baseMagicAttack = 10
-    self.magicAttack = 10
-    
-    self.classId = nil
-    self.skills = {}
-    self.skillCrystals = 0
-    self.critBonus = 0
+    state.baseHp = 100
+    state.hp = 100
+    state.maxHp = 100
+    state.baseAttack = 15
+    state.attack = 15
+    state.baseDefense = 5
+    state.defense = 5
+    state.defPercent = 1
+    state.battleSpeed = 6
+    state.isDefending = false
 
-    self.animationManager = nil
-    self.animationId = "player"
+    state.baseCrit = 5
+    state.crit = 5
+    state.baseEva = 3
+    state.eva = 3
 
-    self.equipmentSystem = nil
-    self.inventorySystem = nil
+    state.mp = 100
+    state.maxMp = 100
+    state.baseMp = 100
+    state.baseMagicAttack = 10
+    state.magicAttack = 10
 
-    self.appearance = nil
-    self.appearanceId = "blue_hero"
-    
-    self.spriteAnimator = nil
-    self.useSpriteAnimator = false
+    state.classId = nil
+    state.skills = {}
+    state.skillCrystals = 0
+    state.critBonus = 0
 
-    self:initSpriteAnimator()
+    state.animationManager = nil
+    state.animationId = "player"
 
-    return self
+    state.equipmentSystem = nil
+    state.inventorySystem = nil
+
+    state.appearance = nil
+    state.appearanceId = "blue_hero"
+
+    state.spriteAnimator = nil
+    state.useSpriteAnimator = false
+
+    Player.initSpriteAnimator(state)
+
+    return state
 end
 
-function Player:initSpriteAnimator()
-    if not self.assetManager then return end
-    
-    if self.assetManager:hasCharacterSprite(self.appearanceId) then
-        self.spriteAnimator = SpriteAnimator.new({
+function Player.initSpriteAnimator(state)
+    if not state.assetManager then return end
+
+    if state.assetManager:hasCharacterSprite(state.appearanceId) then
+        state.spriteAnimator = SpriteAnimator.new({
             frameWidth = 48,
             frameHeight = 48,
             frameDuration = 0.12
         })
-        
-        self.spriteAnimator:loadFromAssetManager(self.assetManager, self.appearanceId)
-        
-        if not self.spriteAnimator:hasAnimation("walking") then
-            local basePath = "assets/images/characters/" .. self.appearanceId .. "/rotations"
-            self.spriteAnimator:loadDirectionalSprites(basePath)
+
+        state.spriteAnimator:loadFromAssetManager(state.assetManager, state.appearanceId)
+
+        if not state.spriteAnimator:hasAnimation("walking") then
+            local basePath = "assets/images/characters/" .. state.appearanceId .. "/rotations"
+            state.spriteAnimator:loadDirectionalSprites(basePath)
         end
-        
-        self.useSpriteAnimator = true
+
+        state.useSpriteAnimator = true
     end
 end
 
-function Player:setAnimationManager(animManager)
-    self.animationManager = animManager
+function Player.setAnimationManager(state, animManager)
+    state.animationManager = animManager
     if animManager then
-        animManager:createAnimationSet(self.animationId)
+        AnimationManager.createAnimationSet(state.animationManager, state.animationId)
     end
 end
 
-function Player:setAppearance(character)
-    self.appearance = AppearanceSystem.createAppearance(character)
+function Player.setAppearance(state, character)
+    state.appearance = AppearanceSystem.createAppearance(character)
     if character and character.appearanceId then
-        self.appearanceId = character.appearanceId
-        self:initSpriteAnimator()
+        state.appearanceId = character.appearanceId
+        Player.initSpriteAnimator(state)
     end
 end
 
-function Player:setAppearanceId(appearanceId)
-    self.appearanceId = appearanceId
-    self:initSpriteAnimator()
+function Player.setAppearanceId(state, appearanceId)
+    state.appearanceId = appearanceId
+    Player.initSpriteAnimator(state)
 end
 
-function Player:setMapBounds(width, height)
-    self.mapWidth = width
-    self.mapHeight = height
+function Player.setMapBounds(state, width, height)
+    state.mapWidth = width
+    state.mapHeight = height
 end
 
-function Player:setCollisionSystem(collisionSystem)
-    self.collisionSystem = collisionSystem
+function Player.setCollisionSystem(state, collisionSystem)
+    state.collisionSystem = collisionSystem
 end
 
-function Player:moveTo(x, y)
-    if self.collisionSystem then
-        x, y = self.collisionSystem:getClosestWalkable(x, y, self.x, self.y, self.collisionRadius)
+function Player.moveTo(state, x, y)
+    if state.collisionSystem then
+        x, y = CollisionSystem.getClosestWalkable(state.collisionSystem, x, y, state.x, state.y, state.collisionRadius)
     end
 
-    self.targetX = math.max(self.collisionRadius, math.min(x, self.mapWidth - self.collisionRadius))
-    self.targetY = math.max(self.collisionRadius, math.min(y, self.mapHeight - self.collisionRadius))
+    state.targetX = math.max(state.collisionRadius, math.min(x, state.mapWidth - state.collisionRadius))
+    state.targetY = math.max(state.collisionRadius, math.min(y, state.mapHeight - state.collisionRadius))
 
-    self.isMoving = true
+    state.isMoving = true
 
-    local dx = self.targetX - self.x
-    local dy = self.targetY - self.y
+    local dx = state.targetX - state.x
+    local dy = state.targetY - state.y
 
-    self.angle = math.atan2(dy, dx)
+    state.angle = math.atan2(dy, dx)
 
     local absX = math.abs(dx)
     local absY = math.abs(dy)
@@ -171,209 +171,184 @@ function Player:moveTo(x, y)
     end
 
     if absY < absX * threshold then
-        self.direction = dx > 0 and "right" or "left"
+        state.direction = dx > 0 and "right" or "left"
     elseif absX < absY * threshold then
-        self.direction = dy > 0 and "down" or "up"
+        state.direction = dy > 0 and "down" or "up"
     else
         if dx > 0 and dy > 0 then
-            self.direction = "down-right"
+            state.direction = "down-right"
         elseif dx > 0 and dy < 0 then
-            self.direction = "up-right"
+            state.direction = "up-right"
         elseif dx < 0 and dy > 0 then
-            self.direction = "down-left"
+            state.direction = "down-left"
         else
-            self.direction = "up-left"
+            state.direction = "up-left"
         end
     end
 end
 
-function Player:update(dt)
-    if self.spriteAnimator then
-        local spriteDir = DIRECTION_MAP[self.direction] or "south"
-        self.spriteAnimator:setDirection(spriteDir)
-        self.spriteAnimator:setAnimationState(self.isMoving)
-        self.spriteAnimator:update(dt)
-    end
-    
-    if self.animationManager then
-        self.animationManager:updateEntity(self.animationId, dt, self.isMoving)
+function Player.update(state, dt)
+    if state.spriteAnimator then
+        local spriteDir = DIRECTION_MAP[state.direction] or "south"
+        state.spriteAnimator:setDirection(spriteDir)
+        state.spriteAnimator:setAnimationState(state.isMoving)
+        state.spriteAnimator:update(dt)
     end
 
-    if not self.isMoving then
+    if state.animationManager then
+        AnimationManager.updateEntity(state.animationManager, state.animationId, dt, state.isMoving)
+    end
+
+    if not state.isMoving then
         return
     end
 
-    local dx = self.targetX - self.x
-    local dy = self.targetY - self.y
+    local dx = state.targetX - state.x
+    local dy = state.targetY - state.y
     local distance = math.sqrt(dx * dx + dy * dy)
 
     if distance < 3 then
-        self.x = self.targetX
-        self.y = self.targetY
-        self.isMoving = false
-        self.animationFrame = 0
+        state.x = state.targetX
+        state.y = state.targetY
+        state.isMoving = false
+        state.animationFrame = 0
         return
     end
 
     local dirX = dx / distance
     local dirY = dy / distance
 
-    local moveDistance = self.speed * dt
+    local moveDistance = state.speed * dt
     if moveDistance > distance then
         moveDistance = distance
     end
 
-    local newX = self.x + dirX * moveDistance
-    local newY = self.y + dirY * moveDistance
+    local newX = state.x + dirX * moveDistance
+    local newY = state.y + dirY * moveDistance
 
-    if self.collisionSystem then
-        local canMove, validX, validY = self.collisionSystem:canMove(
-            self.x, self.y, newX, newY, self.collisionRadius
+    if state.collisionSystem then
+        local canMove, validX, validY = CollisionSystem.canMove(state.collisionSystem,
+            state.x, state.y, newX, newY, state.collisionRadius
         )
 
         if canMove then
-            self.x = validX
-            self.y = validY
+            state.x = validX
+            state.y = validY
         else
-            self.x = validX
-            self.y = validY
-            self.isMoving = false
+            state.x = validX
+            state.y = validY
+            state.isMoving = false
         end
     else
-        self.x = newX
-        self.y = newY
+        state.x = newX
+        state.y = newY
     end
 
-    self.x = math.max(self.collisionRadius, math.min(self.x, self.mapWidth - self.collisionRadius))
-    self.y = math.max(self.collisionRadius, math.min(self.y, self.mapHeight - self.collisionRadius))
+    state.x = math.max(state.collisionRadius, math.min(state.x, state.mapWidth - state.collisionRadius))
+    state.y = math.max(state.collisionRadius, math.min(state.y, state.mapHeight - state.collisionRadius))
 
-    self.animationTime = self.animationTime + dt
-    if self.animationTime > 0.15 then
-        self.animationTime = 0
-        self.animationFrame = (self.animationFrame + 1) % 4
+    state.animationTime = state.animationTime + dt
+    if state.animationTime > 0.15 then
+        state.animationTime = 0
+        state.animationFrame = (state.animationFrame + 1) % 4
     end
 end
 
-function Player:draw()
+function Player.draw(state)
     love.graphics.setColor(1, 1, 1)
 
     local offsetX, offsetY, rotation, scaleX, scaleY = 0, 0, 0, 1, 1
-    if self.animationManager then
-        offsetX, offsetY, rotation, scaleX, scaleY = self.animationManager:getTransform(self.animationId)
+    if state.animationManager then
+        offsetX, offsetY, rotation, scaleX, scaleY = AnimationManager.getTransform(state.animationManager, state.animationId)
     end
 
-    if self.useSpriteAnimator and self.spriteAnimator then
-        local spriteDir = DIRECTION_MAP[self.direction] or "south"
-        self.spriteAnimator:setDirection(spriteDir)
-        self.spriteAnimator:draw(self.x, self.y, 2, offsetX, offsetY)
-    elseif self.appearance then
-        AppearanceSystem.drawSprite(self.x, self.y, 32, self.appearance, offsetX, offsetY, scaleX, scaleY)
-    elseif self.sprite then
+    if state.useSpriteAnimator and state.spriteAnimator then
+        local spriteDir = DIRECTION_MAP[state.direction] or "south"
+        state.spriteAnimator:setDirection(spriteDir)
+        state.spriteAnimator:draw(state.x, state.y, 2, offsetX, offsetY)
+    elseif state.appearance then
+        AppearanceSystem.drawSprite(state.x, state.y, 32, state.appearance, offsetX, offsetY, scaleX, scaleY)
+    elseif state.sprite then
         love.graphics.push()
-        love.graphics.translate(self.x + offsetX, self.y + offsetY)
+        love.graphics.translate(state.x + offsetX, state.y + offsetY)
         love.graphics.rotate(rotation)
         love.graphics.scale(scaleX, scaleY)
-        love.graphics.draw(self.sprite,
-            -self.width/2,
-            -self.height/2)
+        love.graphics.draw(state.sprite,
+            -state.width/2,
+            -state.height/2)
         love.graphics.pop()
     end
-    
-    if self.isMoving then
+
+    if state.isMoving then
         love.graphics.setColor(1, 1, 0, 0.6)
-        love.graphics.circle("line", self.targetX, self.targetY, 12)
-        love.graphics.line(self.targetX - 10, self.targetY, self.targetX + 10, self.targetY)
-        love.graphics.line(self.targetX, self.targetY - 10, self.targetX, self.targetY + 10)
-        
+        love.graphics.circle("line", state.targetX, state.targetY, 12)
+        love.graphics.line(state.targetX - 10, state.targetY, state.targetX + 10, state.targetY)
+        love.graphics.line(state.targetX, state.targetY - 10, state.targetX, state.targetY + 10)
+
         love.graphics.setColor(1, 1, 0, 0.3)
-        love.graphics.line(self.x, self.y, self.targetX, self.targetY)
+        love.graphics.line(state.x, state.y, state.targetX, state.targetY)
     end
-    
-    if self.isMoving and self.animationFrame % 2 == 0 then
+
+    if state.isMoving and state.animationFrame % 2 == 0 then
         love.graphics.setColor(0.2, 0.6, 1.0, 0.2)
-        love.graphics.circle("fill", self.x, self.y + self.height/2, 10)
+        love.graphics.circle("fill", state.x, state.y + state.height/2, 10)
     end
-    
+
     love.graphics.setColor(1, 1, 1)
 end
 
-function Player:takeDamage(damage)
-    local reduction = self.defPercent
-    if self.isDefending then
-        reduction = reduction + 25
-    end
-    reduction = math.min(MAX_DEF_PERCENT + 25, reduction)
-    
-    local actualDamage = math.floor(damage * (100 - reduction) / 100)
-    actualDamage = math.max(1, actualDamage)
-    
-    self.hp = self.hp - actualDamage
-
-    if self.hp < 0 then
-        self.hp = 0
-    end
-
-    self.isDefending = false
-    return actualDamage
+function Player.takeDamage(state, damage)
+    return CombatUtils.takeDamageMutating(state, damage)
 end
 
-function Player:heal(amount)
-    self.hp = math.min(self.maxHp, self.hp + amount)
+function Player.heal(state, amount)
+    CombatUtils.healMutating(state, amount)
 end
 
-function Player:isAlive()
-    return self.hp > 0
+function Player.isAlive(state)
+    return state.hp > 0
 end
 
-function Player:getHPPercent()
-    return self.hp / self.maxHp
+function Player.getHPPercent(state)
+    return state.hp / state.maxHp
 end
 
-function Player:calculateDamage()
-    local variance = 0.2
-    local multiplier = 1 + (math.random() * 2 - 1) * variance
-    local damage = math.floor(self.attack * multiplier)
-    
-    local isCrit = math.random(100) <= self.crit
-    if isCrit then
-        damage = math.floor(damage * 1.5)
-    end
-    
-    return damage, isCrit
+function Player.calculateDamage(state)
+    return CombatUtils.calculateDamageMutating(state)
 end
 
-function Player:setEquipmentSystem(equipSystem)
-    self.equipmentSystem = equipSystem
-    self:updateStatsWithEquipment()
+function Player.setEquipmentSystem(state, equipSystem)
+    state.equipmentSystem = equipSystem
+    Player.updateStatsWithEquipment(state)
 end
 
-function Player:setInventorySystem(invSystem)
-    self.inventorySystem = invSystem
+function Player.setInventorySystem(state, invSystem)
+    state.inventorySystem = invSystem
 end
 
-function Player:updateStatsWithEquipment()
-    if not self.equipmentSystem then
+function Player.updateStatsWithEquipment(state)
+    if not state.equipmentSystem then
         return
     end
 
-    local equipStats = self.equipmentSystem:getTotalStats()
-    self.attack = self.baseAttack + equipStats.attack
-    self.defense = self.baseDefense + equipStats.defense
-    self.battleSpeed = 6 + equipStats.speed
-    self.crit = self.baseCrit + equipStats.crit
-    self.eva = self.baseEva + equipStats.eva
-    
-    self.defPercent = self.equipmentSystem:getDefensePercent()
-    
-    local oldMaxHp = self.maxHp
-    self.maxHp = self.baseHp + (equipStats.hp or 0)
-    if self.maxHp ~= oldMaxHp and self.hp > self.maxHp then
-        self.hp = self.maxHp
+    local equipStats = EquipmentSystem.getTotalStats(state.equipmentSystem)
+    state.attack = state.baseAttack + equipStats.attack
+    state.defense = state.baseDefense + equipStats.defense
+    state.battleSpeed = 6 + equipStats.speed
+    state.crit = state.baseCrit + equipStats.crit
+    state.eva = state.baseEva + equipStats.eva
+
+    state.defPercent = EquipmentSystem.getDefensePercent(state.equipmentSystem)
+
+    local oldMaxHp = state.maxHp
+    state.maxHp = state.baseHp + (equipStats.hp or 0)
+    if state.maxHp ~= oldMaxHp and state.hp > state.maxHp then
+        state.hp = state.maxHp
     end
 end
 
-function Player:checkEvade()
-    return math.random(100) <= self.eva
+function Player.checkEvade(state)
+    return CombatUtils.checkEvade(state)
 end
 
 return Player

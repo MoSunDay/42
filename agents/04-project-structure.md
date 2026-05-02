@@ -9,15 +9,29 @@
 │   ├── src/
 │   │   ├── core/           # Core systems → [docs/summary.md](../game/src/core/docs/summary.md)
 │   │   ├── entities/       # Game entities → [docs/summary.md](../game/src/entities/docs/summary.md)
+│   │   │   ├── enemy_data.lua   # Enemy stat/loot data tables
+│   │   │   └── ...
 │   │   ├── systems/        # Game systems → [docs/summary.md](../game/src/systems/docs/summary.md)
+│   │   │   ├── combat_utils.lua  # Shared combat calculation functions
+│   │   │   ├── item_data.lua     # Item definition data tables
+│   │   │   ├── battle_simulator/ # Battle simulator
+│   │   │   │   ├── sim_combatant.lua
+│   │   │   │   ├── simulation_engine.lua
+│   │   │   │   ├── skill_database.lua
+│   │   │   │   └── init.lua
+│   │   │   └── ...
 │   │   ├── ui/             # UI components → [docs/summary.md](../game/src/ui/docs/summary.md)
+│   │   │   ├── slot_utils.lua   # Slot/grid helper functions
+│   │   │   └── ...
 │   │   └── animations/     # Animation system → [docs/summary.md](../game/src/animations/docs/summary.md)
 │   ├── map/                # Map system → [docs/summary.md](../game/map/docs/summary.md)
 │   │   ├── maps/           # Map data files (manual + generated)
 │   │   ├── minimap/        # Minimap data
 │   │   ├── map_manager.lua # Map loading/management
 │   │   ├── map_generator.lua # Procedural map generation
-│   │   └── map_registry.lua  # Map unlock/progression
+│   │   ├── map_registry.lua  # Map unlock/progression
+│   │   ├── map_themes.lua     # Theme color/asset definitions
+│   │   └── map_object_renderer.lua # Object layer rendering
 │   ├── npcs/               # NPC system → [docs/summary.md](../game/npcs/docs/summary.md)
 │   │   ├── npc_manager.lua   # NPC system manager
 │   │   ├── npc_database.lua  # NPC definitions
@@ -30,6 +44,8 @@
 │
 └── server/                  # Python API server → [docs/summary.md](../server/docs/summary.md)
     ├── app.py              # Main server application
+    ├── handlers/           # Request handlers
+    │   └── common.py       # Shared handler utilities
     ├── requirements.txt    # Python dependencies
     └── start.sh            # Startup script
 ```
