@@ -40,11 +40,11 @@ local AssetManager = require("core.asset_manager")
 local Player = require("entities.player")
 
 print("1. Creating test objects...")
-local assetManager = AssetManager.new()
-assetManager:loadAll()
+local assetManager = AssetManager.create()
+AssetManager.loadAll(assetManager)
 
-local player = Player.new(1000, 1000, assetManager)
-player:setMapBounds(2000, 2000)
+local player = Player.create(1000, 1000, assetManager)
+Player.setMapBounds(player, 2000, 2000)
 print("   Player created at (1000, 1000)")
 print("   Map bounds: 2000 x 2000")
 
@@ -52,7 +52,7 @@ print("\n2. Testing boundary restrictions...")
 
 -- Test moving beyond right boundary
 print("\n   Test 1: Move beyond right boundary (3000, 1000)")
-player:moveTo(3000, 1000)
+Player.moveTo(player, 3000, 1000)
 print("   Target set to: (" .. player.targetX .. ", " .. player.targetY .. ")")
 if player.targetX <= 2000 - player.width/2 then
     print("   ✓ Right boundary restriction working")
@@ -62,7 +62,7 @@ end
 
 -- Test moving beyond bottom boundary
 print("\n   Test 2: Move beyond bottom boundary (1000, 3000)")
-player:moveTo(1000, 3000)
+Player.moveTo(player, 1000, 3000)
 print("   Target set to: (" .. player.targetX .. ", " .. player.targetY .. ")")
 if player.targetY <= 2000 - player.height/2 then
     print("   ✓ Bottom boundary restriction working")
@@ -72,7 +72,7 @@ end
 
 -- Test moving beyond left boundary
 print("\n   Test 3: Move beyond left boundary (-100, 1000)")
-player:moveTo(-100, 1000)
+Player.moveTo(player, -100, 1000)
 print("   Target set to: (" .. player.targetX .. ", " .. player.targetY .. ")")
 if player.targetX >= player.width/2 then
     print("   ✓ Left boundary restriction working")
@@ -82,7 +82,7 @@ end
 
 -- Test moving beyond top boundary
 print("\n   Test 4: Move beyond top boundary (1000, -100)")
-player:moveTo(1000, -100)
+Player.moveTo(player, 1000, -100)
 print("   Target set to: (" .. player.targetX .. ", " .. player.targetY .. ")")
 if player.targetY >= player.height/2 then
     print("   ✓ Top boundary restriction working")
@@ -92,7 +92,7 @@ end
 
 -- Test valid movement
 print("\n   Test 5: Valid movement (500, 500)")
-player:moveTo(500, 500)
+Player.moveTo(player, 500, 500)
 print("   Target set to: (" .. player.targetX .. ", " .. player.targetY .. ")")
 if player.targetX == 500 and player.targetY == 500 then
     print("   ✓ Valid movement working")
@@ -104,10 +104,10 @@ end
 print("\n3. Testing boundary during movement...")
 player.x = 1980
 player.y = 1000
-player:moveTo(2100, 1000)
+Player.moveTo(player, 2100, 1000)
 
 for i = 1, 50 do
-    player:update(0.016)
+    Player.update(player, 0.016)
 end
 
 print("   Final position: (" .. player.x .. ", " .. player.y .. ")")
@@ -120,4 +120,3 @@ end
 print("\n=== All Boundary Tests Complete! ===\n")
 print("Boundary restrictions are working correctly.")
 print("Player cannot move outside the map bounds.")
-

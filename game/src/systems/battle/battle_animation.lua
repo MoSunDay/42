@@ -1,23 +1,13 @@
--- battle_animation.lua - Battle animation effects
--- Handles attack animations, damage numbers, and visual effects
-
 local BattleAnimation = {}
-BattleAnimation.__index = BattleAnimation
 
-function BattleAnimation.new()
-    local self = setmetatable({}, BattleAnimation)
-    
-    -- Active animations
-    self.animations = {}
-    
-    -- Damage numbers
-    self.damageNumbers = {}
-    
-    return self
+function BattleAnimation.create()
+    return {
+        animations = {},
+        damageNumbers = {},
+    }
 end
 
--- Add attack animation
-function BattleAnimation:addAttackAnimation(fromX, fromY, toX, toY, callback)
+function BattleAnimation.addAttackAnimation(state, fromX, fromY, toX, toY, callback)
     local anim = {
         type = "attack",
         fromX = fromX,
@@ -28,11 +18,10 @@ function BattleAnimation:addAttackAnimation(fromX, fromY, toX, toY, callback)
         duration = 0.3,
         callback = callback
     }
-    table.insert(self.animations, anim)
+    table.insert(state.animations, anim)
 end
 
--- Add damage number
-function BattleAnimation:addDamageNumber(x, y, damage, isPlayer, hitType)
+function BattleAnimation.addDamageNumber(state, x, y, damage, isPlayer, hitType)
     local dmg = {
         x = x,
         y = y,
@@ -44,11 +33,10 @@ function BattleAnimation:addDamageNumber(x, y, damage, isPlayer, hitType)
         duration = 1.5,
         timer = 0
     }
-    table.insert(self.damageNumbers, dmg)
+    table.insert(state.damageNumbers, dmg)
 end
 
--- Add hit flash effect
-function BattleAnimation:addHitFlash(x, y)
+function BattleAnimation.addHitFlash(state, x, y)
     local flash = {
         type = "flash",
         x = x,
@@ -58,99 +46,87 @@ function BattleAnimation:addHitFlash(x, y)
         duration = 0.2,
         timer = 0
     }
-    table.insert(self.animations, flash)
+    table.insert(state.animations, flash)
 end
 
--- Update all animations
-function BattleAnimation:update(dt)
-    -- Update animations
-    for i = #self.animations, 1, -1 do
-        local anim = self.animations[i]
-        
+function BattleAnimation.update(state, dt)
+    for i = #state.animations, 1, -1 do
+        local anim = state.animations[i]
+
         if anim.type == "attack" then
             anim.progress = anim.progress + dt / anim.duration
             if anim.progress >= 1 then
                 if anim.callback then
                     anim.callback()
                 end
-                table.remove(self.animations, i)
+                table.remove(state.animations, i)
             end
         elseif anim.type == "flash" then
             anim.timer = anim.timer + dt
             anim.alpha = 1 - (anim.timer / anim.duration)
             if anim.timer >= anim.duration then
-                table.remove(self.animations, i)
+                table.remove(state.animations, i)
             end
         end
     end
-    
-    -- Update damage numbers
-    for i = #self.damageNumbers, 1, -1 do
-        local dmg = self.damageNumbers[i]
+
+    for i = #state.damageNumbers, 1, -1 do
+        local dmg = state.damageNumbers[i]
         dmg.timer = dmg.timer + dt
-        dmg.offsetY = dmg.offsetY - dt * 50  -- Float upward
+        dmg.offsetY = dmg.offsetY - dt * 50
         dmg.alpha = 1 - (dmg.timer / dmg.duration)
-        
+
         if dmg.timer >= dmg.duration then
-            table.remove(self.damageNumbers, i)
+            table.remove(state.damageNumbers, i)
         end
     end
 end
 
--- Draw all animations
-function BattleAnimation:draw()
-    -- Draw attack animations
-    for _, anim in ipairs(self.animations) do
+function BattleAnimation.draw(state)
+    for _, anim in ipairs(state.animations) do
         if anim.type == "attack" then
-            self:drawAttackLine(anim)
+            BattleAnimation.drawAttackLine(state, anim)
         elseif anim.type == "flash" then
-            self:drawFlash(anim)
+            BattleAnimation.drawFlash(state, anim)
         end
     end
-    
-    -- Draw damage numbers
-    for _, dmg in ipairs(self.damageNumbers) do
-        self:drawDamageNumber(dmg)
+
+    for _, dmg in ipairs(state.damageNumbers) do
+        BattleAnimation.drawDamageNumber(state, dmg)
     end
 end
 
--- Draw attack line
-function BattleAnimation:drawAttackLine(anim)
+function BattleAnimation.drawAttackLine(state, anim)
     local t = anim.progress
-    -- Ease out cubic
     t = 1 - math.pow(1 - t, 3)
-    
+
     local x = anim.fromX + (anim.toX - anim.fromX) * t
     local y = anim.fromY + (anim.toY - anim.fromY) * t
-    
-    -- Draw attack trail
+
     love.graphics.setColor(1, 1, 0, 0.8)
     love.graphics.setLineWidth(3)
     love.graphics.line(anim.fromX, anim.fromY, x, y)
-    
-    -- Draw attack point
+
     love.graphics.setColor(1, 0.5, 0, 1)
     love.graphics.circle("fill", x, y, 8)
-    
+
     love.graphics.setLineWidth(1)
 end
 
--- Draw hit flash
-function BattleAnimation:drawFlash(flash)
+function BattleAnimation.drawFlash(state, flash)
     love.graphics.setColor(1, 1, 1, flash.alpha * 0.8)
     love.graphics.circle("fill", flash.x, flash.y, flash.radius)
-    
+
     love.graphics.setColor(1, 0.5, 0, flash.alpha * 0.5)
     love.graphics.circle("line", flash.x, flash.y, flash.radius)
 end
 
--- Draw damage number
-function BattleAnimation:drawDamageNumber(dmg)
+function BattleAnimation.drawDamageNumber(state, dmg)
     local x = dmg.x
     local y = dmg.y + dmg.offsetY
-    
+
     local text, color, scale
-    
+
     if dmg.hitType == "miss" then
         text = "MISS"
         color = {0.5, 0.5, 0.5, dmg.alpha}
@@ -168,24 +144,21 @@ function BattleAnimation:drawDamageNumber(dmg)
         end
         scale = 1.2
     end
-    
+
     love.graphics.setColor(0, 0, 0, dmg.alpha * 0.5)
     love.graphics.print(text, x + 2, y + 2, 0, scale, scale)
-    
+
     love.graphics.setColor(color)
     love.graphics.print(text, x, y, 0, scale, scale)
 end
 
--- Check if animations are playing
-function BattleAnimation:isPlaying()
-    return #self.animations > 0 or #self.damageNumbers > 0
+function BattleAnimation.isPlaying(state)
+    return #state.animations > 0 or #state.damageNumbers > 0
 end
 
--- Clear all animations
-function BattleAnimation:clear()
-    self.animations = {}
-    self.damageNumbers = {}
+function BattleAnimation.clear(state)
+    state.animations = {}
+    state.damageNumbers = {}
 end
 
 return BattleAnimation
-

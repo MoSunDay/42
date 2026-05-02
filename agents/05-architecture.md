@@ -1,5 +1,9 @@
 # Architecture Notes
 
+## Paradigm
+
+All Lua modules use **pure functional style**. There are no classes, no `setmetatable`, no `__index`, and no `self` keyword. Data is passed as plain tables; functions operate on them via dot syntax (`Module.method(state, ...)`). Constructors use `.create()` returning plain tables.
+
 ## Game States
 
 1. `login` - Account login screen

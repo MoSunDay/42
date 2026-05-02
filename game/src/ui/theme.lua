@@ -278,4 +278,170 @@ function Theme.getBorderColor(isActive)
     end
 end
 
+Theme.gold = {
+    bright = {0.95, 0.85, 0.4},
+    normal = {0.85, 0.72, 0.3},
+    dark = {0.65, 0.52, 0.2},
+    glow = {0.95, 0.85, 0.4, 0.3},
+    shimmer = {1.0, 0.95, 0.7}
+}
+
+Theme.parchment = {
+    light = {0.93, 0.88, 0.78},
+    mid = {0.88, 0.82, 0.70},
+    dark = {0.78, 0.70, 0.58},
+    border = {0.60, 0.50, 0.35},
+    text = {0.25, 0.20, 0.15}
+}
+
+Theme.gem = {
+    ruby = {0.85, 0.15, 0.20},
+    sapphire = {0.20, 0.40, 0.90},
+    emerald = {0.15, 0.70, 0.30},
+    topaz = {0.90, 0.75, 0.15},
+    amethyst = {0.60, 0.25, 0.80},
+    diamond = {0.85, 0.92, 1.0}
+}
+
+Theme._animTime = 0
+
+function Theme.update(dt)
+    Theme._animTime = Theme._animTime + dt
+end
+
+function Theme.getAnimTime()
+    return Theme._animTime
+end
+
+function Theme.drawGoldBorder(x, y, w, h, thickness)
+    thickness = thickness or 2
+    local g = Theme.gold
+    love.graphics.setLineWidth(thickness)
+    love.graphics.setColor(g.normal)
+    love.graphics.rectangle("line", x, y, w, h, 6)
+
+    love.graphics.setColor(g.bright)
+    love.graphics.setLineWidth(1)
+    love.graphics.rectangle("line", x + 1, y + 1, w - 2, h - 2, 5)
+
+    love.graphics.setLineWidth(1)
+end
+
+function Theme.drawCornerOrnaments(x, y, w, h, size)
+    size = size or 10
+    local g = Theme.gold
+    love.graphics.setColor(g.bright)
+    love.graphics.setLineWidth(2)
+
+    love.graphics.line(x, y + size, x, y, x + size, y)
+    love.graphics.line(x + w - size, y, x + w, y, x + w, y + size)
+    love.graphics.line(x, y + h - size, x, y + h, x + size, y + h)
+    love.graphics.line(x + w - size, y + h, x + w, y + h, x + w, y + h - size)
+
+    love.graphics.setColor(g.normal)
+    love.graphics.setLineWidth(1)
+    love.graphics.circle("fill", x, y, 2)
+    love.graphics.circle("fill", x + w, y, 2)
+    love.graphics.circle("fill", x, y + h, 2)
+    love.graphics.circle("fill", x + w, y + h, 2)
+end
+
+function Theme.drawGlow(x, y, w, h, color, intensity)
+    color = color or Theme.colors.border
+    intensity = intensity or 0.3
+    local pulse = 0.8 + 0.2 * math.sin(Theme._animTime * 2)
+    local alpha = intensity * pulse
+
+    love.graphics.setColor(color[1], color[2], color[3], alpha * 0.5)
+    love.graphics.rectangle("line", x - 2, y - 2, w + 4, h + 4, 8)
+
+    love.graphics.setColor(color[1], color[2], color[3], alpha * 0.25)
+    love.graphics.rectangle("line", x - 4, y - 4, w + 8, h + 8, 10)
+end
+
+function Theme.drawGradient(x, y, w, h, colorTop, colorBottom, steps)
+    steps = steps or 8
+    local stepH = h / steps
+    for i = 0, steps - 1 do
+        local t = i / (steps - 1)
+        local r = colorTop[1] + (colorBottom[1] - colorTop[1]) * t
+        local g = colorTop[2] + (colorBottom[2] - colorTop[2]) * t
+        local b = colorTop[3] + (colorBottom[3] - colorTop[3]) * t
+        local a = (colorTop[4] or 1) + ((colorBottom[4] or 1) - (colorTop[4] or 1)) * t
+        love.graphics.setColor(r, g, b, a)
+        love.graphics.rectangle("fill", x, y + i * stepH, w, stepH + 1)
+    end
+end
+
+function Theme.drawParchmentPanel(x, y, w, h, borderThickness)
+    borderThickness = borderThickness or 2
+    local p = Theme.parchment
+
+    Theme.drawGradient(x, y, w, h, p.light, p.mid, 6)
+
+    love.graphics.setColor(p.dark)
+    love.graphics.setLineWidth(borderThickness)
+    love.graphics.rectangle("line", x, y, w, h, 4)
+    love.graphics.setLineWidth(1)
+
+    Theme.drawCornerOrnaments(x + 2, y + 2, w - 4, h - 4, 8)
+end
+
+function Theme.drawGemIcon(x, y, size, gemColor)
+    if not gemColor or not gemColor[1] then return end
+    love.graphics.setColor(gemColor[1] * 0.3, gemColor[2] * 0.3, gemColor[3] * 0.3, 0.5)
+    love.graphics.circle("fill", x + 1, y + 1, size)
+
+    love.graphics.setColor(gemColor)
+    love.graphics.circle("fill", x, y, size)
+
+    love.graphics.setColor(1, 1, 1, 0.4)
+    love.graphics.circle("fill", x - size * 0.25, y - size * 0.25, size * 0.35)
+
+    love.graphics.setColor(1, 1, 1, 0.7)
+    love.graphics.setLineWidth(1)
+    love.graphics.circle("line", x, y, size)
+end
+
+function Theme.drawOrnamentalLine(x1, y1, x2, y2, color)
+    color = color or Theme.gold.normal
+    love.graphics.setColor(color)
+    love.graphics.setLineWidth(2)
+    love.graphics.line(x1, y1, x2, y2)
+
+    love.graphics.setColor(color[1], color[2], color[3], 0.4)
+    love.graphics.setLineWidth(1)
+    love.graphics.line(x1, y1 + 1, x2, y2 + 1)
+
+    love.graphics.setLineWidth(1)
+end
+
+function Theme.drawShimmer(x, y, w, h, speed)
+    speed = speed or 1
+    local t = Theme._animTime * speed
+    local shimmerX = x + ((math.sin(t) + 1) / 2) * w
+
+    love.graphics.setColor(1, 1, 1, 0.05)
+    love.graphics.rectangle("fill", shimmerX - 20, y, 40, h)
+    love.graphics.setColor(1, 1, 1, 0.03)
+    love.graphics.rectangle("fill", shimmerX - 40, y, 80, h)
+end
+
+function Theme.drawDiamondSeparator(cx, y, width)
+    width = width or 80
+    local g = Theme.gold
+
+    love.graphics.setColor(g.dark)
+    love.graphics.setLineWidth(1)
+    love.graphics.line(cx - width / 2, y, cx - 5, y)
+    love.graphics.line(cx + 5, y, cx + width / 2, y)
+
+    love.graphics.setColor(g.bright)
+    love.graphics.push()
+    love.graphics.translate(cx, y)
+    love.graphics.rotate(math.pi / 4)
+    love.graphics.rectangle("fill", -3, -3, 6, 6)
+    love.graphics.pop()
+end
+
 return Theme

@@ -1,10 +1,7 @@
--- pet_system.lua - Pet companion system
--- Pets fight alongside the player in battle
+local AnimationManager = require("src.animations.animation_manager")
 
 local PetSystem = {}
-PetSystem.__index = PetSystem
 
--- Pet database
 local PET_DATABASE = {
     slime_pet = {
         id = "slime_pet",
@@ -45,28 +42,24 @@ local PET_DATABASE = {
 }
 
 function PetSystem.new()
-    local self = setmetatable({}, PetSystem)
-    
-    self.activePet = nil
-    self.animationManager = nil
-    
-    return self
+    return {
+        activePet = nil,
+        animationManager = nil,
+    }
 end
 
--- Set animation manager
-function PetSystem:setAnimationManager(animManager)
-    self.animationManager = animManager
+function PetSystem.setAnimationManager(state, animManager)
+    state.animationManager = animManager
 end
 
--- Summon a pet
-function PetSystem:summon(petId)
+function PetSystem.summon(state, petId)
     local template = PET_DATABASE[petId]
     if not template then
         print("Warning: Unknown pet: " .. tostring(petId))
         return false
     end
     
-    self.activePet = {
+    state.activePet = {
         id = template.id,
         name = template.name,
         hp = template.hp,
@@ -81,122 +74,122 @@ function PetSystem:summon(petId)
         animationId = "pet"
     }
     
-    -- Setup animation
-    if self.animationManager then
-        self.animationManager:createAnimationSet(self.activePet.animationId)
+    if state.animationManager then
+        AnimationManager.createAnimationSet(state.animationManager, state.activePet.animationId)
     end
     
-    print("Summoned: " .. self.activePet.name)
+    print("Summoned: " .. state.activePet.name)
     return true
 end
 
--- Dismiss current pet
-function PetSystem:dismiss()
-    if self.activePet then
-        if self.animationManager then
-            self.animationManager:removeEntity(self.activePet.animationId)
+function PetSystem.dismiss(state)
+    if state.activePet then
+        if state.animationManager then
+            AnimationManager.removeEntity(state.animationManager, state.activePet.animationId)
         end
-        print("Dismissed: " .. self.activePet.name)
-        self.activePet = nil
+        print("Dismissed: " .. state.activePet.name)
+        state.activePet = nil
     end
 end
 
--- Get active pet
-function PetSystem:getActivePet()
-    return self.activePet
+function PetSystem.getActivePet(state)
+    return state.activePet
 end
 
--- Check if pet is active
-function PetSystem:hasPet()
-    return self.activePet ~= nil
+function PetSystem.hasPet(state)
+    return state.activePet ~= nil
 end
 
--- Pet takes damage
-function PetSystem:takeDamage(damage)
-    if not self.activePet then
+function PetSystem.takeDamage(state, damage)
+    if not state.activePet then
         return 0
     end
-    
-    local defense = self.activePet.isDefending and self.activePet.defense * 2 or self.activePet.defense
-    local actualDamage = math.max(1, damage - defense)
-    self.activePet.hp = self.activePet.hp - actualDamage
-    
-    if self.activePet.hp < 0 then
-        self.activePet.hp = 0
+
+    local defPercent = math.min(50, math.floor(state.activePet.defense / 5))
+    if state.activePet.isDefending then
+        defPercent = defPercent + 25
     end
-    
+    defPercent = math.min(75, defPercent)
+
+    local actualDamage = math.floor(damage * (100 - defPercent) / 100)
+    actualDamage = math.max(1, actualDamage)
+    state.activePet.hp = state.activePet.hp - actualDamage
+
+    if state.activePet.hp < 0 then
+        state.activePet.hp = 0
+    end
+
     return actualDamage
 end
 
--- Pet attacks
-function PetSystem:calculateDamage()
-    if not self.activePet then
+function PetSystem.calculateDamage(state)
+    if not state.activePet then
+        return 0, false
+    end
+
+    local variance = 0.2
+    local multiplier = 1 + (math.random() * 2 - 1) * variance
+    local damage = math.floor(state.activePet.attack * multiplier)
+
+    local isCrit = math.random(100) <= 5
+    if isCrit then
+        damage = math.floor(damage * 1.5)
+    end
+
+    return damage, isCrit
+end
+
+function PetSystem.isAlive(state)
+    return state.activePet and state.activePet.hp > 0
+end
+
+function PetSystem.heal(state, amount)
+    if state.activePet then
+        state.activePet.hp = math.min(state.activePet.maxHp, state.activePet.hp + amount)
+    end
+end
+
+function PetSystem.getHPPercent(state)
+    if not state.activePet then
         return 0
     end
-    
-    return self.activePet.attack + math.random(-2, 2)
+    return state.activePet.hp / state.activePet.maxHp
 end
 
--- Check if pet is alive
-function PetSystem:isAlive()
-    return self.activePet and self.activePet.hp > 0
-end
-
--- Heal pet
-function PetSystem:heal(amount)
-    if self.activePet then
-        self.activePet.hp = math.min(self.activePet.maxHp, self.activePet.hp + amount)
+function PetSystem.update(state, dt)
+    if state.activePet and state.animationManager then
+        AnimationManager.updateEntity(state.animationManager, state.activePet.animationId, dt, false)
     end
 end
 
--- Get HP percentage
-function PetSystem:getHPPercent()
-    if not self.activePet then
-        return 0
-    end
-    return self.activePet.hp / self.activePet.maxHp
-end
-
--- Update pet animation
-function PetSystem:update(dt)
-    if self.activePet and self.animationManager then
-        self.animationManager:updateEntity(self.activePet.animationId, dt, false)
-    end
-end
-
--- Get all available pets
 function PetSystem.getAllPets()
     return PET_DATABASE
 end
 
--- Get pet data
 function PetSystem.getPetData(petId)
     return PET_DATABASE[petId]
 end
 
--- Serialize for saving
-function PetSystem:serialize()
-    if not self.activePet then
+function PetSystem.serialize(state)
+    if not state.activePet then
         return nil
     end
     
     return {
-        id = self.activePet.id,
-        hp = self.activePet.hp
+        id = state.activePet.id,
+        hp = state.activePet.hp
     }
 end
 
--- Deserialize from saved data
-function PetSystem:deserialize(data)
+function PetSystem.deserialize(state, data)
     if not data then
         return
     end
     
-    self:summon(data.id)
-    if self.activePet and data.hp then
-        self.activePet.hp = data.hp
+    PetSystem.summon(state, data.id)
+    if state.activePet and data.hp then
+        state.activePet.hp = data.hp
     end
 end
 
 return PetSystem
-

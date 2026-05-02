@@ -2,8 +2,8 @@
 
 ## Adding a New Enemy Type
 
-1. Edit `src/entities/enemy.lua`
-2. Add to `ENEMY_DATA` table with stats
+1. Edit `src/entities/enemy_data.lua`
+2. Add entry to `EnemyData.TYPES` table with stats
 3. Set tier (1-4) for spawn weighting
 
 ## Adding a New Map

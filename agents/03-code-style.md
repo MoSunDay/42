@@ -2,48 +2,47 @@
 
 ## Lua (Game Client)
 
-### Module Pattern
+### Module Pattern (Pure Functional)
+
+All modules follow pure functional style — **no `setmetatable`**, **no `__index`**, **no `self`**, **no colon syntax**.
 
 ```lua
--- module_name.lua - Brief description (EN or CN comments OK)
-
 local Dependency = require("path.to.dependency")
 
 local ModuleName = {}
-ModuleName.__index = ModuleName
 
--- Constants at the top (use local)
 local CONSTANT_NAME = 100
 
-function ModuleName.new(param)
-    local self = setmetatable({}, ModuleName)
-    
-    -- Initialize properties
-    self.property = param or defaultValue
-    
-    return self
+function ModuleName.create(param)
+    return {
+        property = param or defaultValue
+    }
 end
 
--- Methods use colon syntax
-function ModuleName:methodName(arg)
-    -- Implementation
+function ModuleName.method(state, arg)
+    -- access state.property instead of self.property
 end
 
--- Static methods use dot syntax
 function ModuleName.staticMethod(arg)
-    -- Implementation
+    -- no state parameter needed
 end
 
 return ModuleName
 ```
 
+**Rules:**
+- Constructor is `.create()` — returns a plain table, never uses metatables
+- Instance methods take `state` as first parameter (the data table)
+- Always call with dot syntax: `Module.method(state, ...)`, never `state:method(...)`
+- Static methods have no `state` parameter
+
 ### Naming Conventions
 
 | Type | Convention | Example |
 |------|------------|---------|
-| Modules/Classes | PascalCase | `BattleSystem`, `Player` |
-| Functions/Methods | snake_case | `takeDamage`, `move_to` |
-| Variables | snake_case | `player_hp`, `currentMap` |
+| Modules | PascalCase | `BattleSystem`, `Player` |
+| Functions | snake_case | `take_damage`, `move_to` |
+| Variables | snake_case | `player_hp`, `current_map` |
 | Constants | SCREAMING_SNAKE | `MAX_PARTY_SIZE`, `GAME_MODE` |
 | Private fields | prefix with _ | `_internalState` |
 | Boolean properties | is/has prefix | `isMoving`, `isActive` |
@@ -76,7 +75,7 @@ if not success then
 end
 
 -- Validate parameters
-function Module:method(required, optional)
+function Module.method(state, required, optional)
     assert(required ~= nil, "required parameter is missing")
     optional = optional or defaultValue
 end

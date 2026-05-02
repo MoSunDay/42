@@ -1,35 +1,33 @@
-local SimUnit = {}
-SimUnit.__index = SimUnit
-
+local CombatUtils = require("src.systems.combat_utils")
 local ClassDatabase = require("src.data.class_database")
-local Enemy = require("entities.enemy")
 
-function SimUnit.new(name)
-    local self = setmetatable({}, SimUnit)
-    self.name = name or "Unit"
-    self.hp = 100
-    self.maxHp = 100
-    self.mp = 50
-    self.maxMp = 50
-    self.attack = 15
-    self.defense = 5
-    self.magicAttack = 10
-    self.defPercent = 5
-    self.speed = 5
-    self.crit = 5
-    self.eva = 3
-    self.level = 1
-    self.skills = {}
-    self.isDefending = false
-    self._team = nil
-    return self
+local SimCombatant = {}
+
+function SimCombatant.new(name)
+    return {
+        name = name or "Unit",
+        hp = 100,
+        maxHp = 100,
+        mp = 50,
+        maxMp = 50,
+        attack = 15,
+        defense = 5,
+        magicAttack = 10,
+        defPercent = 5,
+        speed = 5,
+        crit = 5,
+        eva = 3,
+        level = 1,
+        skills = {},
+        isDefending = false,
+        _team = nil,
+    }
 end
 
-function SimUnit.fromClass(classId, level, name)
-    local self = SimUnit.new(name)
+function SimCombatant.fromClass(classId, level, name)
+    local self = SimCombatant.new(name)
     level = level or 1
     self.level = level
-    
     local class = ClassDatabase.getClass(classId)
     if class then
         self.name = name or class.name
@@ -47,21 +45,19 @@ function SimUnit.fromClass(classId, level, name)
             self.crit = (stats.crit or 5) + (stats.critBonus or 0)
             self.eva = stats.eva or 3
         end
-        
         if class.skillIds then
             self.skills = class.skillIds
         end
     end
-    
-    self:applyLevelScaling()
+    SimCombatant.applyLevelScaling(self)
     return self
 end
 
-function SimUnit.fromEnemy(enemyType, level, name)
-    local self = SimUnit.new(name)
+function SimCombatant.fromEnemy(enemyType, level, name)
+    local self = SimCombatant.new(name)
     level = level or 1
     self.level = level
-    
+    local Enemy = require("entities.enemy")
     local enemyData = Enemy.getAllTypes()[enemyType]
     if enemyData then
         self.name = name or enemyData.name
@@ -77,14 +73,12 @@ function SimUnit.fromEnemy(enemyType, level, name)
         self.crit = enemyData.crit or 5
         self.eva = enemyData.eva or 3
     end
-    
-    self:applyLevelScaling()
+    SimCombatant.applyLevelScaling(self)
     return self
 end
 
-function SimUnit.fromStats(stats, name)
-    local self = SimUnit.new(name)
-    
+function SimCombatant.fromStats(stats, name)
+    local self = SimCombatant.new(name)
     self.hp = stats.hp or 100
     self.maxHp = stats.maxHp or self.hp
     self.mp = stats.mp or 50
@@ -98,14 +92,12 @@ function SimUnit.fromStats(stats, name)
     self.eva = stats.eva or 3
     self.level = stats.level or 1
     self.skills = stats.skills or {}
-    
     return self
 end
 
-function SimUnit:applyLevelScaling()
+function SimCombatant.applyLevelScaling(self)
     local scalePerLevel = 0.05
     local levelMult = 1 + scalePerLevel * (self.level - 1)
-    
     self.maxHp = math.floor(self.maxHp * levelMult)
     self.hp = self.maxHp
     self.maxMp = math.floor(self.maxMp * levelMult)
@@ -116,65 +108,42 @@ function SimUnit:applyLevelScaling()
     self.speed = math.floor(self.speed * (1 + (levelMult - 1) * 0.5))
 end
 
-function SimUnit:reset()
+function SimCombatant.reset(self)
     self.hp = self.maxHp
     self.mp = self.maxMp
     self.isDefending = false
 end
 
-function SimUnit:takeDamage(damage)
-    local reduction = self.defPercent or 0
-    if self.isDefending then
-        reduction = reduction + 25
-    end
-    reduction = math.min(75, reduction)
-    
-    local actualDamage = math.floor(damage * (100 - reduction) / 100)
-    actualDamage = math.max(1, actualDamage)
-    
-    self.hp = self.hp - actualDamage
-    if self.hp < 0 then
-        self.hp = 0
-    end
-    
-    return actualDamage
+function SimCombatant.takeDamage(self, damage)
+    return CombatUtils.takeDamageMutating(self, damage)
 end
 
-function SimUnit:heal(amount)
+function SimCombatant.heal(self, amount)
     local oldHp = self.hp
     self.hp = math.min(self.maxHp, self.hp + amount)
     return self.hp - oldHp
 end
 
-function SimUnit:isAlive()
-    return self.hp > 0
+function SimCombatant.isAlive(self)
+    return CombatUtils.isAlive(self)
 end
 
-function SimUnit:getHPPercent()
-    return self.hp / self.maxHp
+function SimCombatant.getHPPercent(self)
+    return CombatUtils.getHPPercent(self)
 end
 
-function SimUnit:calculateDamage()
-    local variance = 0.2
-    local multiplier = 1 + (math.random() * 2 - 1) * variance
-    local damage = math.floor(self.attack * multiplier)
-    
-    local isCrit = math.random(100) <= self.crit
-    if isCrit then
-        damage = math.floor(damage * 1.5)
-    end
-    
-    return damage, isCrit
+function SimCombatant.calculateDamage(self)
+    return CombatUtils.calculateDamageMutating(self)
 end
 
-function SimUnit:checkEvade()
-    return math.random(100) <= self.eva
+function SimCombatant.checkEvade(self)
+    return CombatUtils.checkEvade(self)
 end
 
-function SimUnit:getSummary()
+function SimCombatant.getSummary(self)
     return string.format("%s Lv.%d HP:%d/%d MP:%d/%d ATK:%d DEF:%d SPD:%d",
         self.name, self.level, self.hp, self.maxHp, self.mp, self.maxMp,
         self.attack, self.defense, self.speed)
 end
 
-return SimUnit
+return SimCombatant

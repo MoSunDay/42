@@ -30,11 +30,11 @@ function love.load()
     })
 
     -- Initialize asset manager
-    game.assetManager = AssetManager.new()
-    game.assetManager:loadAll()
+    game.assetManager = AssetManager.create()
+    AssetManager.loadAll(game.assetManager)
 
     -- Initialize game state
-    game.state = GameState.new(game.assetManager)
+    game.state = GameState.create(game.assetManager)
 
     -- Initialize render system first
     game.renderSystem = RenderSystem.new(game.state, game.assetManager)
@@ -52,7 +52,7 @@ end
 
 function love.update(dt)
     if game.state then
-        game.state:update(dt)
+        GameState.update(game.state, dt)
     end
     if game.renderSystem then
         game.renderSystem:update(dt)
@@ -67,10 +67,10 @@ end
 
 function love.keypressed(key)
     -- Handle login input first
-    if game.state and game.state:getMode() == "login" then
-        game.state:keypressed(key)
-    elseif game.state and game.state:getMode() == "character_select" then
-        game.state:keypressed(key)
+    if game.state and GameState.getMode(game.state) == "login" then
+        GameState.keypressed(game.state, key)
+    elseif game.state and GameState.getMode(game.state) == "character_select" then
+        GameState.keypressed(game.state, key)
     elseif game.inputSystem then
         game.inputSystem:keypressed(key)
     end
@@ -78,13 +78,13 @@ end
 
 function love.textinput(text)
     -- Handle login text input
-    if game.state and game.state:getMode() == "login" then
-        game.state:textinput(text)
-    elseif game.state and game.state:getMode() == "character_select" then
-        game.state:textinput(text)
-    elseif game.state and game.state:getMode() == "exploration" then
+    if game.state and GameState.getMode(game.state) == "login" then
+        GameState.textinput(game.state, text)
+    elseif game.state and GameState.getMode(game.state) == "character_select" then
+        GameState.textinput(game.state, text)
+    elseif game.state and GameState.getMode(game.state) == "exploration" then
         -- Handle chat input
-        local chatSystem = game.state:getChatSystem()
+        local chatSystem = GameState.getChatSystem(game.state)
         if chatSystem and chatSystem:isInputting() then
             chatSystem:addInputChar(text)
         end
@@ -93,10 +93,10 @@ end
 
 function love.mousepressed(x, y, button)
     -- Handle mouse input based on game mode
-    if game.state and game.state:getMode() == "login" then
-        game.state:mousepressed(x, y, button)
-    elseif game.state and game.state:getMode() == "character_select" then
-        game.state:mousepressed(x, y, button)
+    if game.state and GameState.getMode(game.state) == "login" then
+        GameState.mousepressed(game.state, x, y, button)
+    elseif game.state and GameState.getMode(game.state) == "character_select" then
+        GameState.mousepressed(game.state, x, y, button)
     elseif game.inputSystem then
         game.inputSystem:mousepressed(x, y, button)
     end
@@ -115,4 +115,3 @@ function love.mousemoved(x, y)
         game.inputSystem:mousemoved(x, y)
     end
 end
-

@@ -1,10 +1,5 @@
--- appearance_system.lua - Character appearance system
--- 统一管理角色外观（头像和精灵）
-
 local AppearanceSystem = {}
-AppearanceSystem.__index = AppearanceSystem
 
--- Appearance presets (predefined character looks)
 local APPEARANCE_PRESETS = {
     blue_hero = {
         name = "Blue Hero",
@@ -57,16 +52,13 @@ local APPEARANCE_PRESETS = {
 }
 
 function AppearanceSystem.new()
-    local self = setmetatable({}, AppearanceSystem)
-    return self
+    return {}
 end
 
--- Get appearance preset by ID
 function AppearanceSystem.getPreset(presetId)
     return APPEARANCE_PRESETS[presetId] or APPEARANCE_PRESETS.blue_hero
 end
 
--- Get all available presets
 function AppearanceSystem.getAllPresets()
     local presets = {}
     for id, preset in pairs(APPEARANCE_PRESETS) do
@@ -75,7 +67,6 @@ function AppearanceSystem.getAllPresets()
     return presets
 end
 
--- Draw character sprite (for game world)
 function AppearanceSystem.drawSprite(x, y, size, appearance, offsetX, offsetY, scaleX, scaleY)
     offsetX = offsetX or 0
     offsetY = offsetY or 0
@@ -90,29 +81,23 @@ function AppearanceSystem.drawSprite(x, y, size, appearance, offsetX, offsetY, s
     love.graphics.translate(x + offsetX, y + offsetY)
     love.graphics.scale(scaleX, scaleY)
     
-    -- Outer circle (border)
     love.graphics.setColor(0.2, 0.2, 0.2)
     love.graphics.circle("fill", 0, 0, size + 3)
     
-    -- Main circle (body)
     love.graphics.setColor(color)
     love.graphics.circle("fill", 0, 0, size)
     
-    -- Highlight
     love.graphics.setColor(highlightColor)
     love.graphics.circle("fill", -size * 0.3, -size * 0.3, size * 0.3)
     
-    -- Eyes
     love.graphics.setColor(eyeColor)
     love.graphics.circle("fill", -size * 0.25, -size * 0.1, size * 0.15)
     love.graphics.circle("fill", size * 0.25, -size * 0.1, size * 0.15)
     
-    -- Eye shine
     love.graphics.setColor(1, 1, 1, 0.8)
     love.graphics.circle("fill", -size * 0.25 + 2, -size * 0.1 - 2, size * 0.06)
     love.graphics.circle("fill", size * 0.25 + 2, -size * 0.1 - 2, size * 0.06)
     
-    -- Smile
     love.graphics.setColor(eyeColor)
     love.graphics.setLineWidth(2)
     love.graphics.arc("line", "open", 0, size * 0.1, size * 0.4, 0.3, math.pi - 0.3)
@@ -121,24 +106,19 @@ function AppearanceSystem.drawSprite(x, y, size, appearance, offsetX, offsetY, s
     love.graphics.pop()
 end
 
--- Draw character avatar (for UI panels)
 function AppearanceSystem.drawAvatar(x, y, size, appearance)
-    -- Avatar is the same as sprite, just a wrapper for clarity
     AppearanceSystem.drawSprite(x, y, size, appearance, 0, 0, 1, 1)
 end
 
--- Create appearance from character data
 function AppearanceSystem.createAppearance(character)
     if not character then
         return AppearanceSystem.getPreset("blue_hero")
     end
     
-    -- If character has a preset ID, use it
     if character.appearanceId then
         return AppearanceSystem.getPreset(character.appearanceId)
     end
     
-    -- If character has custom colors, use them
     if character.avatarColor then
         return {
             name = character.name or "Custom",
@@ -148,11 +128,9 @@ function AppearanceSystem.createAppearance(character)
         }
     end
     
-    -- Default to blue hero
     return AppearanceSystem.getPreset("blue_hero")
 end
 
--- Set character appearance
 function AppearanceSystem.setCharacterAppearance(character, presetId)
     if not character then
         return
@@ -166,4 +144,3 @@ function AppearanceSystem.setCharacterAppearance(character, presetId)
 end
 
 return AppearanceSystem
-

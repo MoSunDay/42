@@ -2,6 +2,8 @@
 -- 角色头像渲染（使用统一外观系统）
 
 local AppearanceSystem = require("src.systems.appearance_system")
+local Components = require("src.ui.components")
+local Theme = require("src.ui.theme")
 
 local AvatarRenderer = {}
 
@@ -16,21 +18,14 @@ function AvatarRenderer.drawAvatar(x, y, size, character)
 end
 
 -- Draw character info panel
-function AvatarRenderer.drawCharacterPanel(x, y, width, height, character, font)
+function AvatarRenderer.drawCharacterPanel(x, y, width, height, character, font, assetManager)
     if not character then
         return
     end
     
     font = font or love.graphics.newFont(14)
     
-    -- Panel background
-    love.graphics.setColor(0.15, 0.15, 0.2, 0.9)
-    love.graphics.rectangle("fill", x, y, width, height, 5, 5)
-    
-    -- Panel border
-    love.graphics.setColor(0.4, 0.4, 0.5)
-    love.graphics.setLineWidth(2)
-    love.graphics.rectangle("line", x, y, width, height, 5, 5)
+    Components.drawOrnatePanel(x, y, width, height, assetManager, {title="Player", corners=true, glow=true})
     
     -- Avatar
     local avatarSize = 30
@@ -58,29 +53,9 @@ function AvatarRenderer.drawCharacterPanel(x, y, width, height, character, font)
 end
 
 -- Draw HP bar (for battle)
-function AvatarRenderer.drawHPBar(x, y, width, height, current, max)
-    -- Background
-    love.graphics.setColor(0.2, 0.2, 0.25)
-    love.graphics.rectangle("fill", x, y, width, height, 3, 3)
-    
-    -- HP fill
+function AvatarRenderer.drawHPBar(x, y, width, height, current, max, assetManager)
     local hpPercent = current / max
-    local color
-    if hpPercent > 0.5 then
-        color = {0.3, 0.8, 0.3}  -- Green
-    elseif hpPercent > 0.25 then
-        color = {0.9, 0.7, 0.2}  -- Yellow
-    else
-        color = {0.9, 0.3, 0.3}  -- Red
-    end
-    
-    love.graphics.setColor(color)
-    love.graphics.rectangle("fill", x, y, width * hpPercent, height, 3, 3)
-    
-    -- Border
-    love.graphics.setColor(0.4, 0.4, 0.5)
-    love.graphics.setLineWidth(1)
-    love.graphics.rectangle("line", x, y, width, height, 3, 3)
+    Components.drawOrnateHPBar(x, y, width, height, hpPercent, nil, assetManager)
     
     -- Text
     love.graphics.setColor(1, 1, 1)

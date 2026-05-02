@@ -85,7 +85,7 @@ User interface components for HUD, menus, skills, and interactions.
 - `TutorialPanel:handleKeyPress(key)` - Handle keyboard navigation (arrows, space, escape)
 
 ### skill_panel.lua
-- `SkillPanel.new()` - Create skill panel
+- `SkillPanel.new(assetManager)` - Create skill panel
 - `SkillPanel:open(player)` - Open panel with player data
 - `SkillPanel:close()` - Close panel
 - `SkillPanel:toggle(player)` - Toggle open/close

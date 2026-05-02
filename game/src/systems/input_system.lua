@@ -1,134 +1,125 @@
--- input_system.lua - Input system
--- Handle all user input (mouse, keyboard, etc.)
+local BattleSystem = require("src.systems.battle.battle_system")
+local BattleUI = require("src.ui.battle.battle_ui")
+local BattleLog = require("src.systems.battle.battle_log")
+local Camera = require("core.camera")
+local FullscreenMap = require("src.ui.fullscreen_map")
+local SkillPanel = require("src.ui.skill_panel")
+local HUD = require("src.ui.hud")
+local ChatUI = require("src.ui.chat_ui")
+local UnifiedMenu = require("src.ui.unified_menu")
+local Enemy = require("entities.enemy")
 
 local InputSystem = {}
-InputSystem.__index = InputSystem
 
 function InputSystem.new(gameState, renderSystem)
-    local self = setmetatable({}, InputSystem)
-
-    self.gameState = gameState
-    self.renderSystem = renderSystem
-    self.battleUI = renderSystem:getBattleUI()
-    self.fullscreenMap = renderSystem:getFullscreenMap()
-    self.hud = renderSystem:getHUD()
-    self.chatUI = renderSystem:getChatUI()
-
-    return self
+    return {
+        gameState = gameState,
+        renderSystem = renderSystem,
+        battleUI = renderSystem:getBattleUI(),
+        fullscreenMap = renderSystem:getFullscreenMap(),
+        hud = renderSystem:getHUD(),
+        chatUI = renderSystem:getChatUI(),
+    }
 end
 
--- Handle mouse press events
-function InputSystem:mousepressed(x, y, button)
-    local mode = self.gameState:getMode()
+function InputSystem.mousepressed(state, x, y, button)
+    local mode = state.gameState:getMode()
 
-    -- Handle skill panel mouse events
-    local skillPanel = self.gameState:getSkillPanel()
+    local skillPanel = state.gameState:getSkillPanel()
     if skillPanel and skillPanel.isOpen then
-        if skillPanel:mousepressed(x, y, button) then
+        if SkillPanel.mousepressed(skillPanel, x, y, button) then
             return
         end
     end
 
     if mode == "exploration" then
-        -- Check if clicked on unified menu
-        local unifiedMenu = self.renderSystem:getUnifiedMenu()
-        if unifiedMenu and unifiedMenu:isMenuOpen() then
-            if unifiedMenu:mousepressed(x, y, button, self.gameState) then
+        local unifiedMenu = state.renderSystem:getUnifiedMenu()
+        if unifiedMenu and UnifiedMenu.isMenuOpen(unifiedMenu) then
+            if UnifiedMenu.mousepressed(unifiedMenu, x, y, button, state.gameState) then
                 return
             end
         end
 
-        -- Check if fullscreen map is open
-        if self.fullscreenMap:isMapOpen() then
-            local worldX, worldY = self.fullscreenMap:mousepressed(x, y, button, self.gameState.map)
+        if FullscreenMap.isMapOpen(state.fullscreenMap) then
+            local worldX, worldY = FullscreenMap.mousepressed(state.fullscreenMap, x, y, button, state.gameState.map)
             if worldX and worldY then
-                -- Navigate to clicked position
-                self.gameState:movePlayerTo(worldX, worldY)
+                state.gameState:movePlayerTo(worldX, worldY)
                 print(string.format("Navigate to: (%.0f, %.0f)", worldX, worldY))
             end
             return
         end
 
-        -- Check if clicked on minimap
-        if button == 1 and self.hud:isMouseOverMinimap(x, y) then
-            self.fullscreenMap:open()
+        if button == 1 and HUD.isMouseOverMinimap(state.hud, x, y) then
+            FullscreenMap.open(state.fullscreenMap)
             return
         end
 
-        -- Check if clicked on HUD buttons
         if button == 1 then
-            local buttonKey = self.hud:isMouseOverButton(x, y)
+            local buttonKey = HUD.isMouseOverButton(state.hud, x, y)
             if buttonKey then
                 if buttonKey == "menu" then
-                    local unifiedMenu = self.renderSystem:getUnifiedMenu()
+                    local unifiedMenu = state.renderSystem:getUnifiedMenu()
                     if unifiedMenu then
-                        unifiedMenu:toggle()
+                        UnifiedMenu.toggle(unifiedMenu)
                     end
                     return
                 elseif buttonKey == "party" then
-                    local unifiedMenu = self.renderSystem:getUnifiedMenu()
+                    local unifiedMenu = state.renderSystem:getUnifiedMenu()
                     if unifiedMenu then
-                        unifiedMenu:open()
-                        unifiedMenu:setTab(3)  -- Party tab
+                        UnifiedMenu.open(unifiedMenu)
+                        UnifiedMenu.setTab(unifiedMenu, 3)
                     end
                     return
                 elseif buttonKey == "pet" then
-                    local unifiedMenu = self.renderSystem:getUnifiedMenu()
+                    local unifiedMenu = state.renderSystem:getUnifiedMenu()
                     if unifiedMenu then
-                        unifiedMenu:open()
-                        unifiedMenu:setTab(4)  -- Pet tab
+                        UnifiedMenu.open(unifiedMenu)
+                        UnifiedMenu.setTab(unifiedMenu, 4)
                     end
                     return
                 end
             end
         end
 
-        -- Check if clicked on chat input
-        local chatUI = self.renderSystem:getChatUI()
-        local chatSystem = self.gameState:getChatSystem()
+        local chatUI = state.renderSystem:getChatUI()
+        local chatSystem = state.gameState:getChatSystem()
         if chatUI and chatSystem then
-            if chatUI:mousepressed(x, y, button, chatSystem) then
+            if ChatUI.mousepressed(chatUI, x, y, button, chatSystem) then
                 return
             end
         end
 
-        if button == 1 then -- Left click
-            -- Convert screen coordinates to world coordinates
-            local worldX, worldY = self.gameState.camera:toWorld(x, y)
+        if button == 1 then
+            local worldX, worldY = Camera.toWorld(state.gameState.camera, x, y)
 
-            -- Command player to move to target position
-            self.gameState:movePlayerTo(worldX, worldY)
+            state.gameState:movePlayerTo(worldX, worldY)
 
             print(string.format("Click: Screen(%.0f, %.0f) -> World(%.0f, %.0f)",
                 x, y, worldX, worldY))
         end
     elseif mode == "battle" then
-        if button == 1 then -- Left click in battle
-            local battleSystem = self.gameState:getBattleSystem()
-            local state = battleSystem:getState()
+        if button == 1 then
+            local battleSystem = state.gameState:getBattleSystem()
+            local battleState = BattleSystem.getState(battleSystem)
 
-            if state == "player" then
-                -- First check if clicked on action menu
-                local action = self.battleUI:mousepressed(x, y, button, battleSystem)
+            if battleState == "player" then
+                local action = BattleUI.mousepressed(state.battleUI, x, y, button, battleSystem)
                 if action then
                     print("Clicked action: " .. action)
-                    -- Handle the action like keyboard input
                     if action == "auto" then
-                        battleSystem:toggleAutoBattle()
+                        BattleSystem.toggleAutoBattle(battleSystem)
                     else
-                        local targetIndex = self.battleUI:getSelectedEnemy()
-                        battleSystem:selectAction(action, targetIndex)
+                        local targetIndex = BattleUI.getSelectedEnemy(state.battleUI)
+                        BattleSystem.selectAction(battleSystem, action, targetIndex)
                     end
                     return
                 end
 
-                -- Then check if clicked on an enemy
-                local enemies = battleSystem:getEnemies()
+                local enemies = BattleSystem.getEnemies(battleSystem)
                 local w, h = love.graphics.getDimensions()
 
                 for i, enemy in ipairs(enemies) do
-                    if enemy:isAlive() then
-                        -- Diagonal positioning: left-bottom to right-top
+                    if Enemy.isAlive(enemy) then
                         local baseX = w * 0.2
                         local baseY = h * 0.6
                         local enemyX = baseX + (i - 1) * 100
@@ -140,8 +131,7 @@ function InputSystem:mousepressed(x, y, button)
                         local distance = math.sqrt(dx * dx + dy * dy)
 
                         if distance <= radius then
-                            -- Clicked on this enemy
-                            self.battleUI:setSelectedEnemy(i)
+                            BattleUI.setSelectedEnemy(state.battleUI, i)
                             print("Selected enemy " .. i .. ": " .. enemy.name)
                             return
                         end
@@ -152,57 +142,48 @@ function InputSystem:mousepressed(x, y, button)
     end
 end
 
--- Handle keyboard input
-function InputSystem:keypressed(key)
-    local mode = self.gameState:getMode()
+function InputSystem.keypressed(state, key)
+    local mode = state.gameState:getMode()
 
-    -- Handle skill panel
-    local skillPanel = self.gameState:getSkillPanel()
+    local skillPanel = state.gameState:getSkillPanel()
     if skillPanel and skillPanel.isOpen then
-        if skillPanel:keypressed(key) then
+        if SkillPanel.keypressed(skillPanel, key) then
             return
         end
     end
 
-    -- Handle unified menu (M key)
     if mode == "exploration" then
-        local unifiedMenu = self.renderSystem:getUnifiedMenu()
+        local unifiedMenu = state.renderSystem:getUnifiedMenu()
         if unifiedMenu then
             if key == "m" then
-                unifiedMenu:toggle()
+                UnifiedMenu.toggle(unifiedMenu)
                 return
-            elseif unifiedMenu:isMenuOpen() then
-                -- Let menu handle the key
-                if unifiedMenu:keypressed(key) then
+            elseif UnifiedMenu.isMenuOpen(unifiedMenu) then
+                if UnifiedMenu.keypressed(unifiedMenu, key) then
                     return
                 end
             end
         end
     end
 
-    -- Handle chat input in exploration mode
     if mode == "exploration" then
-        local chatSystem = self.gameState:getChatSystem()
+        local chatSystem = state.gameState:getChatSystem()
         
-        -- Handle K key for skill panel
         if key == "k" then
             if skillPanel then
-                skillPanel:toggle(self.gameState.player)
+                SkillPanel.toggle(skillPanel, state.gameState.player)
             end
             return
         end
 
         if chatSystem and chatSystem:isInputting() then
-            -- Chat is active
             if key == "return" then
-                -- Send message
                 local text = chatSystem:endInput()
                 if text and text ~= "" then
-                    self.gameState:sendChatMessage(text)
+                    state.gameState:sendChatMessage(text)
                 end
                 return
             elseif key == "escape" then
-                -- Cancel input
                 chatSystem:endInput()
                 return
             elseif key == "backspace" then
@@ -210,9 +191,7 @@ function InputSystem:keypressed(key)
                 return
             end
         else
-            -- Chat is not active
             if key == "return" then
-                -- Start chat input
                 if chatSystem then
                     chatSystem:startInput()
                 end
@@ -220,107 +199,96 @@ function InputSystem:keypressed(key)
             end
         end
 
-        -- Handle Tab key for fullscreen map
         if key == "tab" then
-            self.fullscreenMap:toggle()
+            FullscreenMap.toggle(state.fullscreenMap)
             return
-        elseif key == "escape" and self.fullscreenMap:isMapOpen() then
-            self.fullscreenMap:close()
+        elseif key == "escape" and FullscreenMap.isMapOpen(state.fullscreenMap) then
+            FullscreenMap.close(state.fullscreenMap)
             return
         end
     end
 
-    if mode == "battle" and self.battleUI then
-        local battleSystem = self.gameState:getBattleSystem()
-        local state = battleSystem:getState()
+    if mode == "battle" and state.battleUI then
+        local battleSystem = state.gameState:getBattleSystem()
+        local battleState = BattleSystem.getState(battleSystem)
 
-        -- Handle skill selection mode
-        if self.battleUI:isSkillMode() then
+        if BattleUI.isSkillMode(state.battleUI) then
             if key == "up" or key == "w" then
-                self.battleUI:navigateSkillUp()
+                BattleUI.navigateSkillUp(state.battleUI)
             elseif key == "down" or key == "s" then
-                self.battleUI:navigateSkillDown()
+                BattleUI.navigateSkillDown(state.battleUI)
             elseif key == "return" or key == "space" then
-                local skillId = self.battleUI:getSelectedSkill()
+                local skillId = BattleUI.getSelectedSkill(state.battleUI)
                 if skillId then
-                    battleSystem:selectSkill(skillId)
-                    self.battleUI:exitSkillMode()
-                    local targetIndex = self.battleUI:getSelectedEnemy()
-                    battleSystem:selectAction("skill", targetIndex)
+                    BattleSystem.selectSkill(battleSystem, skillId)
+                    BattleUI.exitSkillMode(state.battleUI)
+                    local targetIndex = BattleUI.getSelectedEnemy(state.battleUI)
+                    BattleSystem.selectAction(battleSystem, "skill", targetIndex)
                 end
             elseif key == "escape" then
-                self.battleUI:exitSkillMode()
+                BattleUI.exitSkillMode(state.battleUI)
             end
             return
         end
 
-        if state == "player" then
+        if battleState == "player" then
             if key == "up" or key == "w" then
-                self.battleUI:navigateUp()
+                BattleUI.navigateUp(state.battleUI)
             elseif key == "down" or key == "s" then
-                self.battleUI:navigateDown()
+                BattleUI.navigateDown(state.battleUI)
             elseif key == "left" or key == "a" then
-                self.battleUI:navigateLeft()
+                BattleUI.navigateLeft(state.battleUI)
             elseif key == "right" or key == "d" then
-                local enemies = battleSystem:getAliveEnemies()
-                self.battleUI:navigateRight(#enemies)
+                local enemies = BattleSystem.getAliveEnemies(battleSystem)
+                BattleUI.navigateRight(state.battleUI, #enemies)
             elseif key == "return" or key == "space" then
-                -- Confirm action
-                local action = self.battleUI:getSelectedAction()
+                local action = BattleUI.getSelectedAction(state.battleUI)
 
-                -- Check if skill selected
                 if action == "skill" then
-                    self.battleUI:enterSkillMode(battleSystem)
+                    BattleUI.enterSkillMode(state.battleUI, battleSystem)
                     return
                 end
 
-                -- Check if auto battle selected
                 if action == "auto" then
-                    battleSystem:toggleAutoBattle()
+                    BattleSystem.toggleAutoBattle(battleSystem)
                 else
-                    local targetIndex = self.battleUI:getSelectedEnemy()
-                    battleSystem:selectAction(action, targetIndex)
+                    local targetIndex = BattleUI.getSelectedEnemy(state.battleUI)
+                    BattleSystem.selectAction(battleSystem, action, targetIndex)
                 end
             end
-        elseif state == "victory" or state == "defeat" or state == "escaped" then
-            -- Press any key to continue
+        elseif battleState == "victory" or battleState == "defeat" or battleState == "escaped" then
             if key == "return" or key == "space" then
-                self.gameState:endBattle()
+                state.gameState:endBattle()
             end
         end
     end
 end
 
--- Handle mouse wheel scroll
-function InputSystem:wheelmoved(x, y)
-    local mode = self.gameState:getMode()
+function InputSystem.wheelmoved(state, x, y)
+    local mode = state.gameState:getMode()
 
     if mode == "exploration" then
-        -- Scroll chat window
-        local chatUI = self.renderSystem:getChatUI()
+        local chatUI = state.renderSystem:getChatUI()
         if chatUI then
-            chatUI:mousescroll(x, y)
+            ChatUI.mousescroll(chatUI, x, y)
         end
     elseif mode == "battle" then
-        -- Scroll battle log
-        local battleSystem = self.gameState:getBattleSystem()
+        local battleSystem = state.gameState:getBattleSystem()
         if battleSystem and battleSystem.battleLog then
-            battleSystem.battleLog:scroll(-y * 20)
+            BattleLog.scroll(battleSystem.battleLog, -y * 20)
         end
     end
 end
 
--- Handle mouse move events
-function InputSystem:mousemoved(x, y)
-    local mode = self.gameState:getMode()
+function InputSystem.mousemoved(state, x, y)
+    local mode = state.gameState:getMode()
     
     if mode == "exploration" then
-        local unifiedMenu = self.renderSystem:getUnifiedMenu()
-        if unifiedMenu and unifiedMenu:isMenuOpen() then
-            unifiedMenu:mousemoved(x, y, self.gameState)
+        local unifiedMenu = state.renderSystem:getUnifiedMenu()
+        if unifiedMenu and UnifiedMenu.isMenuOpen(unifiedMenu) then
+            UnifiedMenu.mousemoved(unifiedMenu, x, y, state.gameState)
         end
     end
 end
 
 return InputSystem
-

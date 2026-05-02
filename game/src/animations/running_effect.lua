@@ -1,84 +1,67 @@
--- running_effect.lua - Running animation for characters
--- Creates bobbing and tilting effects when moving
-
 local RunningEffect = {}
-RunningEffect.__index = RunningEffect
 
-function RunningEffect.new()
-    local self = setmetatable({}, RunningEffect)
-    
-    self.time = 0
-    self.isRunning = false
-    self.runSpeed = 4.0  -- Animation speed (cycles per second)
-    self.bobAmount = 3   -- Vertical bobbing amount (pixels)
-    self.tiltAmount = 0.1  -- Rotation tilt amount (radians)
-    
-    return self
+function RunningEffect.create()
+    return {
+        time = 0,
+        isRunning = false,
+        runSpeed = 4.0,
+        bobAmount = 3,
+        tiltAmount = 0.1
+    }
 end
 
--- Update running animation
-function RunningEffect:update(dt, isMoving)
-    self.isRunning = isMoving
-    
-    if self.isRunning then
-        self.time = self.time + dt
+function RunningEffect.update(state, dt, isMoving)
+    state.isRunning = isMoving
+
+    if state.isRunning then
+        state.time = state.time + dt
     else
-        -- Gradually return to idle
-        if self.time > 0 then
-            self.time = self.time - dt * 2
-            if self.time < 0 then
-                self.time = 0
+        if state.time > 0 then
+            state.time = state.time - dt * 2
+            if state.time < 0 then
+                state.time = 0
             end
         end
     end
 end
 
--- Get vertical offset (bobbing)
-function RunningEffect:getBobOffset()
-    if self.time <= 0 then
+function RunningEffect.getBobOffset(state)
+    if state.time <= 0 then
         return 0
     end
-    
-    -- Use absolute sine for bobbing (always up/down, never negative)
-    local cycle = math.abs(math.sin(self.time * math.pi * self.runSpeed))
-    return -cycle * self.bobAmount
+
+    local cycle = math.abs(math.sin(state.time * math.pi * state.runSpeed))
+    return -cycle * state.bobAmount
 end
 
--- Get rotation tilt
-function RunningEffect:getTilt()
-    if self.time <= 0 then
+function RunningEffect.getTilt(state)
+    if state.time <= 0 then
         return 0
     end
-    
-    -- Use sine for left/right tilt
-    local cycle = math.sin(self.time * math.pi * self.runSpeed)
-    return cycle * self.tiltAmount
+
+    local cycle = math.sin(state.time * math.pi * state.runSpeed)
+    return cycle * state.tiltAmount
 end
 
--- Get scale factor (slight squash and stretch)
-function RunningEffect:getScale()
-    if self.time <= 0 then
+function RunningEffect.getScale(state)
+    if state.time <= 0 then
         return 1.0, 1.0
     end
-    
-    -- Squash and stretch
-    local cycle = math.abs(math.sin(self.time * math.pi * self.runSpeed))
-    local scaleX = 1.0 + cycle * 0.05  -- Slightly wider when compressed
-    local scaleY = 1.0 - cycle * 0.05  -- Slightly shorter when compressed
-    
+
+    local cycle = math.abs(math.sin(state.time * math.pi * state.runSpeed))
+    local scaleX = 1.0 + cycle * 0.05
+    local scaleY = 1.0 - cycle * 0.05
+
     return scaleX, scaleY
 end
 
--- Reset animation
-function RunningEffect:reset()
-    self.time = 0
-    self.isRunning = false
+function RunningEffect.reset(state)
+    state.time = 0
+    state.isRunning = false
 end
 
--- Check if running
-function RunningEffect:isActive()
-    return self.isRunning
+function RunningEffect.isActive(state)
+    return state.isRunning
 end
 
 return RunningEffect
-

@@ -3,122 +3,113 @@ local Theme = require("src.ui.theme")
 local Components = require("src.ui.components")
 
 local FullscreenMap = {}
-FullscreenMap.__index = FullscreenMap
 
-function FullscreenMap.new(assetManager)
-    local self = setmetatable({}, FullscreenMap)
+function FullscreenMap.create(assetManager)
+    local state = {}
 
-    self.assetManager = assetManager
-    self.isOpen = false
+    state.assetManager = assetManager
+    state.isOpen = false
     
-    self.screenWidth = love.graphics.getWidth()
-    self.screenHeight = love.graphics.getHeight()
+    state.screenWidth = love.graphics.getWidth()
+    state.screenHeight = love.graphics.getHeight()
     
-    self.panelWidth = self.screenWidth * 0.8
-    self.panelHeight = self.screenHeight * 0.8
-    self.panelX = (self.screenWidth - self.panelWidth) / 2
-    self.panelY = (self.screenHeight - self.panelHeight) / 2
+    state.panelWidth = state.screenWidth * 0.8
+    state.panelHeight = state.screenHeight * 0.8
+    state.panelX = (state.screenWidth - state.panelWidth) / 2
+    state.panelY = (state.screenHeight - state.panelHeight) / 2
     
-    self.padding = 40
-    self.mapRenderWidth = self.panelWidth - self.padding * 2
-    self.mapRenderHeight = self.panelHeight - self.padding * 2
-    self.mapRenderX = self.panelX + self.padding
-    self.mapRenderY = self.panelY + self.padding
+    state.padding = 40
+    state.mapRenderWidth = state.panelWidth - state.padding * 2
+    state.mapRenderHeight = state.panelHeight - state.padding * 2
+    state.mapRenderX = state.panelX + state.padding
+    state.mapRenderY = state.panelY + state.padding
     
-    self.colors = Theme.colors.map
+    state.colors = Theme.colors.map
     
-    self.navigationTarget = nil
+    state.navigationTarget = nil
     
-    self.font = assetManager:getFont("default")
-    self.fontLarge = assetManager:getFont("large")
+    state.font = assetManager:getFont("default")
+    state.fontLarge = assetManager:getFont("large")
     
-    return self
+    return state
 end
 
--- Toggle map open/close
-function FullscreenMap:toggle()
-    self.isOpen = not self.isOpen
-    if not self.isOpen then
-        -- Clear navigation target when closing
-        self.navigationTarget = nil
+function FullscreenMap.toggle(state)
+    state.isOpen = not state.isOpen
+    if not state.isOpen then
+        state.navigationTarget = nil
     end
 end
 
--- Open map
-function FullscreenMap:open()
-    self.isOpen = true
+function FullscreenMap.open(state)
+    state.isOpen = true
 end
 
--- Close map
-function FullscreenMap:close()
-    self.isOpen = false
-    self.navigationTarget = nil
+function FullscreenMap.close(state)
+    state.isOpen = false
+    state.navigationTarget = nil
 end
 
--- Check if map is open
-function FullscreenMap:isMapOpen()
-    return self.isOpen
+function FullscreenMap.isMapOpen(state)
+    return state.isOpen
 end
 
--- Handle mouse click on map
-function FullscreenMap:mousepressed(x, y, button, map)
-    if not self.isOpen then
+function FullscreenMap.mousepressed(state, x, y, button, map)
+    if not state.isOpen then
         return nil
     end
 
-    -- Check if click is inside map render area
-    if x >= self.mapRenderX and x <= self.mapRenderX + self.mapRenderWidth and
-       y >= self.mapRenderY and y <= self.mapRenderY + self.mapRenderHeight then
+    if x >= state.mapRenderX and x <= state.mapRenderX + state.mapRenderWidth and
+       y >= state.mapRenderY and y <= state.mapRenderY + state.mapRenderHeight then
 
-        if button == 1 then -- Left click
-            -- Convert screen coordinates to world coordinates
-            local worldX = ((x - self.mapRenderX) / self.mapRenderWidth) * map.width
-            local worldY = ((y - self.mapRenderY) / self.mapRenderHeight) * map.height
+        if button == 1 then
+            local worldX = ((x - state.mapRenderX) / state.mapRenderWidth) * map.width
+            local worldY = ((y - state.mapRenderY) / state.mapRenderHeight) * map.height
 
-            -- Set navigation target
-            self.navigationTarget = {x = worldX, y = worldY}
+            state.navigationTarget = {x = worldX, y = worldY}
 
-            -- Close map and return target position
-            self.isOpen = false
+            state.isOpen = false
             return worldX, worldY
         end
     end
 
-    -- Check if click is outside panel (close map)
-    if x < self.panelX or x > self.panelX + self.panelWidth or
-       y < self.panelY or y > self.panelY + self.panelHeight then
-        self:close()
+    if x < state.panelX or x > state.panelX + state.panelWidth or
+       y < state.panelY or y > state.panelY + state.panelHeight then
+        FullscreenMap.close(state)
     end
 
     return nil
 end
 
-function FullscreenMap:draw(playerX, playerY, map)
-    if not self.isOpen then
+function FullscreenMap.draw(state, playerX, playerY, map)
+    if not state.isOpen then
         return
     end
 
-    local w, h = self.screenWidth, self.screenHeight
-    Components.drawOverlay(w, h, self.colors.overlay[4])
+    local w, h = state.screenWidth, state.screenHeight
+    Components.drawOverlay(w, h, state.colors.overlay[4])
 
-    Components.drawPanel(self.panelX, self.panelY, self.panelWidth, self.panelHeight, self.assetManager, "menu_panel")
+    Components.drawOrnatePanel(state.panelX, state.panelY, state.panelWidth, state.panelHeight, state.assetManager, {
+        title = "World Map",
+        corners = true,
+        glow = true,
+        shimmer = true,
+        font = state.fontLarge
+    })
 
-    love.graphics.setFont(self.fontLarge)
-    love.graphics.setColor(self.colors.text)
-    love.graphics.printf("World Map", self.panelX, self.panelY + 10, self.panelWidth, "center")
-    love.graphics.setFont(self.font)
+    love.graphics.setFont(state.font)
 
-    self:drawMapContent(playerX, playerY, map)
+    FullscreenMap.drawMapContent(state, playerX, playerY, map)
 
-    love.graphics.setColor(0.7, 0.7, 0.7)
+    love.graphics.setColor(Theme.colors.textDim)
     love.graphics.printf("Click on map to navigate | Press TAB or ESC to close",
-                        self.panelX, self.panelY + self.panelHeight - 25,
-                        self.panelWidth, "center")
+                        state.panelX, state.panelY + state.panelHeight - 25,
+                        state.panelWidth, "center")
 end
 
-function FullscreenMap:drawMapContent(playerX, playerY, map)
-    MapRenderer.render(map, self.mapRenderX, self.mapRenderY,
-                      self.mapRenderWidth, self.mapRenderHeight,
+function FullscreenMap.drawMapContent(state, playerX, playerY, map)
+    MapRenderer.render(map, state.mapRenderX, state.mapRenderY,
+                      state.mapRenderWidth, state.mapRenderHeight,
                       playerX, playerY, {
         showPlayer = true,
         showBuildings = true,
@@ -127,44 +118,41 @@ function FullscreenMap:drawMapContent(playerX, playerY, map)
         playerRadius = 8
     })
 
-    local playerMapX = self.mapRenderX + (playerX / map.width) * self.mapRenderWidth
-    local playerMapY = self.mapRenderY + (playerY / map.height) * self.mapRenderHeight
+    local playerMapX = state.mapRenderX + (playerX / map.width) * state.mapRenderWidth
+    local playerMapY = state.mapRenderY + (playerY / map.height) * state.mapRenderHeight
 
-    love.graphics.setColor(self.colors.text)
+    love.graphics.setColor(state.colors.text)
     love.graphics.printf(string.format("Player: (%.0f, %.0f)", playerX, playerY),
                         playerMapX - 50, playerMapY + 40, 100, "center")
 
-    if self.navigationTarget then
-        local targetMapX = self.mapRenderX + (self.navigationTarget.x / map.width) * self.mapRenderWidth
-        local targetMapY = self.mapRenderY + (self.navigationTarget.y / map.height) * self.mapRenderHeight
+    if state.navigationTarget then
+        local targetMapX = state.mapRenderX + (state.navigationTarget.x / map.width) * state.mapRenderWidth
+        local targetMapY = state.mapRenderY + (state.navigationTarget.y / map.height) * state.mapRenderHeight
         
         local pulse = 0.5 + 0.5 * math.sin(love.timer.getTime() * 3)
-        love.graphics.setColor(self.colors.navigationTarget[1], 
-                              self.colors.navigationTarget[2], 
-                              self.colors.navigationTarget[3], 
+        love.graphics.setColor(state.colors.navigationTarget[1], 
+                              state.colors.navigationTarget[2], 
+                              state.colors.navigationTarget[3], 
                               pulse)
         love.graphics.circle("fill", targetMapX, targetMapY, 10)
         
-        love.graphics.setColor(self.colors.navigationTarget[1], self.colors.navigationTarget[2], self.colors.navigationTarget[3])
+        love.graphics.setColor(state.colors.navigationTarget[1], state.colors.navigationTarget[2], state.colors.navigationTarget[3])
         love.graphics.circle("line", targetMapX, targetMapY, 10)
         love.graphics.circle("line", targetMapX, targetMapY, 15)
         
-        love.graphics.setColor(self.colors.navigationLine)
+        love.graphics.setColor(state.colors.navigationLine)
         love.graphics.setLineWidth(2)
         love.graphics.line(playerMapX, playerMapY, targetMapX, targetMapY)
         love.graphics.setLineWidth(1)
     end
 end
 
--- Get navigation target
-function FullscreenMap:getNavigationTarget()
-    return self.navigationTarget
+function FullscreenMap.getNavigationTarget(state)
+    return state.navigationTarget
 end
 
--- Clear navigation target
-function FullscreenMap:clearNavigationTarget()
-    self.navigationTarget = nil
+function FullscreenMap.clearNavigationTarget(state)
+    state.navigationTarget = nil
 end
 
 return FullscreenMap
-

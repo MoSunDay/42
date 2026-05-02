@@ -1,12 +1,4 @@
--- tile_animator.lua - Tile animation system
--- 瓦片动画系统，支持水面、火焰等动态效果
-
 local TileAnimator = {}
-TileAnimator.__index = TileAnimator
-
-TileAnimator.animations = {}
-TileAnimator.activeTiles = {}
-TileAnimator.globalTime = 0
 
 local ANIMATION_PRESETS = {
     water = {
@@ -57,20 +49,21 @@ local ANIMATION_PRESETS = {
 }
 
 function TileAnimator.new()
-    local self = setmetatable({}, TileAnimator)
-    self.animations = {}
-    self.activeTiles = {}
-    self.globalTime = 0
-    self.enabled = true
+    local state = {
+        animations = {},
+        activeTiles = {},
+        globalTime = 0,
+        enabled = true,
+    }
     
-    self:registerPresets()
+    TileAnimator.registerPresets(state)
     
-    return self
+    return state
 end
 
-function TileAnimator:registerPresets()
+function TileAnimator.registerPresets(state)
     for name, preset in pairs(ANIMATION_PRESETS) do
-        self.animations[name] = {
+        state.animations[name] = {
             name = name,
             frames = preset.frames,
             fps = preset.fps,
@@ -82,8 +75,8 @@ function TileAnimator:registerPresets()
     end
 end
 
-function TileAnimator:registerAnimation(name, config)
-    self.animations[name] = {
+function TileAnimator.registerAnimation(state, name, config)
+    state.animations[name] = {
         name = name,
         frames = config.frames or {1},
         fps = config.fps or 4,
@@ -95,10 +88,10 @@ function TileAnimator:registerAnimation(name, config)
     }
 end
 
-function TileAnimator:registerAnimatedTile(tileX, tileY, animationName)
+function TileAnimator.registerAnimatedTile(state, tileX, tileY, animationName)
     local key = tileX .. "," .. tileY
     
-    local anim = self.animations[animationName]
+    local anim = state.animations[animationName]
     if not anim then
         return false
     end
@@ -108,7 +101,7 @@ function TileAnimator:registerAnimatedTile(tileX, tileY, animationName)
         offset = (tileX * 7 + tileY * 13) % #anim.frames
     end
     
-    self.activeTiles[key] = {
+    state.activeTiles[key] = {
         x = tileX,
         y = tileY,
         animation = animationName,
@@ -121,22 +114,22 @@ function TileAnimator:registerAnimatedTile(tileX, tileY, animationName)
     return true
 end
 
-function TileAnimator:removeAnimatedTile(tileX, tileY)
+function TileAnimator.removeAnimatedTile(state, tileX, tileY)
     local key = tileX .. "," .. tileY
-    self.activeTiles[key] = nil
+    state.activeTiles[key] = nil
 end
 
-function TileAnimator:clearAnimatedTiles()
-    self.activeTiles = {}
+function TileAnimator.clearAnimatedTiles(state)
+    state.activeTiles = {}
 end
 
-function TileAnimator:update(dt)
-    if not self.enabled then return end
+function TileAnimator.update(state, dt)
+    if not state.enabled then return end
     
-    self.globalTime = self.globalTime + dt
+    state.globalTime = state.globalTime + dt
     
-    for key, tile in pairs(self.activeTiles) do
-        local anim = self.animations[tile.animation]
+    for key, tile in pairs(state.activeTiles) do
+        local anim = state.animations[tile.animation]
         if anim then
             tile.timer = tile.timer + dt
             
@@ -154,9 +147,9 @@ function TileAnimator:update(dt)
     end
 end
 
-function TileAnimator:getAnimationFrame(tileX, tileY)
+function TileAnimator.getAnimationFrame(state, tileX, tileY)
     local key = tileX .. "," .. tileY
-    local tile = self.activeTiles[key]
+    local tile = state.activeTiles[key]
     
     if tile then
         return tile.currentFrame
@@ -165,8 +158,8 @@ function TileAnimator:getAnimationFrame(tileX, tileY)
     return nil
 end
 
-function TileAnimator:getAnimationColor(animationName, frame)
-    local anim = self.animations[animationName]
+function TileAnimator.getAnimationColor(state, animationName, frame)
+    local anim = state.animations[animationName]
     if anim and anim.tileColors then
         local colorIndex = ((frame or 1) - 1) % #anim.tileColors + 1
         return anim.tileColors[colorIndex]
@@ -174,21 +167,21 @@ function TileAnimator:getAnimationColor(animationName, frame)
     return nil
 end
 
-function TileAnimator:drawAnimatedTile(tileX, tileY, x, y, tileSize, theme)
+function TileAnimator.drawAnimatedTile(state, tileX, tileY, x, y, tileSize, theme)
     local key = tileX .. "," .. tileY
-    local tile = self.activeTiles[key]
+    local tile = state.activeTiles[key]
     
     if not tile then
         return false
     end
     
-    local anim = self.animations[tile.animation]
+    local anim = state.animations[tile.animation]
     if not anim then
         return false
     end
     
     if anim.tileColors then
-        local color = self:getAnimationColor(tile.animation, tile.currentFrame)
+        local color = TileAnimator.getAnimationColor(state, tile.animation, tile.currentFrame)
         if color then
             love.graphics.setColor(color)
             love.graphics.rectangle("fill", x, y, tileSize, tileSize)
@@ -197,26 +190,26 @@ function TileAnimator:drawAnimatedTile(tileX, tileY, x, y, tileSize, theme)
     end
     
     if tile.animation == "water" or tile.animation == "water_deep" then
-        self:drawWaterTile(x, y, tileSize, tile.currentFrame, theme)
+        TileAnimator.drawWaterTile(state, x, y, tileSize, tile.currentFrame, theme)
         return true
     elseif tile.animation == "fire" or tile.animation == "torch" then
-        self:drawFireTile(x, y, tileSize, tile.currentFrame, theme)
+        TileAnimator.drawFireTile(state, x, y, tileSize, tile.currentFrame, theme)
         return true
     elseif tile.animation == "lava" then
-        self:drawLavaTile(x, y, tileSize, tile.currentFrame, theme)
+        TileAnimator.drawLavaTile(state, x, y, tileSize, tile.currentFrame, theme)
         return true
     elseif tile.animation == "portal" then
-        self:drawPortalTile(x, y, tileSize, tile.currentFrame, theme)
+        TileAnimator.drawPortalTile(state, x, y, tileSize, tile.currentFrame, theme)
         return true
     elseif tile.animation == "waterfall" then
-        self:drawWaterfallTile(x, y, tileSize, tile.currentFrame, theme)
+        TileAnimator.drawWaterfallTile(state, x, y, tileSize, tile.currentFrame, theme)
         return true
     end
     
     return false
 end
 
-function TileAnimator:drawWaterTile(x, y, tileSize, frame, theme)
+function TileAnimator.drawWaterTile(state, x, y, tileSize, frame, theme)
     local baseColor = theme and theme.water or {0.3, 0.5, 0.8}
     
     local colorVariation = {
@@ -240,7 +233,7 @@ function TileAnimator:drawWaterTile(x, y, tileSize, frame, theme)
     end
 end
 
-function TileAnimator:drawFireTile(x, y, tileSize, frame, theme)
+function TileAnimator.drawFireTile(state, x, y, tileSize, frame, theme)
     love.graphics.setColor(0.2, 0.1, 0.05)
     love.graphics.rectangle("fill", x, y, tileSize, tileSize)
     
@@ -260,7 +253,7 @@ function TileAnimator:drawFireTile(x, y, tileSize, frame, theme)
         local colorIndex = ((frame + i - 2) % 4) + 1
         love.graphics.setColor(fireColors[colorIndex])
         
-        local offsetX = math.sin(self.globalTime * 5 + i) * 2
+        local offsetX = math.sin(state.globalTime * 5 + i) * 2
         
         love.graphics.polygon("fill",
             flameX + offsetX - 4, flameY,
@@ -270,7 +263,7 @@ function TileAnimator:drawFireTile(x, y, tileSize, frame, theme)
     end
 end
 
-function TileAnimator:drawLavaTile(x, y, tileSize, frame, theme)
+function TileAnimator.drawLavaTile(state, x, y, tileSize, frame, theme)
     local baseColor = {0.8, 0.3, 0.1}
     local brightColor = {1.0, 0.6, 0.2}
     local darkColor = {0.6, 0.2, 0.05}
@@ -292,7 +285,7 @@ function TileAnimator:drawLavaTile(x, y, tileSize, frame, theme)
     love.graphics.line(crackX, y, crackX + 4, y + tileSize)
 end
 
-function TileAnimator:drawPortalTile(x, y, tileSize, frame, theme)
+function TileAnimator.drawPortalTile(state, x, y, tileSize, frame, theme)
     love.graphics.setColor(0.1, 0.05, 0.2)
     love.graphics.rectangle("fill", x, y, tileSize, tileSize)
     
@@ -315,14 +308,14 @@ function TileAnimator:drawPortalTile(x, y, tileSize, frame, theme)
     love.graphics.setColor(1, 1, 1, 0.5)
     local sparkleCount = 3
     for i = 1, sparkleCount do
-        local angle = self.globalTime * 2 + i * 2.1
+        local angle = state.globalTime * 2 + i * 2.1
         local sparkleX = centerX + math.cos(angle) * radius * 0.7
         local sparkleY = centerY + math.sin(angle) * radius * 0.7
         love.graphics.circle("fill", sparkleX, sparkleY, 2)
     end
 end
 
-function TileAnimator:drawWaterfallTile(x, y, tileSize, frame, theme)
+function TileAnimator.drawWaterfallTile(state, x, y, tileSize, frame, theme)
     local baseColor = theme and theme.water or {0.3, 0.5, 0.8}
     
     love.graphics.setColor(baseColor[1] - 0.1, baseColor[2] - 0.1, baseColor[3])
@@ -341,10 +334,10 @@ function TileAnimator:drawWaterfallTile(x, y, tileSize, frame, theme)
     love.graphics.ellipse("fill", x + tileSize / 2, mistY, tileSize / 2, 4)
 end
 
-function TileAnimator:scanMapForAnimatedTiles(map)
+function TileAnimator.scanMapForAnimatedTiles(state, map)
     if not map or not map.tiles then return end
     
-    self:clearAnimatedTiles()
+    TileAnimator.clearAnimatedTiles(state)
     
     local animationTileTypes = {
         [4] = "water",
@@ -365,19 +358,19 @@ function TileAnimator:scanMapForAnimatedTiles(map)
             local animName = animationTileTypes[tileId]
             
             if animName then
-                self:registerAnimatedTile(x, y, animName)
+                TileAnimator.registerAnimatedTile(state, x, y, animName)
             end
         end
     end
 end
 
-function TileAnimator:setEnabled(enabled)
-    self.enabled = enabled
+function TileAnimator.setEnabled(state, enabled)
+    state.enabled = enabled
 end
 
-function TileAnimator:getActiveTileCount()
+function TileAnimator.getActiveTileCount(state)
     local count = 0
-    for _ in pairs(self.activeTiles) do
+    for _ in pairs(state.activeTiles) do
         count = count + 1
     end
     return count

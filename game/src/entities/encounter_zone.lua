@@ -4,27 +4,44 @@
 local Enemy = require("entities.enemy")
 
 local EncounterZone = {}
-EncounterZone.__index = EncounterZone
 
-function EncounterZone.new(x, y, radius)
-    local self = setmetatable({}, EncounterZone)
+function EncounterZone.create(x, y, radius)
+    local state = {}
 
-    self.x = x
-    self.y = y
-    self.radius = radius or 40  -- Visible monsters size (doubled)
-    self.isActive = true
-    self.isTriggered = false
+    state.x = x
+    state.y = y
+    state.radius = radius or 40
+    state.isActive = true
+    state.isTriggered = false
 
-    -- Visual representation
-    self.enemyType = Enemy.getRandomType()
-    self.color = self:getColorForType(self.enemyType)
-    self.animationTime = math.random() * 10  -- Random start time for animation
+    state.enemyType = Enemy.getRandomType()
+    state.color = EncounterZone.getColorForType(state.enemyType)
+    state.animationTime = math.random() * 10
+    state.assetManager = nil
+    state.sprite = nil
 
-    return self
+    return state
+end
+
+function EncounterZone.setAssetManager(state, assetManager)
+    state.assetManager = assetManager
+    if assetManager then
+        local spriteMap = {
+            slime = "slime", goblin = "goblin", skeleton = "skeleton",
+            bat = "bat", wolf = "wolf", orc = "orc_warrior",
+            orc_warrior = "orc_warrior", skeleton_knight = "skeleton_knight",
+            dark_mage = "dark_mage", orc_chieftain = "orc_chieftain",
+            vampire = "vampire", golem = "golem", demon = "demon",
+            ancient_dragon = "ancient_dragon", lich_king = "lich_king",
+            chaos_serpent = "chaos_serpent", dragon = "ancient_dragon"
+        }
+        local spriteId = spriteMap[state.enemyType] or state.enemyType
+        state.sprite = assetManager:getEnemySprite(spriteId, "south")
+    end
 end
 
 -- Get color based on enemy type
-function EncounterZone:getColorForType(enemyType)
+function EncounterZone.getColorForType(enemyType)
     local colors = {
         slime = {0.2, 0.8, 0.3},      -- Green
         goblin = {0.6, 0.4, 0.2},     -- Brown
@@ -38,88 +55,87 @@ function EncounterZone:getColorForType(enemyType)
 end
 
 -- Check if point is inside zone (with player collision radius)
-function EncounterZone:contains(x, y)
-    if not self.isActive then
+function EncounterZone.contains(state, x, y)
+    if not state.isActive then
         return false
     end
 
-    local dx = x - self.x
-    local dy = y - self.y
+    local dx = x - state.x
+    local dy = y - state.y
     local distance = math.sqrt(dx * dx + dy * dy)
 
     -- Add player collision radius (16 pixels) to detection
     local playerRadius = 16
-    return distance <= (self.radius + playerRadius)
+    return distance <= (state.radius + playerRadius)
 end
 
 -- Trigger the encounter
-function EncounterZone:trigger()
-    if self.isActive and not self.isTriggered then
-        self.isTriggered = true
-        self.isActive = false
+function EncounterZone.trigger(state)
+    if state.isActive and not state.isTriggered then
+        state.isTriggered = true
+        state.isActive = false
         return true
     end
     return false
 end
 
 -- Reset the zone
-function EncounterZone:reset()
-    self.isActive = true
-    self.isTriggered = false
+function EncounterZone.reset(state)
+    state.isActive = true
+    state.isTriggered = false
 end
 
 -- Deactivate the zone
-function EncounterZone:deactivate()
-    self.isActive = false
+function EncounterZone.deactivate(state)
+    state.isActive = false
 end
 
 -- Update animation
-function EncounterZone:update(dt)
-    if self.isActive then
-        self.animationTime = self.animationTime + dt
+function EncounterZone.update(state, dt)
+    if state.isActive then
+        state.animationTime = state.animationTime + dt
     end
 end
 
 -- Draw the visible monster (in world space, camera will transform)
-function EncounterZone:draw(camera)
-    if not self.isActive then
+function EncounterZone.draw(state, camera)
+    if not state.isActive then
         return
     end
 
-    -- Breathing animation
-    local breathe = math.sin(self.animationTime * 2) * 2
-    local size = self.radius + breathe
+    local breathe = math.sin(state.animationTime * 2) * 2
+    local size = state.radius + breathe
 
-    -- Draw in world coordinates (camera will handle transformation)
-    -- Draw shadow
     love.graphics.setColor(0, 0, 0, 0.3)
-    love.graphics.ellipse("fill", self.x, self.y + size + 5, size * 0.8, size * 0.3)
+    love.graphics.ellipse("fill", state.x, state.y + size + 5, size * 0.8, size * 0.3)
 
-    -- Draw monster body
-    love.graphics.setColor(self.color[1], self.color[2], self.color[3], 0.9)
-    love.graphics.circle("fill", self.x, self.y, size)
+    if state.sprite then
+        love.graphics.setColor(1, 1, 1, 1)
+        local sw, sh = state.sprite:getDimensions()
+        local bobY = math.sin(state.animationTime * 2) * 2
+        love.graphics.draw(state.sprite, state.x - sw / 2, state.y - sh / 2 + bobY, 0, 1, 1)
+    else
+        love.graphics.setColor(state.color[1], state.color[2], state.color[3], 0.9)
+        love.graphics.circle("fill", state.x, state.y, size)
 
-    -- Draw eyes (simple)
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.circle("fill", self.x - size * 0.3, self.y - size * 0.2, size * 0.2)
-    love.graphics.circle("fill", self.x + size * 0.3, self.y - size * 0.2, size * 0.2)
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.circle("fill", state.x - size * 0.3, state.y - size * 0.2, size * 0.2)
+        love.graphics.circle("fill", state.x + size * 0.3, state.y - size * 0.2, size * 0.2)
 
-    -- Draw pupils
-    love.graphics.setColor(0, 0, 0)
-    love.graphics.circle("fill", self.x - size * 0.3, self.y - size * 0.2, size * 0.1)
-    love.graphics.circle("fill", self.x + size * 0.3, self.y - size * 0.2, size * 0.1)
+        love.graphics.setColor(0, 0, 0)
+        love.graphics.circle("fill", state.x - size * 0.3, state.y - size * 0.2, size * 0.1)
+        love.graphics.circle("fill", state.x + size * 0.3, state.y - size * 0.2, size * 0.1)
 
-    -- Draw border
-    love.graphics.setColor(self.color[1] * 0.7, self.color[2] * 0.7, self.color[3] * 0.7)
-    love.graphics.setLineWidth(2)
-    love.graphics.circle("line", self.x, self.y, size)
-    love.graphics.setLineWidth(1)
+        love.graphics.setColor(state.color[1] * 0.7, state.color[2] * 0.7, state.color[3] * 0.7)
+        love.graphics.setLineWidth(2)
+        love.graphics.circle("line", state.x, state.y, size)
+        love.graphics.setLineWidth(1)
+    end
 end
 
 -- Get enemy type for battle
-function EncounterZone:getEnemyType()
-    return self.enemyType
+function EncounterZone.getEnemyType(state)
+    return state.enemyType
 end
 
 return EncounterZone
-

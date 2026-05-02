@@ -3,6 +3,13 @@
 
 local SkillSystem = require("src.systems.skill_system")
 local SkillDatabase = require("src.data.skill_database")
+local CombatUtils = require("src.systems.combat_utils")
+local AudioSystem = require("src.systems.audio_system")
+local BattleAnimation = require("src.systems.battle.battle_animation")
+local BattleSystem = require("src.systems.battle.battle_system")
+local BattleLog = require("src.systems.battle.battle_log")
+local Enemy = require("src.entities.enemy")
+local Player = require("src.entities.player")
 
 local BattleExecutor = {}
 
@@ -16,39 +23,39 @@ function BattleExecutor.executePlayerAttack(battleSystem, target, targetIndex)
     local targetY = baseY - (targetIndex - 1) * 80
     
     if battleSystem.audioSystem then
-        battleSystem.audioSystem:playSFX("attack")
+        AudioSystem.playSFX(battleSystem.audioSystem, "attack")
     end
     
-    battleSystem.animation:addAttackAnimation(playerX, playerY, targetX, targetY, function()
-        if target:checkEvade() then
-            battleSystem.animation:addDamageNumber(targetX, targetY - 30, 0, false, "miss")
-            battleSystem:addLog(target.name .. " evaded your attack!")
+    BattleAnimation.addAttackAnimation(battleSystem.animation, playerX, playerY, targetX, targetY, function()
+        if CombatUtils.checkEvade(target) then
+            BattleAnimation.addDamageNumber(battleSystem.animation, targetX, targetY - 30, 0, false, "miss")
+            BattleSystem.addLog(battleSystem, target.name .. " evaded your attack!")
             return
         end
         
-        local damage, isCrit = battleSystem.player:calculateDamage()
-        local actualDamage = target:takeDamage(damage)
+        local damage, isCrit = Player.calculateDamage(battleSystem.player)
+        local actualDamage = CombatUtils.takeDamageMutating(target, damage)
         
         local hitType = isCrit and "crit" or "normal"
-        battleSystem.animation:addDamageNumber(targetX, targetY - 30, actualDamage, false, hitType)
-        battleSystem.animation:addHitFlash(targetX, targetY)
+        BattleAnimation.addDamageNumber(battleSystem.animation, targetX, targetY - 30, actualDamage, false, hitType)
+        BattleAnimation.addHitFlash(battleSystem.animation, targetX, targetY)
         
         if battleSystem.audioSystem then
-            battleSystem.audioSystem:playSFX("hit")
+            AudioSystem.playSFX(battleSystem.audioSystem, "hit")
         end
         
         local critText = isCrit and " CRITICAL!" or ""
-        battleSystem:addLog("You attack " .. target.name .. " for " .. actualDamage .. " damage!" .. critText)
+        BattleSystem.addLog(battleSystem, "You attack " .. target.name .. " for " .. actualDamage .. " damage!" .. critText)
         
-        if not target:isAlive() then
-            battleSystem:addLog(target.name .. " defeated!")
+        if not CombatUtils.isAlive(target) then
+            BattleSystem.addLog(battleSystem, target.name .. " defeated!")
         end
     end)
 end
 
 function BattleExecutor.executePlayerDefend(battleSystem)
     battleSystem.player.isDefending = true
-    battleSystem:addLog("You take a defensive stance! (+25% DEF)")
+    BattleSystem.addLog(battleSystem, "You take a defensive stance! (+25% DEF)")
 end
 
 function BattleExecutor.executePlayerEscape(battleSystem, battleState)
@@ -56,11 +63,11 @@ function BattleExecutor.executePlayerEscape(battleSystem, battleState)
     escapeChance = math.min(0.8, escapeChance)
     
     if math.random() < escapeChance then
-        battleSystem:addLog("You escaped successfully!")
-        battleSystem:endBattle(battleState.ESCAPED)
+        BattleSystem.addLog(battleSystem, "You escaped successfully!")
+        BattleSystem.endBattle(battleSystem, battleState.ESCAPED)
         return true
     else
-        battleSystem:addLog("Failed to escape!")
+        BattleSystem.addLog(battleSystem, "Failed to escape!")
         return false
     end
 end
@@ -75,39 +82,39 @@ function BattleExecutor.executeEnemyAttack(battleSystem, enemy, enemyIndex)
     local enemyY = baseY - (enemyIndex - 1) * 80
     
     if battleSystem.audioSystem then
-        battleSystem.audioSystem:playSFX("attack")
+        AudioSystem.playSFX(battleSystem.audioSystem, "attack")
     end
     
-    battleSystem.animation:addAttackAnimation(enemyX, enemyY, playerX, playerY, function()
-        if battleSystem.player:checkEvade() then
-            battleSystem.animation:addDamageNumber(playerX, playerY - 30, 0, true, "miss")
-            battleSystem:addLog("You evaded " .. enemy.name .. "'s attack!")
+    BattleAnimation.addAttackAnimation(battleSystem.animation, enemyX, enemyY, playerX, playerY, function()
+        if Player.checkEvade(battleSystem.player) then
+            BattleAnimation.addDamageNumber(battleSystem.animation, playerX, playerY - 30, 0, true, "miss")
+            BattleSystem.addLog(battleSystem, "You evaded " .. enemy.name .. "'s attack!")
             return
         end
         
-        local damage, isCrit = enemy:calculateDamage()
-        local actualDamage = battleSystem.player:takeDamage(damage)
+        local damage, isCrit = Enemy.calculateDamage(enemy)
+        local actualDamage = Player.takeDamage(battleSystem.player, damage)
         
         local hitType = isCrit and "crit" or "normal"
-        battleSystem.animation:addDamageNumber(playerX, playerY - 30, actualDamage, true, hitType)
-        battleSystem.animation:addHitFlash(playerX, playerY)
+        BattleAnimation.addDamageNumber(battleSystem.animation, playerX, playerY - 30, actualDamage, true, hitType)
+        BattleAnimation.addHitFlash(battleSystem.animation, playerX, playerY)
         
         if battleSystem.audioSystem then
-            battleSystem.audioSystem:playSFX("hit")
+            AudioSystem.playSFX(battleSystem.audioSystem, "hit")
         end
         
         local critText = isCrit and " CRITICAL!" or ""
-        battleSystem:addLog(enemy.name .. " attacks you for " .. actualDamage .. " damage!" .. critText)
+        BattleSystem.addLog(battleSystem, enemy.name .. " attacks you for " .. actualDamage .. " damage!" .. critText)
         
-        if not battleSystem.player:isAlive() then
-            battleSystem:addLog("You have been defeated!")
+        if not Player.isAlive(battleSystem.player) then
+            BattleSystem.addLog(battleSystem, "You have been defeated!")
         end
     end)
 end
 
 function BattleExecutor.executeEnemyDefend(battleSystem, enemy)
     enemy.isDefending = true
-    battleSystem:addLog(enemy.name .. " takes a defensive stance!")
+    BattleSystem.addLog(battleSystem, enemy.name .. " takes a defensive stance!")
 end
 
 function BattleExecutor.executePlayerSkill(battleSystem, skillId, targets, targetIndices)
@@ -115,13 +122,13 @@ function BattleExecutor.executePlayerSkill(battleSystem, skillId, targets, targe
     local canUse, result = SkillSystem.canUseSkill(player, skillId)
     
     if not canUse then
-        battleSystem:addLog(result)
+        BattleSystem.addLog(battleSystem, result)
         return false
     end
     
     local success, skillResult = SkillSystem.useSkill(player, skillId)
     if not success then
-        battleSystem:addLog(skillResult)
+        BattleSystem.addLog(battleSystem, skillResult)
         return false
     end
     
@@ -129,7 +136,7 @@ function BattleExecutor.executePlayerSkill(battleSystem, skillId, targets, targe
     local skillLevel = skillResult.level
     
     if battleSystem.audioSystem then
-        battleSystem.audioSystem:playSFX("skill")
+        AudioSystem.playSFX(battleSystem.audioSystem, "skill")
     end
     
     if skillData.type == SkillDatabase.TYPES.HEAL then
@@ -157,17 +164,17 @@ function BattleExecutor.executeDamageSkill(battleSystem, skillData, skillLevel, 
     local totalDamage = 0
     local targetCount = #targets
     
-    battleSystem:addLog(string.format("%s Lv.%d!", skillData.name, skillLevel))
+    BattleSystem.addLog(battleSystem, string.format("%s Lv.%d!", skillData.name, skillLevel))
     
     for i, target in ipairs(targets) do
         local targetIndex = targetIndices[i]
         local targetX = baseX + (targetIndex - 1) * 100
         local targetY = baseY - (targetIndex - 1) * 80
         
-        battleSystem.animation:addAttackAnimation(playerX, playerY, targetX, targetY, function()
-            if target:checkEvade() then
-                battleSystem.animation:addDamageNumber(targetX, targetY - 30, 0, false, "miss")
-                battleSystem:addLog(target.name .. " evaded!")
+        BattleAnimation.addAttackAnimation(battleSystem.animation, playerX, playerY, targetX, targetY, function()
+            if CombatUtils.checkEvade(target) then
+                BattleAnimation.addDamageNumber(battleSystem.animation, targetX, targetY - 30, 0, false, "miss")
+                BattleSystem.addLog(battleSystem, target.name .. " evaded!")
                 return
             end
             
@@ -180,23 +187,23 @@ function BattleExecutor.executeDamageSkill(battleSystem, skillData, skillLevel, 
                 isCrit = true
             end
             
-            local actualDamage = target:takeDamage(baseDamage)
+            local actualDamage = CombatUtils.takeDamageMutating(target, baseDamage)
             totalDamage = totalDamage + actualDamage
             
             local hitType = isCrit and "crit" or "normal"
-            battleSystem.animation:addDamageNumber(targetX, targetY - 30, actualDamage, false, hitType)
-            battleSystem.animation:addHitFlash(targetX, targetY)
+            BattleAnimation.addDamageNumber(battleSystem.animation, targetX, targetY - 30, actualDamage, false, hitType)
+            BattleAnimation.addHitFlash(battleSystem.animation, targetX, targetY)
             
             if battleSystem.audioSystem then
-                battleSystem.audioSystem:playSFX("hit")
+                AudioSystem.playSFX(battleSystem.audioSystem, "hit")
             end
             
             local critText = isCrit and " CRITICAL!" or ""
-            battleSystem:addLog(string.format("%s takes %d damage!%s", target.name, actualDamage, critText))
+            BattleSystem.addLog(battleSystem, string.format("%s takes %d damage!%s", target.name, actualDamage, critText))
             
             if skillData.defBreak then
                 target.defense = target.defense * (1 - skillData.defBreak)
-                battleSystem:addLog(target.name .. "'s defense reduced!")
+                BattleSystem.addLog(battleSystem, target.name .. "'s defense reduced!")
             end
             
             if skillData.debuff then
@@ -206,12 +213,12 @@ function BattleExecutor.executeDamageSkill(battleSystem, skillData, skillLevel, 
                     value = skillData.debuff.speedPercent or 0,
                     duration = skillData.debuff.duration or 2
                 })
-                battleSystem:addLog(target.name .. " is slowed!")
+                BattleSystem.addLog(battleSystem, target.name .. " is slowed!")
             end
             
             if skillData.stunChance and math.random() < skillData.stunChance then
                 target.stunned = true
-                battleSystem:addLog(target.name .. " is stunned!")
+                BattleSystem.addLog(battleSystem, target.name .. " is stunned!")
             end
             
             if skillData.dot then
@@ -220,11 +227,11 @@ function BattleExecutor.executeDamageSkill(battleSystem, skillData, skillLevel, 
                     damage = skillData.dot.damage,
                     duration = skillData.dot.duration
                 }
-                battleSystem:addLog(target.name .. " is burning!")
+                BattleSystem.addLog(battleSystem, target.name .. " is burning!")
             end
             
-            if not target:isAlive() then
-                battleSystem:addLog(target.name .. " defeated!")
+            if not CombatUtils.isAlive(target) then
+                BattleSystem.addLog(battleSystem, target.name .. " defeated!")
             end
         end)
     end
@@ -239,10 +246,10 @@ function BattleExecutor.executeDamageSkill(battleSystem, skillData, skillLevel, 
         })
         
         if buff.speedPercent and buff.speedPercent > 0 then
-            battleSystem:addLog(string.format("Your speed increased by %d%%!", buff.speedPercent * 100))
+            BattleSystem.addLog(battleSystem, string.format("Your speed increased by %d%%!", buff.speedPercent * 100))
         end
         if buff.defensePercent and buff.defensePercent > 0 then
-            battleSystem:addLog(string.format("Your defense increased by %d%%!", buff.defensePercent * 100))
+            BattleSystem.addLog(battleSystem, string.format("Your defense increased by %d%%!", buff.defensePercent * 100))
         end
     end
     
@@ -254,17 +261,17 @@ function BattleExecutor.executeHealSkill(battleSystem, skillData, skillLevel)
     local healPercent = SkillDatabase.getEffectiveHealPercent(skillData, skillLevel)
     
     local healAmount = math.floor(player.maxHp * healPercent)
-    player:heal(healAmount)
+    CombatUtils.healMutating(player, healAmount)
     
     if skillData.cleanse and player.debuffs then
         player.debuffs = {}
-        battleSystem:addLog("All debuffs cleansed!")
+        BattleSystem.addLog(battleSystem, "All debuffs cleansed!")
     end
     
-    battleSystem:addLog(string.format("%s Lv.%d! Healed %d HP!", skillData.name, skillLevel, healAmount))
+    BattleSystem.addLog(battleSystem, string.format("%s Lv.%d! Healed %d HP!", skillData.name, skillLevel, healAmount))
     
     if battleSystem.audioSystem then
-        battleSystem.audioSystem:playSFX("skill")
+        AudioSystem.playSFX(battleSystem.audioSystem, "skill")
     end
     
     return true
@@ -272,7 +279,7 @@ end
 
 function BattleExecutor.executeSealSkill(battleSystem, skillData, skillLevel, targets, targetIndices)
     if not targets or #targets == 0 then
-        battleSystem:addLog("No target for seal!")
+        BattleSystem.addLog(battleSystem, "No target for seal!")
         return false
     end
     
@@ -292,11 +299,11 @@ function BattleExecutor.executeSealSkill(battleSystem, skillData, skillLevel, ta
         confusion = "confused"
     }
     
-    battleSystem:addLog(string.format("%s Lv.%d! %s is %s for %d turns!", 
+    BattleSystem.addLog(battleSystem, string.format("%s Lv.%d! %s is %s for %d turns!", 
         skillData.name, skillLevel, target.name, sealName[sealType] or "sealed", duration))
     
     if battleSystem.audioSystem then
-        battleSystem.audioSystem:playSFX("skill")
+        AudioSystem.playSFX(battleSystem.audioSystem, "skill")
     end
     
     return true
@@ -309,7 +316,7 @@ function BattleExecutor.selectSkillTargets(battleSystem, skillId)
     local enemies = battleSystem.enemies
     local aliveEnemies = {}
     for i, enemy in ipairs(enemies) do
-        if enemy:isAlive() then
+        if Enemy.isAlive(enemy) then
             table.insert(aliveEnemies, {enemy = enemy, index = i})
         end
     end

@@ -1,133 +1,132 @@
 local SkillDatabase = require("src.systems.battle_simulator.skill_database")
-local SimUnit = require("src.systems.battle_simulator.sim_unit")
+local SimCombatant = require("src.systems.battle_simulator.sim_combatant")
 
 local BattleSimulator = {}
-BattleSimulator.__index = BattleSimulator
 
 function BattleSimulator.new()
-    local self = setmetatable({}, BattleSimulator)
-    self.teamA = {}
-    self.teamB = {}
-    self.turn = 0
-    self.log = {}
-    self.isRunning = false
-    self.winner = nil
-    self.config = {
-        maxTurns = 100,
-        logDetail = "normal",
+    return {
+        teamA = {},
+        teamB = {},
+        turn = 0,
+        log = {},
+        isRunning = false,
+        winner = nil,
+        config = {
+            maxTurns = 100,
+            logDetail = "normal",
+        },
     }
-    return self
 end
 
-function BattleSimulator:reset()
-    self.teamA = {}
-    self.teamB = {}
-    self.turn = 0
-    self.log = {}
-    self.isRunning = false
-    self.winner = nil
+function BattleSimulator.reset(state)
+    state.teamA = {}
+    state.teamB = {}
+    state.turn = 0
+    state.log = {}
+    state.isRunning = false
+    state.winner = nil
 end
 
-function BattleSimulator:addUnitToTeamA(classId, level, name)
-    local unit = SimUnit.fromClass(classId, level, name)
-    table.insert(self.teamA, unit)
+function BattleSimulator.addUnitToTeamA(state, classId, level, name)
+    local unit = SimCombatant.fromClass(classId, level, name)
+    table.insert(state.teamA, unit)
     return unit
 end
 
-function BattleSimulator:addUnitToTeamB(enemyType, level, name)
-    local unit = SimUnit.fromEnemy(enemyType, level, name)
-    table.insert(self.teamB, unit)
+function BattleSimulator.addUnitToTeamB(state, enemyType, level, name)
+    local unit = SimCombatant.fromEnemy(enemyType, level, name)
+    table.insert(state.teamB, unit)
     return unit
 end
 
-function BattleSimulator:addCustomUnitToTeamB(stats, name)
-    local unit = SimUnit.fromStats(stats, name)
-    table.insert(self.teamB, unit)
+function BattleSimulator.addCustomUnitToTeamB(state, stats, name)
+    local unit = SimCombatant.fromStats(stats, name)
+    table.insert(state.teamB, unit)
     return unit
 end
 
-function BattleSimulator:getAliveUnits(team)
+function BattleSimulator.getAliveUnits(state, team)
     local alive = {}
     for _, unit in ipairs(team) do
-        if unit:isAlive() then
+        if SimCombatant.isAlive(unit) then
             table.insert(alive, unit)
         end
     end
     return alive
 end
 
-function BattleSimulator:sortUnitsBySpeed(units)
+function BattleSimulator.sortUnitsBySpeed(state, units)
     table.sort(units, function(a, b)
         return a.speed > b.speed
     end)
 end
 
-function BattleSimulator:checkVictory()
-    local aliveA = self:getAliveUnits(self.teamA)
-    local aliveB = self:getAliveUnits(self.teamB)
+function BattleSimulator.checkVictory(state)
+    local aliveA = BattleSimulator.getAliveUnits(state, state.teamA)
+    local aliveB = BattleSimulator.getAliveUnits(state, state.teamB)
     
     if #aliveA == 0 then
-        self.winner = "B"
+        state.winner = "B"
         return true
     end
     if #aliveB == 0 then
-        self.winner = "A"
+        state.winner = "A"
         return true
     end
     return false
 end
 
-function BattleSimulator:logMessage(msg)
-    if self.config.logDetail ~= "none" then
-        table.insert(self.log, msg)
+function BattleSimulator.logMessage(state, msg)
+    if state.config.logDetail ~= "none" then
+        table.insert(state.log, msg)
     end
 end
 
-function BattleSimulator:executeTurn()
-    self.turn = self.turn + 1
-    self:logMessage(string.format("=== Turn %d ===", self.turn))
+function BattleSimulator.executeTurn(state)
+    state.turn = state.turn + 1
+    BattleSimulator.logMessage(state, string.format("=== Turn %d ===", state.turn))
     
     local allUnits = {}
-    for _, unit in ipairs(self:getAliveUnits(self.teamA)) do
+    for _, unit in ipairs(BattleSimulator.getAliveUnits(state, state.teamA)) do
         unit._team = "A"
         table.insert(allUnits, unit)
     end
-    for _, unit in ipairs(self:getAliveUnits(self.teamB)) do
+    for _, unit in ipairs(BattleSimulator.getAliveUnits(state, state.teamB)) do
         unit._team = "B"
         table.insert(allUnits, unit)
     end
     
-    self:sortUnitsBySpeed(allUnits)
+    BattleSimulator.sortUnitsBySpeed(state, allUnits)
     
     for _, unit in ipairs(allUnits) do
-        if unit:isAlive() then
-            self:executeUnitAction(unit)
+        if SimCombatant.isAlive(unit) then
+            BattleSimulator.executeUnitAction(state, unit)
         end
         
-        if self:checkVictory() then
+        if BattleSimulator.checkVictory(state) then
             return false
         end
     end
     
-    if self.turn >= self.config.maxTurns then
-        self:logMessage("Max turns reached!")
-        self.winner = "draw"
+    if state.turn >= state.config.maxTurns then
+        BattleSimulator.logMessage(state, "Max turns reached!")
+        state.winner = "draw"
         return false
     end
     
     return true
 end
 
-function BattleSimulator:executeUnitAction(unit)
+function BattleSimulator.executeUnitAction(state, unit)
     local enemies
     local allies
     
     if unit._team == "A" then
-        enemies = self:getAliveUnits(self.teamB)
-        allies = self:getAliveUnits(self.teamA)
+        enemies = BattleSimulator.getAliveUnits(state, state.teamB)
+        allies = BattleSimulator.getAliveUnits(state, state.teamA)
     else
-        enemies = self:getAliveUnits(self.teamA)
-        allies = self:getAliveUnits(self.teamB)
+        enemies = BattleSimulator.getAliveUnits(state, state.teamA)
+        allies = BattleSimulator.getAliveUnits(state, state.teamB)
     end
     
     if #enemies == 0 then
@@ -135,18 +134,18 @@ function BattleSimulator:executeUnitAction(unit)
     end
     
     local hpPercent = unit.hp / unit.maxHp
-    local action = self:decideAction(unit, hpPercent, enemies, allies)
+    local action = BattleSimulator.decideAction(state, unit, hpPercent, enemies, allies)
     
     if action.type == "skill" then
-        self:executeSkill(unit, action.skill, action.targets, enemies)
+        BattleSimulator.executeSkill(state, unit, action.skill, action.targets, enemies)
     elseif action.type == "attack" then
-        self:executeAttack(unit, action.target)
+        BattleSimulator.executeAttack(state, unit, action.target)
     elseif action.type == "defend" then
-        self:executeDefend(unit)
+        BattleSimulator.executeDefend(state, unit)
     end
 end
 
-function BattleSimulator:decideAction(unit, hpPercent, enemies, allies)
+function BattleSimulator.decideAction(state, unit, hpPercent, enemies, allies)
     if hpPercent < 0.3 and math.random() < 0.3 then
         return {type = "defend"}
     end
@@ -159,12 +158,12 @@ function BattleSimulator:decideAction(unit, hpPercent, enemies, allies)
                 if skill.targetType == "self" and hpPercent > 0.5 then
                     canUse = false
                 end
-                if skill.targetType == "ally" and not self:needsHealing(allies) then
+                if skill.targetType == "ally" and not BattleSimulator.needsHealing(state, allies) then
                     canUse = false
                 end
                 
                 if canUse and math.random() < 0.6 then
-                    local targets = self:selectSkillTargets(skill, unit, enemies, allies)
+                    local targets = BattleSimulator.selectSkillTargets(state, skill, unit, enemies, allies)
                     if #targets > 0 then
                         return {type = "skill", skill = skill, targets = targets}
                     end
@@ -177,7 +176,7 @@ function BattleSimulator:decideAction(unit, hpPercent, enemies, allies)
     return {type = "attack", target = target}
 end
 
-function BattleSimulator:needsHealing(allies)
+function BattleSimulator.needsHealing(state, allies)
     for _, ally in ipairs(allies) do
         if ally.hp / ally.maxHp < 0.6 then
             return true
@@ -186,7 +185,7 @@ function BattleSimulator:needsHealing(allies)
     return false
 end
 
-function BattleSimulator:selectSkillTargets(skill, unit, enemies, allies)
+function BattleSimulator.selectSkillTargets(state, skill, unit, enemies, allies)
     local targets = {}
     
     if skill.targetType == "single_enemy" then
@@ -217,84 +216,84 @@ function BattleSimulator:selectSkillTargets(skill, unit, enemies, allies)
     return targets
 end
 
-function BattleSimulator:executeSkill(unit, skill, targets, enemies)
+function BattleSimulator.executeSkill(state, unit, skill, targets, enemies)
     unit.mp = unit.mp - skill.mpCost
-    self:logMessage(string.format("  %s uses %s!", unit.name, skill.name))
+    BattleSimulator.logMessage(state, string.format("  %s uses %s!", unit.name, skill.name))
     
     local effectValue = SkillDatabase.calculateEffect(skill, unit)
     
     for _, target in ipairs(targets) do
         if skill.category == "damage" then
-            local damage = self:calculateSkillDamage(effectValue, target)
-            local actualDmg = target:takeDamage(damage)
-            self:logMessage(string.format("    -> %s takes %d damage (HP: %d/%d)", 
+            local damage = BattleSimulator.calculateSkillDamage(state, effectValue, target)
+            local actualDmg = SimCombatant.takeDamage(target, damage)
+            BattleSimulator.logMessage(state, string.format("    -> %s takes %d damage (HP: %d/%d)", 
                 target.name, actualDmg, target.hp, target.maxHp))
         elseif skill.category == "heal" then
             local healAmount = effectValue
-            target:heal(healAmount)
-            self:logMessage(string.format("    -> %s heals %d (HP: %d/%d)", 
+            SimCombatant.heal(target, healAmount)
+            BattleSimulator.logMessage(state, string.format("    -> %s heals %d (HP: %d/%d)", 
                 target.name, healAmount, target.hp, target.maxHp))
         elseif skill.category == "buff" or skill.category == "debuff" then
-            self:logMessage(string.format("    -> %s receives %s effect", target.name, skill.name))
+            BattleSimulator.logMessage(state, string.format("    -> %s receives %s effect", target.name, skill.name))
         end
     end
 end
 
-function BattleSimulator:calculateSkillDamage(effectValue, target)
+function BattleSimulator.calculateSkillDamage(state, effectValue, target)
     local reduction = target.defPercent or 0
     local damage = math.floor(effectValue * (100 - reduction) / 100)
     return math.max(1, damage)
 end
 
-function BattleSimulator:executeAttack(unit, target)
-    self:logMessage(string.format("  %s attacks %s!", unit.name, target.name))
+function BattleSimulator.executeAttack(state, unit, target)
+    BattleSimulator.logMessage(state, string.format("  %s attacks %s!", unit.name, target.name))
     
-    if target:checkEvade() then
-        self:logMessage(string.format("    -> %s evaded!", target.name))
+    if SimCombatant.checkEvade(target) then
+        BattleSimulator.logMessage(state, string.format("    -> %s evaded!", target.name))
         return
     end
     
-    local damage, isCrit = unit:calculateDamage()
-    local actualDmg = target:takeDamage(damage)
+    local damage, isCrit = SimCombatant.calculateDamage(unit)
+    local actualDmg = SimCombatant.takeDamage(target, damage)
     
     local critText = isCrit and " (CRIT!)" or ""
-    self:logMessage(string.format("    -> %d damage%s (HP: %d/%d)", 
+    BattleSimulator.logMessage(state, string.format("    -> %d damage%s (HP: %d/%d)", 
         actualDmg, critText, target.hp, target.maxHp))
 end
 
-function BattleSimulator:executeDefend(unit)
+function BattleSimulator.executeDefend(state, unit)
     unit.isDefending = true
-    self:logMessage(string.format("  %s defends!", unit.name))
+    BattleSimulator.logMessage(state, string.format("  %s defends!", unit.name))
 end
 
-function BattleSimulator:run()
-    self.isRunning = true
-    self:logMessage("=== Battle Start ===")
-    self:logMessage(string.format("Team A: %d units", #self.teamA))
-    self:logMessage(string.format("Team B: %d units", #self.teamB))
+function BattleSimulator.run(state)
+    state.isRunning = true
+    BattleSimulator.logMessage(state, "=== Battle Start ===")
+    BattleSimulator.logMessage(state, string.format("Team A: %d units", #state.teamA))
+    BattleSimulator.logMessage(state, string.format("Team B: %d units", #state.teamB))
     
-    while self.isRunning do
-        local continue = self:executeTurn()
+    while state.isRunning do
+        local continue = BattleSimulator.executeTurn(state)
         if not continue then
-            self.isRunning = false
+            state.isRunning = false
         end
     end
     
-    self:logMessage("=== Battle End ===")
-    if self.winner then
-        self:logMessage(string.format("Winner: Team %s", self.winner))
+    BattleSimulator.logMessage(state, "=== Battle End ===")
+    if state.winner then
+        BattleSimulator.logMessage(state, string.format("Winner: Team %s", state.winner))
     end
     
     return {
-        winner = self.winner,
-        turns = self.turn,
-        log = self.log,
-        teamASurvivors = self:getAliveUnits(self.teamA),
-        teamBSurvivors = self:getAliveUnits(self.teamB),
+        winner = state.winner,
+        turns = state.turn,
+        log = state.log,
+        teamASurvivors = BattleSimulator.getAliveUnits(state, state.teamA),
+        teamBSurvivors = BattleSimulator.getAliveUnits(state, state.teamB),
     }
 end
 
-function BattleSimulator:runMultiple(iterations)
+function BattleSimulator.runMultiple(state, iterations)
     local results = {
         teamAWins = 0,
         teamBWins = 0,
@@ -304,11 +303,11 @@ function BattleSimulator:runMultiple(iterations)
     }
     
     for i = 1, iterations do
-        self:reset()
-        for _, unit in ipairs(self.teamA) do unit:reset() end
-        for _, unit in ipairs(self.teamB) do unit:reset() end
+        BattleSimulator.reset(state)
+        for _, unit in ipairs(state.teamA) do SimCombatant.reset(unit) end
+        for _, unit in ipairs(state.teamB) do SimCombatant.reset(unit) end
         
-        local result = self:run()
+        local result = BattleSimulator.run(state)
         results.totalTurns = results.totalTurns + result.turns
         
         if result.winner == "A" then
@@ -329,9 +328,9 @@ end
 
 function BattleSimulator.createUnit(classIdOrEnemy, level, name, isEnemy)
     if isEnemy then
-        return SimUnit.fromEnemy(classIdOrEnemy, level, name)
+        return SimCombatant.fromEnemy(classIdOrEnemy, level, name)
     else
-        return SimUnit.fromClass(classIdOrEnemy, level, name)
+        return SimCombatant.fromClass(classIdOrEnemy, level, name)
     end
 end
 

@@ -1,44 +1,67 @@
 -- npc_manager.lua - Manages NPC instances in the game world
 -- Handles spawning, updating, and rendering NPCs
 
+local AnimationManager = require("src.animations.animation_manager")
 local NPCDatabase = require("npcs.npc_database")
 
 local NPCManager = {}
-NPCManager.__index = NPCManager
 
-function NPCManager.new()
-    local self = setmetatable({}, NPCManager)
-    
-    -- Active NPC instances
-    self.npcs = {}
-    self.nextId = 1
-    
-    -- Animation manager (will be set externally)
-    self.animationManager = nil
-    
-    return self
+function NPCManager.create()
+    local state = {}
+
+    state.npcs = {}
+    state.nextId = 1
+    state.animationManager = nil
+    state.assetManager = nil
+    state.npcSprites = {}
+
+    return state
 end
 
--- Set animation manager
-function NPCManager:setAnimationManager(animManager)
-    self.animationManager = animManager
+function NPCManager.setAnimationManager(state, animManager)
+    state.animationManager = animManager
 end
 
--- Spawn an NPC at a position
-function NPCManager:spawnNPC(npcType, x, y)
+function NPCManager.setAssetManager(state, assetManager)
+    state.assetManager = assetManager
+end
+
+local NPC_SPRITE_MAP = {
+    elder_adrian = "elder",
+    spirit_guide_lina = "quest_giver",
+    town_guard = "guard",
+    weapon_merchant = "merchant",
+    healer = "healer",
+    innkeeper = "villager",
+    teleporter = "villager"
+}
+
+function NPCManager.getSpriteForNPC(state, npcType)
+    if state.npcSprites[npcType] then
+        return state.npcSprites[npcType]
+    end
+    if not state.assetManager then return nil end
+
+    local spriteId = NPC_SPRITE_MAP[npcType] or npcType
+    local sprite = state.assetManager:getNPCSprite(spriteId, "south")
+    if sprite then
+        state.npcSprites[npcType] = sprite
+    end
+    return sprite
+end
+
+function NPCManager.spawnNPC(state, npcType, x, y)
     local template = NPCDatabase.getNPCData(npcType)
     if not template then
         print("Warning: Unknown NPC type: " .. tostring(npcType))
         return nil
     end
-    
-    -- Create NPC instance
+
     local npc = {
-        id = self.nextId,
+        id = state.nextId,
         type = npcType,
         x = x,
         y = y,
-        -- Copy template data
         npcType = template.type,
         name = template.name,
         description = template.description,
@@ -47,8 +70,7 @@ function NPCManager:spawnNPC(npcType, x, y)
         canTalk = template.canTalk,
         canTrade = template.canTrade,
         dialogue = template.dialogue,
-        
-        -- Monster-specific
+
         hp = template.hp,
         maxHp = template.maxHp,
         attack = template.attack,
@@ -57,74 +79,63 @@ function NPCManager:spawnNPC(npcType, x, y)
         aggressive = template.aggressive,
         chaseRange = template.chaseRange,
         dropTable = template.dropTable,
-        
-        -- State
+
         isAlive = true,
         isChasing = false,
         targetX = x,
         targetY = y,
-        
-        -- Animation
-        animationId = "npc_" .. self.nextId
+
+        animationId = "npc_" .. state.nextId
     }
-    
-    -- Setup animation
-    if self.animationManager then
-        self.animationManager:createAnimationSet(npc.animationId)
+
+    if state.animationManager then
+        AnimationManager.createAnimationSet(state.animationManager, npc.animationId)
     end
-    
-    self.npcs[self.nextId] = npc
-    self.nextId = self.nextId + 1
-    
+
+    state.npcs[state.nextId] = npc
+    state.nextId = state.nextId + 1
+
     return npc
 end
 
--- Remove an NPC
-function NPCManager:removeNPC(npcId)
-    local npc = self.npcs[npcId]
-    if npc and self.animationManager then
-        self.animationManager:removeEntity(npc.animationId)
+function NPCManager.removeNPC(state, npcId)
+    local npc = state.npcs[npcId]
+    if npc and state.animationManager then
+        AnimationManager.removeEntity(state.animationManager, npc.animationId)
     end
-    self.npcs[npcId] = nil
+    state.npcs[npcId] = nil
 end
 
--- Update all NPCs
-function NPCManager:update(dt, playerX, playerY)
-    for id, npc in pairs(self.npcs) do
-        -- Update animation
-        if self.animationManager then
+function NPCManager.update(state, dt, playerX, playerY)
+    for id, npc in pairs(state.npcs) do
+        if state.animationManager then
             local isMoving = npc.isChasing
-            self.animationManager:updateEntity(npc.animationId, dt, isMoving)
+            AnimationManager.updateEntity(state.animationManager, npc.animationId, dt, isMoving)
         end
-        
-        -- Update monster AI
+
         if npc.npcType == "monster" or npc.npcType == "boss" then
-            self:updateMonsterAI(npc, dt, playerX, playerY)
+            NPCManager.updateMonsterAI(state, npc, dt, playerX, playerY)
         end
     end
 end
 
--- Update monster AI (chase player if aggressive)
-function NPCManager:updateMonsterAI(npc, dt, playerX, playerY)
+function NPCManager.updateMonsterAI(state, npc, dt, playerX, playerY)
     if not npc.aggressive or not npc.isAlive then
         npc.isChasing = false
         return
     end
-    
-    -- Calculate distance to player
+
     local dx = playerX - npc.x
     local dy = playerY - npc.y
     local distance = math.sqrt(dx * dx + dy * dy)
-    
-    -- Check if player is in chase range
+
     if distance < npc.chaseRange then
         npc.isChasing = true
-        
-        -- Move towards player
-        local moveSpeed = 50  -- NPC movement speed
+
+        local moveSpeed = 50
         local dirX = dx / distance
         local dirY = dy / distance
-        
+
         npc.x = npc.x + dirX * moveSpeed * dt
         npc.y = npc.y + dirY * moveSpeed * dt
     else
@@ -132,85 +143,80 @@ function NPCManager:updateMonsterAI(npc, dt, playerX, playerY)
     end
 end
 
--- Draw all NPCs
-function NPCManager:draw(cameraX, cameraY, screenWidth, screenHeight)
-    for id, npc in pairs(self.npcs) do
-        -- Simple culling: only draw if on screen
+function NPCManager.draw(state, cameraX, cameraY, screenWidth, screenHeight)
+    for id, npc in pairs(state.npcs) do
         local screenX = npc.x - cameraX + screenWidth / 2
         local screenY = npc.y - cameraY + screenHeight / 2
-        
+
         if screenX > -50 and screenX < screenWidth + 50 and
            screenY > -50 and screenY < screenHeight + 50 then
-            self:drawNPC(npc)
+            NPCManager.drawNPC(state, npc)
         end
     end
 end
 
--- Draw a single NPC
-function NPCManager:drawNPC(npc)
+function NPCManager.drawNPC(state, npc)
     if not npc.isAlive then
         return
     end
-    
-    -- Get animation transform
+
     local offsetX, offsetY, rotation, scaleX, scaleY = 0, 0, 0, 1, 1
-    if self.animationManager then
-        offsetX, offsetY, rotation, scaleX, scaleY = self.animationManager:getTransform(npc.animationId)
+    if state.animationManager then
+        offsetX, offsetY, rotation, scaleX, scaleY = AnimationManager.getTransform(state.animationManager, npc.animationId)
     end
-    
-    -- Draw shadow
+
     love.graphics.setColor(0, 0, 0, 0.3)
-    love.graphics.ellipse("fill", npc.x + offsetX, npc.y + offsetY + npc.size + 5, 
+    love.graphics.ellipse("fill", npc.x + offsetX, npc.y + offsetY + npc.size + 5,
                           npc.size * 0.8 * scaleX, npc.size * 0.3)
-    
-    -- Apply transform
+
+    local sprite = NPCManager.getSpriteForNPC(state, npc.type)
+
     love.graphics.push()
     love.graphics.translate(npc.x + offsetX, npc.y + offsetY)
     love.graphics.rotate(rotation)
     love.graphics.scale(scaleX, scaleY)
-    
-    -- Draw NPC body
-    love.graphics.setColor(npc.color)
-    love.graphics.circle("fill", 0, 0, npc.size)
-    
-    -- Draw type indicator
-    if npc.npcType == "friendly" or npc.npcType == "merchant" or 
-       npc.npcType == "healer" or npc.npcType == "service" then
-        -- Friendly: draw smile
-        love.graphics.setColor(0, 0, 0)
-        love.graphics.circle("fill", -npc.size * 0.3, -npc.size * 0.2, 2)
-        love.graphics.circle("fill", npc.size * 0.3, -npc.size * 0.2, 2)
-        love.graphics.arc("line", "open", 0, npc.size * 0.1, npc.size * 0.4, 
-                         math.pi * 0.2, math.pi * 0.8)
-    elseif npc.npcType == "monster" or npc.npcType == "boss" then
-        -- Monster: draw angry eyes
-        love.graphics.setColor(1, 0, 0)
-        love.graphics.circle("fill", -npc.size * 0.3, -npc.size * 0.2, 3)
-        love.graphics.circle("fill", npc.size * 0.3, -npc.size * 0.2, 3)
+
+    if sprite then
+        love.graphics.setColor(1, 1, 1, 1)
+        local sw, sh = sprite:getDimensions()
+        love.graphics.draw(sprite, -sw / 2, -sh / 2)
+    else
+        love.graphics.setColor(npc.color)
+        love.graphics.circle("fill", 0, 0, npc.size)
+
+        if npc.npcType == "friendly" or npc.npcType == "merchant" or
+           npc.npcType == "healer" or npc.npcType == "service" then
+            love.graphics.setColor(0, 0, 0)
+            love.graphics.circle("fill", -npc.size * 0.3, -npc.size * 0.2, 2)
+            love.graphics.circle("fill", npc.size * 0.3, -npc.size * 0.2, 2)
+            love.graphics.arc("line", "open", 0, npc.size * 0.1, npc.size * 0.4,
+                             math.pi * 0.2, math.pi * 0.8)
+        elseif npc.npcType == "monster" or npc.npcType == "boss" then
+            love.graphics.setColor(1, 0, 0)
+            love.graphics.circle("fill", -npc.size * 0.3, -npc.size * 0.2, 3)
+            love.graphics.circle("fill", npc.size * 0.3, -npc.size * 0.2, 3)
+        end
     end
-    
+
     love.graphics.pop()
-    
-    -- Draw name above NPC
+
     love.graphics.setColor(1, 1, 1)
-    love.graphics.printf(npc.name, npc.x + offsetX - 50, npc.y + offsetY - npc.size - 20, 
+    love.graphics.printf(npc.name, npc.x + offsetX - 50, npc.y + offsetY - npc.size - 20,
                         100, "center")
-    
-    -- Draw chase indicator for aggressive monsters
+
     if npc.isChasing then
         love.graphics.setColor(1, 0, 0, 0.5)
         love.graphics.circle("line", npc.x + offsetX, npc.y + offsetY, npc.size + 5)
     end
 end
 
--- Get NPCs in range
-function NPCManager:getNPCsInRange(x, y, range)
+function NPCManager.getNPCsInRange(state, x, y, range)
     local result = {}
-    for id, npc in pairs(self.npcs) do
+    for id, npc in pairs(state.npcs) do
         local dx = npc.x - x
         local dy = npc.y - y
         local distance = math.sqrt(dx * dx + dy * dy)
-        
+
         if distance <= range then
             table.insert(result, npc)
         end
@@ -218,20 +224,17 @@ function NPCManager:getNPCsInRange(x, y, range)
     return result
 end
 
--- Get NPC by ID
-function NPCManager:getNPC(npcId)
-    return self.npcs[npcId]
+function NPCManager.getNPC(state, npcId)
+    return state.npcs[npcId]
 end
 
--- Clear all NPCs
-function NPCManager:clear()
-    if self.animationManager then
-        for id, npc in pairs(self.npcs) do
-            self.animationManager:removeEntity(npc.animationId)
+function NPCManager.clear(state)
+    if state.animationManager then
+        for id, npc in pairs(state.npcs) do
+            AnimationManager.removeEntity(state.animationManager, npc.animationId)
         end
     end
-    self.npcs = {}
+    state.npcs = {}
 end
 
 return NPCManager
-

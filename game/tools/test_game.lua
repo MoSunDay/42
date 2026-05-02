@@ -73,28 +73,28 @@ end
 -- 测试对象创建
 print("\n2. 测试对象创建...")
 
-local assetManager = AssetManager.new()
-assetManager:loadAll()
+local assetManager = AssetManager.create()
+AssetManager.loadAll(assetManager)
 print("   ✓ AssetManager 创建成功")
 
-local camera = Camera.new()
+local camera = Camera.create()
 print("   ✓ Camera 创建成功")
 
-local player = Player.new(100, 100, assetManager)
+local player = Player.create(100, 100, assetManager)
 print("   ✓ Player 创建成功")
 
-local map = Map.new(2000, 2000)
+local map = Map.create(2000, 2000)
 print("   ✓ Map 创建成功")
 
 -- 测试玩家移动
 print("\n3. 测试玩家移动...")
 
-player:moveTo(200, 200)
+Player.moveTo(player, 200, 200)
 print("   ✓ 设置移动目标")
 
 -- 模拟更新
 for i = 1, 10 do
-    player:update(0.016)
+    Player.update(player, 0.016)
 end
 
 if player.x ~= 100 or player.y ~= 100 then
@@ -106,14 +106,13 @@ end
 -- 测试相机跟随
 print("\n4. 测试相机跟随...")
 
-camera:follow(player.x, player.y, 0.016)
+Camera.follow(camera, player.x, player.y, 0.016)
 print("   ✓ 相机位置: (" .. camera.x .. ", " .. camera.y .. ")")
 
 -- 测试坐标转换
-local worldX, worldY = camera:toWorld(640, 360)
+local worldX, worldY = Camera.toWorld(camera, 640, 360)
 print("   ✓ 屏幕坐标转世界坐标: (640, 360) -> (" .. worldX .. ", " .. worldY .. ")")
 
 print("\n=== 所有测试通过！ ===\n")
 print("游戏核心逻辑正常，可以运行游戏。")
 print("运行命令: love game")
-

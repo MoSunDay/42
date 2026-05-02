@@ -1,141 +1,110 @@
--- chat_ui.lua - Chat UI display
--- Display chat box in bottom-left corner
-
 local Theme = require("src.ui.theme")
 local Components = require("src.ui.components")
 
 local ChatUI = {}
-ChatUI.__index = ChatUI
 
-function ChatUI.new(assetManager)
-    local self = setmetatable({}, ChatUI)
+function ChatUI.create(assetManager)
+    local state = {}
     
-    self.assetManager = assetManager
-    
-    -- Screen dimensions
+    state.assetManager = assetManager
     local screenWidth = love.graphics.getWidth()
     local screenHeight = love.graphics.getHeight()
     
-    -- UI position (bottom-left corner)
-    self.x = 10
-    self.y = screenHeight - 210
-    self.width = 400
-    self.height = 200
-    
-    -- Chat display area
-    self.chatHeight = 150
-    
-    -- Input area
-    self.inputHeight = 40
-    self.inputY = self.y + self.chatHeight + 5
-    
-    -- Colors
-    self.colors = Theme.colors.chat
-    
-    -- Fonts
-    self.font = assetManager:getFont("default")
-    
-    -- Visibility
-    self.isVisible = true
+    state.x = 10
+    state.y = screenHeight - 210
+    state.width = 400
+    state.height = 200
+    state.chatHeight = 150
+    state.inputHeight = 40
+    state.inputY = state.y + state.chatHeight + 5
+    state.colors = Theme.colors.chat
+    state.font = assetManager:getFont("default")
+    state.isVisible = true
+    state.scrollOffset = 0
+    state.manuallyScrolled = false
 
-    -- Scroll offset
-    self.scrollOffset = 0
-    self.manuallyScrolled = false  -- Auto-scroll to bottom by default
-
-    return self
+    return state
 end
 
--- Toggle visibility
-function ChatUI:toggle()
-    self.isVisible = not self.isVisible
+function ChatUI.toggle(state)
+    state.isVisible = not state.isVisible
 end
 
--- Set visibility
-function ChatUI:setVisible(visible)
-    self.isVisible = visible
+function ChatUI.setVisible(state, visible)
+    state.isVisible = visible
 end
 
--- Draw chat UI
-function ChatUI:draw(chatSystem)
-    if not self.isVisible then
-        return
-    end
+function ChatUI.draw(state, chatSystem)
+    if not state.isVisible then return end
+    ChatUI.drawChatArea(state, chatSystem)
+    ChatUI.drawInputArea(state, chatSystem)
+end
+
+function ChatUI.drawChatArea(state, chatSystem)
+    Components.drawOrnatePanel(state.x, state.y, state.width, state.chatHeight, state.assetManager, {
+        title = "Chat",
+        corners = true,
+        glow = true,
+        shimmer = false,
+        font = state.font
+    })
+
+    love.graphics.setFont(state.font)
     
-    -- Draw chat message area
-    self:drawChatArea(chatSystem)
-    
-    -- Draw input area
-    self:drawInputArea(chatSystem)
-end
-
--- Draw chat message area
-function ChatUI:drawChatArea(chatSystem)
-    Components.drawPanelSimple(self.x, self.y, self.width, self.chatHeight, 5)
-
-    love.graphics.setFont(self.font)
-    love.graphics.setColor(self.colors.text)
-    love.graphics.print("Chat", self.x + 10, self.y + 5)
-
     local allMessages = chatSystem:getMessages()
     local lineHeight = 16
     local contentHeight = #allMessages * lineHeight
-    local viewHeight = self.chatHeight - 30
+    local viewHeight = state.chatHeight - 35
 
     local maxScroll = math.max(0, contentHeight - viewHeight)
 
-    if not self.manuallyScrolled then
-        self.scrollOffset = maxScroll
+    if not state.manuallyScrolled then
+        state.scrollOffset = maxScroll
     end
 
-    -- Clamp scroll offset
-    self.scrollOffset = math.max(0, math.min(self.scrollOffset, maxScroll))
+    state.scrollOffset = math.max(0, math.min(state.scrollOffset, maxScroll))
 
-    -- Enable scissor to clip messages
-    love.graphics.setScissor(self.x + 5, self.y + 25, self.width - 15, viewHeight)
+    love.graphics.setScissor(state.x + 5, state.y + 28, state.width - 15, viewHeight)
 
-    -- Draw messages from top to bottom (oldest to newest)
-    -- Start from the top of the view area
-    local startY = self.y + 25
-    local messageY = startY - self.scrollOffset
+    local startY = state.y + 28
+    local messageY = startY - state.scrollOffset
 
     for i = 1, #allMessages do
         local msg = allMessages[i]
 
-        -- Only draw if in visible area
-        if messageY >= self.y + 25 - lineHeight and messageY <= self.y + 25 + viewHeight then
-            -- Draw sender name
-            love.graphics.setColor(self.colors.sender)
+        if messageY >= state.y + 28 - lineHeight and messageY <= state.y + 28 + viewHeight then
+            love.graphics.setColor(Theme.gold.bright)
             local senderText = msg.sender .. ": "
-            local senderWidth = self.font:getWidth(senderText)
-            love.graphics.print(senderText, self.x + 10, messageY)
+            local senderWidth = state.font:getWidth(senderText)
+            love.graphics.print(senderText, state.x + 10, messageY)
 
-            -- Draw message text
-            love.graphics.setColor(msg.color or {1, 1, 1})
-            love.graphics.print(msg.text, self.x + 10 + senderWidth, messageY)
+            love.graphics.setColor(msg.color or Theme.colors.text)
+            love.graphics.print(msg.text, state.x + 10 + senderWidth, messageY)
         end
 
         messageY = messageY + lineHeight
     end
 
-    -- Disable scissor
     love.graphics.setScissor()
 
     if contentHeight > viewHeight then
-        local scrollbarX = self.x + self.width - 10
-        local scrollbarY = self.y + 25
-        Components.drawScrollbar(scrollbarX, scrollbarY, 5, viewHeight, contentHeight, self.scrollOffset)
+        Components.drawScrollbar(state.x + state.width - 12, state.y + 28, 5, viewHeight, contentHeight, state.scrollOffset)
     end
 
     love.graphics.setColor(1, 1, 1)
 end
 
-function ChatUI:drawInputArea(chatSystem)
+function ChatUI.drawInputArea(state, chatSystem)
     local isActive = chatSystem:isInputting()
     
-    Components.drawInput(self.x, self.inputY, self.width, self.inputHeight, isActive, self.assetManager)
+    Components.drawInput(state.x, state.inputY, state.width, state.inputHeight, isActive, state.assetManager)
     
-    love.graphics.setFont(self.font)
-    love.graphics.setColor(self.colors.text)
+    if isActive then
+        Theme.drawGoldBorder(state.x, state.inputY, state.width, state.inputHeight, 1)
+    end
+
+    love.graphics.setFont(state.font)
+    love.graphics.setColor(state.colors.text)
     
     local displayText = chatSystem:getInputText()
     if isActive then
@@ -144,46 +113,37 @@ function ChatUI:drawInputArea(chatSystem)
         end
     else
         if displayText == "" then
-            love.graphics.setColor(self.colors.textHint)
+            love.graphics.setColor(state.colors.textHint)
             displayText = "Press ENTER to chat..."
         end
     end
     
-    love.graphics.print(displayText, self.x + 10, self.inputY + 12)
+    love.graphics.print(displayText, state.x + 10, state.inputY + 12)
 end
 
-function ChatUI:isMouseOver(x, y)
-    if not self.isVisible then
-        return false
-    end
-    
-    return x >= self.x and x <= self.x + self.width and
-           y >= self.y and y <= self.inputY + self.inputHeight
+function ChatUI.isMouseOver(state, x, y)
+    if not state.isVisible then return false end
+    return x >= state.x and x <= state.x + state.width and
+           y >= state.y and y <= state.inputY + state.inputHeight
 end
 
--- Handle mouse scroll
-function ChatUI:mousescroll(x, y)
-    if self:isMouseOver(love.mouse.getX(), love.mouse.getY()) then
-        self.scrollOffset = self.scrollOffset + y * 20
-        self.scrollOffset = math.max(0, self.scrollOffset)
+function ChatUI.mousescroll(state, x, y)
+    if ChatUI.isMouseOver(state, love.mouse.getX(), love.mouse.getY()) then
+        state.scrollOffset = state.scrollOffset + y * 20
+        state.scrollOffset = math.max(0, state.scrollOffset)
     end
 end
 
--- Handle mouse press
-function ChatUI:mousepressed(x, y, button, chatSystem)
-    if button ~= 1 then
-        return false
-    end
+function ChatUI.mousepressed(state, x, y, button, chatSystem)
+    if button ~= 1 then return false end
 
-    -- Check if clicked on input area
-    local inputX = self.x + 5
-    local inputY = self.inputY
-    local inputW = self.width - 10
-    local inputH = self.inputHeight
+    local inputX = state.x + 5
+    local inputY = state.inputY
+    local inputW = state.width - 10
+    local inputH = state.inputHeight
 
     if x >= inputX and x <= inputX + inputW and
        y >= inputY and y <= inputY + inputH then
-        -- Clicked on input box, start input
         if chatSystem and not chatSystem:isInputting() then
             chatSystem:startInput()
             return true
@@ -194,4 +154,3 @@ function ChatUI:mousepressed(x, y, button, chatSystem)
 end
 
 return ChatUI
-

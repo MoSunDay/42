@@ -1,10 +1,14 @@
 import time
-import asyncio
 from collections import deque
-from typing import Dict, Optional, Tuple, Callable, Any
-from dataclasses import dataclass, field
+from typing import Dict, Optional, Tuple, Callable, Any, List
 
-from .packet import Packet, PacketType, PacketBuilder
+from .packet import (
+    create_packet,
+    pack_packet,
+    needs_ack,
+    build_ack,
+    PacketType,
+)
 from .constants import (
     MAX_RETRIES,
     RETRY_TIMEOUT_MS,
@@ -15,273 +19,270 @@ from .constants import (
 )
 
 
-@dataclass
-class PendingPacket:
-    packet: Packet
-    send_time: float = 0.0
-    retries: int = 0
-    last_send: float = 0.0
+def create_channel(send_fn: Callable[[bytes], None]) -> Dict[str, Any]:
+    now = time.time() * 1000
+    return {
+        "send_fn": send_fn,
+        "next_seq": 1,
+        "remote_seq": 0,
+        "send_buffer": {},
+        "recv_window": {},
+        "last_recv_time": now,
+        "last_send_time": now,
+        "connected": True,
+    }
 
 
-class ReliableChannel:
-    def __init__(self, send_func: Callable[[bytes], None]):
-        self.send_func = send_func
+def _next_sequence(channel: Dict[str, Any]) -> int:
+    seq = channel["next_seq"]
+    channel["next_seq"] = (seq + 1) & 0xFFFFFFFF
+    return seq
 
-        self.next_seq = 1
-        self.remote_seq = 0
 
-        self.send_buffer: Dict[int, PendingPacket] = {}
-        self.recv_window: Dict[int, Packet] = {}
-        self.recv_queue: deque = deque(maxlen=SEND_BUFFER_SIZE)
+def _calculate_ack_mask(channel: Dict[str, Any]) -> Tuple[int, int]:
+    ack = channel["remote_seq"]
+    ack_mask = 0
+    for seq in channel["recv_window"]:
+        diff = ack - seq
+        if 0 < diff <= 32:
+            ack_mask |= 1 << (diff - 1)
+    return ack, ack_mask
 
-        self.ack_mask = 0
 
-        self.last_recv_time = time.time() * 1000
-        self.last_send_time = time.time() * 1000
-
-        self.connected = True
-
-    def _now_ms(self) -> float:
-        return time.time() * 1000
-
-    def _next_sequence(self) -> int:
-        seq = self.next_seq
-        self.next_seq = (self.next_seq + 1) & 0xFFFFFFFF
-        return seq
-
-    def _update_ack_mask(self, ack_seq: int):
-        diff = self.remote_seq - ack_seq
-        if diff <= 0 or diff > 32:
-            return
-
-        self.ack_mask |= 1 << (diff - 1)
-
-        if self.ack_mask.bit_length() > 32:
-            self.ack_mask &= 0xFFFFFFFF
-
-    def _calculate_ack_mask(self) -> Tuple[int, int]:
-        ack = self.remote_seq
-        ack_mask = 0
-
-        for seq in self.recv_window:
-            diff = ack - seq
-            if 0 < diff <= 32:
-                ack_mask |= 1 << (diff - 1)
-
-        return ack, ack_mask
-
-    def send(self, packet: Packet) -> bool:
-        now = self._now_ms()
-        self.last_send_time = now
-
-        if packet.seq == 0:
-            packet.seq = self._next_sequence()
-
-        ack, ack_mask = self._calculate_ack_mask()
-        packet.ack = ack
-        packet.ack_mask = ack_mask
-
-        data = packet.pack()
-        self.send_func(data)
-
-        if packet.needs_ack:
-            pending = PendingPacket(
-                packet=packet, send_time=now, retries=0, last_send=now
-            )
-            self.send_buffer[packet.seq] = pending
-
-        return True
-
-    def send_immediate(self, packet: Packet):
-        now = self._now_ms()
-        self.last_send_time = now
-
-        ack, ack_mask = self._calculate_ack_mask()
-        packet.ack = ack
-        packet.ack_mask = ack_mask
-
-        self.send_func(packet.pack())
-
-    def recv(self, packet: Packet) -> Optional[Packet]:
-        now = self._now_ms()
-        self.last_recv_time = now
-
-        self._process_acks(packet.ack, packet.ack_mask)
-
-        if packet.msg_type == PacketType.ACK:
-            return None
-
-        if packet.seq > 0:
-            if packet.seq <= self.remote_seq:
-                diff = self.remote_seq - packet.seq
-                if diff < RECV_WINDOW_SIZE:
-                    return None
-            elif packet.seq > self.remote_seq:
-                self.remote_seq = packet.seq
-
-            self.recv_window[packet.seq] = packet
-            self._clean_recv_window()
-
-        if packet.needs_ack:
-            ack, ack_mask = self._calculate_ack_mask()
-            ack_packet = PacketBuilder.ack(0, packet.seq, ack_mask)
-            self.send_immediate(ack_packet)
-
-        return packet
-
-    def _process_acks(self, ack: int, ack_mask: int):
-        to_remove = []
-
-        for seq, pending in self.send_buffer.items():
-            if seq == ack:
+def _process_acks(channel: Dict[str, Any], ack: int, ack_mask: int) -> None:
+    to_remove = []
+    for seq, pending in channel["send_buffer"].items():
+        if seq == ack:
+            to_remove.append(seq)
+            continue
+        diff = ack - seq
+        if 0 < diff <= 32:
+            if ack_mask & (1 << (diff - 1)):
                 to_remove.append(seq)
-                continue
+    for seq in to_remove:
+        del channel["send_buffer"][seq]
 
-            diff = ack - seq
-            if 0 < diff <= 32:
-                if ack_mask & (1 << (diff - 1)):
-                    to_remove.append(seq)
 
-        for seq in to_remove:
-            del self.send_buffer[seq]
+def _clean_recv_window(channel: Dict[str, Any]) -> None:
+    threshold = channel["remote_seq"] - RECV_WINDOW_SIZE
+    to_remove = [seq for seq in channel["recv_window"] if seq <= threshold]
+    for seq in to_remove:
+        del channel["recv_window"][seq]
 
-    def _clean_recv_window(self):
-        to_remove = []
-        threshold = self.remote_seq - RECV_WINDOW_SIZE
 
-        for seq in self.recv_window:
-            if seq <= threshold:
-                to_remove.append(seq)
+def channel_send(channel: Dict[str, Any], packet: Dict[str, Any]) -> bool:
+    now = time.time() * 1000
+    channel["last_send_time"] = now
 
-        for seq in to_remove:
-            del self.recv_window[seq]
+    if packet["seq"] == 0:
+        packet["seq"] = _next_sequence(channel)
 
-    def update(self) -> list:
-        now = self._now_ms()
-        timeout_ms = RETRY_TIMEOUT_MS
+    ack, ack_mask = _calculate_ack_mask(channel)
+    packet["ack"] = ack
+    packet["ack_mask"] = ack_mask
 
-        failed = []
-        to_remove = []
+    data = pack_packet(packet)
+    channel["send_fn"](data)
 
-        for seq, pending in self.send_buffer.items():
-            elapsed = now - pending.last_send
-
-            if elapsed >= timeout_ms:
-                if pending.retries >= MAX_RETRIES:
-                    failed.append(pending.packet)
-                    to_remove.append(seq)
-                else:
-                    pending.retries += 1
-                    pending.last_send = now
-
-                    ack, ack_mask = self._calculate_ack_mask()
-                    pending.packet.ack = ack
-                    pending.packet.ack_mask = ack_mask
-
-                    self.send_func(pending.packet.pack())
-
-        for seq in to_remove:
-            del self.send_buffer[seq]
-
-        return failed
-
-    def is_timed_out(self) -> bool:
-        elapsed = self._now_ms() - self.last_recv_time
-        return elapsed >= CONNECTION_TIMEOUT_MS
-
-    def needs_heartbeat(self) -> bool:
-        elapsed = self._now_ms() - self.last_send_time
-        return elapsed >= HEARTBEAT_INTERVAL_MS
-
-    def get_pending_count(self) -> int:
-        return len(self.send_buffer)
-
-    def get_stats(self) -> Dict[str, Any]:
-        return {
-            "next_seq": self.next_seq,
-            "remote_seq": self.remote_seq,
-            "pending_count": len(self.send_buffer),
-            "recv_window_size": len(self.recv_window),
-            "connected": self.connected,
-            "last_recv_ms": self._now_ms() - self.last_recv_time,
-            "last_send_ms": self._now_ms() - self.last_send_time,
+    if needs_ack(packet):
+        channel["send_buffer"][packet["seq"]] = {
+            "packet": packet,
+            "send_time": now,
+            "retries": 0,
+            "last_send": now,
         }
 
+    return True
 
-class ConnectionManager:
-    def __init__(self):
-        self.connections: Dict[str, ReliableChannel] = {}
-        self.addr_to_session: Dict[Tuple[str, int], str] = {}
-        self._session_counter = 0
 
-    def _generate_session_id(self) -> str:
-        self._session_counter += 1
-        return f"sess_{self._session_counter}_{int(time.time() * 1000)}"
+def channel_send_immediate(channel: Dict[str, Any], packet: Dict[str, Any]) -> None:
+    now = time.time() * 1000
+    channel["last_send_time"] = now
 
-    def create_connection(
-        self, addr: Tuple[str, int], send_func: Callable[[bytes, Tuple[str, int]], None]
-    ) -> Tuple[str, ReliableChannel]:
-        session_id = self._generate_session_id()
+    ack, ack_mask = _calculate_ack_mask(channel)
+    packet["ack"] = ack
+    packet["ack_mask"] = ack_mask
 
-        def wrapped_send(data: bytes):
-            send_func(data, addr)
+    channel["send_fn"](pack_packet(packet))
 
-        channel = ReliableChannel(wrapped_send)
 
-        self.connections[session_id] = channel
-        self.addr_to_session[addr] = session_id
+def channel_recv(
+    channel: Dict[str, Any], packet: Dict[str, Any]
+) -> Optional[Dict[str, Any]]:
+    now = time.time() * 1000
+    channel["last_recv_time"] = now
 
-        return session_id, channel
+    _process_acks(channel, packet["ack"], packet["ack_mask"])
 
-    def get_connection(self, session_id: str) -> Optional[ReliableChannel]:
-        return self.connections.get(session_id)
-
-    def get_connection_by_addr(
-        self, addr: Tuple[str, int]
-    ) -> Optional[ReliableChannel]:
-        session_id = self.addr_to_session.get(addr)
-        if session_id:
-            return self.connections.get(session_id)
+    if packet["msg_type"] == PacketType.ACK:
         return None
 
-    def get_session_id(self, addr: Tuple[str, int]) -> Optional[str]:
-        return self.addr_to_session.get(addr)
+    if packet["seq"] > 0:
+        if packet["seq"] <= channel["remote_seq"]:
+            diff = channel["remote_seq"] - packet["seq"]
+            if diff < RECV_WINDOW_SIZE:
+                return None
+        elif packet["seq"] > channel["remote_seq"]:
+            channel["remote_seq"] = packet["seq"]
 
-    def remove_connection(self, session_id: str):
-        if session_id in self.connections:
-            del self.connections[session_id]
+        channel["recv_window"][packet["seq"]] = packet
+        _clean_recv_window(channel)
 
-        to_remove = [
-            addr for addr, sid in self.addr_to_session.items() if sid == session_id
-        ]
-        for addr in to_remove:
-            del self.addr_to_session[addr]
+    if needs_ack(packet):
+        ack, ack_mask = _calculate_ack_mask(channel)
+        ack_packet = build_ack(0, packet["seq"], ack_mask)
+        channel_send_immediate(channel, ack_packet)
 
-    def update_all(self) -> Dict[str, list]:
-        results = {}
-        timed_out = []
+    return packet
 
-        for session_id, channel in self.connections.items():
-            failed = channel.update()
-            if failed:
-                results[session_id] = failed
 
-            if channel.is_timed_out():
-                timed_out.append(session_id)
+def channel_update(channel: Dict[str, Any]) -> list:
+    now = time.time() * 1000
+    failed = []
+    to_remove = []
 
-        for session_id in timed_out:
-            self.remove_connection(session_id)
+    for seq, pending in channel["send_buffer"].items():
+        elapsed = now - pending["last_send"]
+        if elapsed >= RETRY_TIMEOUT_MS:
+            if pending["retries"] >= MAX_RETRIES:
+                failed.append(pending["packet"])
+                to_remove.append(seq)
+            else:
+                pending["retries"] += 1
+                pending["last_send"] = now
 
-        return results
+                ack, ack_mask = _calculate_ack_mask(channel)
+                pending["packet"]["ack"] = ack
+                pending["packet"]["ack_mask"] = ack_mask
 
-    def broadcast(self, packet: Packet, exclude: Optional[set] = None):
-        exclude_set = exclude or set()
-        for session_id, channel in self.connections.items():
-            if session_id not in exclude_set:
-                channel.send(packet)
+                channel["send_fn"](pack_packet(pending["packet"]))
 
-    def get_connection_count(self) -> int:
-        return len(self.connections)
+    for seq in to_remove:
+        del channel["send_buffer"][seq]
 
-    def get_all_sessions(self) -> list:
-        return list(self.connections.keys())
+    return failed
+
+
+def channel_is_timed_out(channel: Dict[str, Any]) -> bool:
+    elapsed = time.time() * 1000 - channel["last_recv_time"]
+    return elapsed >= CONNECTION_TIMEOUT_MS
+
+
+def channel_needs_heartbeat(channel: Dict[str, Any]) -> bool:
+    elapsed = time.time() * 1000 - channel["last_send_time"]
+    return elapsed >= HEARTBEAT_INTERVAL_MS
+
+
+def channel_get_pending_count(channel: Dict[str, Any]) -> int:
+    return len(channel["send_buffer"])
+
+
+def channel_get_stats(channel: Dict[str, Any]) -> Dict[str, Any]:
+    now = time.time() * 1000
+    return {
+        "next_seq": channel["next_seq"],
+        "remote_seq": channel["remote_seq"],
+        "pending_count": len(channel["send_buffer"]),
+        "recv_window_size": len(channel["recv_window"]),
+        "connected": channel["connected"],
+        "last_recv_ms": now - channel["last_recv_time"],
+        "last_send_ms": now - channel["last_send_time"],
+    }
+
+
+def create_conn_manager() -> Dict[str, Any]:
+    return {
+        "connections": {},
+        "addr_to_session": {},
+        "session_counter": 0,
+    }
+
+
+def _generate_session_id(manager: Dict[str, Any]) -> str:
+    manager["session_counter"] += 1
+    return f"sess_{manager['session_counter']}_{int(time.time() * 1000)}"
+
+
+def conn_create(
+    manager: Dict[str, Any],
+    addr: Tuple[str, int],
+    send_func: Callable[[bytes, Tuple[str, int]], None],
+) -> Tuple[str, Dict[str, Any]]:
+    session_id = _generate_session_id(manager)
+
+    def wrapped_send(data: bytes):
+        send_func(data, addr)
+
+    channel = create_channel(wrapped_send)
+
+    manager["connections"][session_id] = channel
+    manager["addr_to_session"][addr] = session_id
+
+    return session_id, channel
+
+
+def conn_get(manager: Dict[str, Any], session_id: str) -> Optional[Dict[str, Any]]:
+    return manager["connections"].get(session_id)
+
+
+def conn_get_by_addr(
+    manager: Dict[str, Any], addr: Tuple[str, int]
+) -> Optional[Dict[str, Any]]:
+    session_id = manager["addr_to_session"].get(addr)
+    if session_id:
+        return manager["connections"].get(session_id)
+    return None
+
+
+def conn_get_session_id(
+    manager: Dict[str, Any], addr: Tuple[str, int]
+) -> Optional[str]:
+    return manager["addr_to_session"].get(addr)
+
+
+def conn_remove(manager: Dict[str, Any], session_id: str) -> None:
+    if session_id in manager["connections"]:
+        del manager["connections"][session_id]
+
+    to_remove = [
+        addr for addr, sid in manager["addr_to_session"].items() if sid == session_id
+    ]
+    for addr in to_remove:
+        del manager["addr_to_session"][addr]
+
+
+def conn_update_all(manager: Dict[str, Any]) -> Dict[str, list]:
+    results = {}
+    timed_out = []
+
+    for session_id, channel in manager["connections"].items():
+        failed = channel_update(channel)
+        if failed:
+            results[session_id] = failed
+
+        if channel_is_timed_out(channel):
+            timed_out.append(session_id)
+
+    for session_id in timed_out:
+        conn_remove(manager, session_id)
+
+    return results
+
+
+def conn_broadcast(
+    manager: Dict[str, Any],
+    packet: Dict[str, Any],
+    exclude: Optional[set] = None,
+) -> None:
+    exclude_set = exclude or set()
+    for session_id, channel in manager["connections"].items():
+        if session_id not in exclude_set:
+            channel_send(channel, packet)
+
+
+def conn_get_count(manager: Dict[str, Any]) -> int:
+    return len(manager["connections"])
+
+
+def conn_get_all_sessions(manager: Dict[str, Any]) -> list:
+    return list(manager["connections"].keys())

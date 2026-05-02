@@ -1,85 +1,67 @@
--- animation_manager.lua - Centralized animation management
--- Manages all character and NPC animations
-
 local BreathingEffect = require("src.animations.breathing_effect")
 local RunningEffect = require("src.animations.running_effect")
 
 local AnimationManager = {}
-AnimationManager.__index = AnimationManager
 
-function AnimationManager.new()
-    local self = setmetatable({}, AnimationManager)
-    
-    -- Animation instances for different entities
-    self.animations = {}
-    
-    return self
-end
-
--- Create animation set for an entity
-function AnimationManager:createAnimationSet(entityId)
-    self.animations[entityId] = {
-        breathing = BreathingEffect.new(),
-        running = RunningEffect.new()
+function AnimationManager.create()
+    return {
+        animations = {}
     }
-    return self.animations[entityId]
 end
 
--- Get animation set for an entity
-function AnimationManager:getAnimationSet(entityId)
-    if not self.animations[entityId] then
-        return self:createAnimationSet(entityId)
+function AnimationManager.createAnimationSet(state, entityId)
+    state.animations[entityId] = {
+        breathing = BreathingEffect.create(),
+        running = RunningEffect.create()
+    }
+    return state.animations[entityId]
+end
+
+function AnimationManager.getAnimationSet(state, entityId)
+    if not state.animations[entityId] then
+        return AnimationManager.createAnimationSet(state, entityId)
     end
-    return self.animations[entityId]
+    return state.animations[entityId]
 end
 
--- Update all animations for an entity
-function AnimationManager:updateEntity(entityId, dt, isMoving)
-    local anims = self:getAnimationSet(entityId)
-    
-    anims.breathing:update(dt)
-    anims.running:update(dt, isMoving or false)
+function AnimationManager.updateEntity(state, entityId, dt, isMoving)
+    local anims = AnimationManager.getAnimationSet(state, entityId)
+
+    BreathingEffect.update(anims.breathing, dt)
+    RunningEffect.update(anims.running, dt, isMoving or false)
 end
 
--- Get combined transform for rendering
--- Returns: offsetX, offsetY, rotation, scaleX, scaleY
-function AnimationManager:getTransform(entityId)
-    local anims = self:getAnimationSet(entityId)
-    
-    -- Start with defaults
+function AnimationManager.getTransform(state, entityId)
+    local anims = AnimationManager.getAnimationSet(state, entityId)
+
     local offsetX = 0
     local offsetY = 0
     local rotation = 0
     local scaleX = 1.0
     local scaleY = 1.0
-    
-    -- Apply breathing (affects scale)
-    local breathScale = anims.breathing:getScale()
+
+    local breathScale = BreathingEffect.getScale(anims.breathing)
     scaleX = scaleX * breathScale
     scaleY = scaleY * breathScale
-    
-    -- Apply running effects
-    if anims.running:isActive() or anims.running.time > 0 then
-        offsetY = offsetY + anims.running:getBobOffset()
-        rotation = anims.running:getTilt()
-        
-        local runScaleX, runScaleY = anims.running:getScale()
+
+    if RunningEffect.isActive(anims.running) or anims.running.time > 0 then
+        offsetY = offsetY + RunningEffect.getBobOffset(anims.running)
+        rotation = RunningEffect.getTilt(anims.running)
+
+        local runScaleX, runScaleY = RunningEffect.getScale(anims.running)
         scaleX = scaleX * runScaleX
         scaleY = scaleY * runScaleY
     end
-    
+
     return offsetX, offsetY, rotation, scaleX, scaleY
 end
 
--- Remove animation set for an entity
-function AnimationManager:removeEntity(entityId)
-    self.animations[entityId] = nil
+function AnimationManager.removeEntity(state, entityId)
+    state.animations[entityId] = nil
 end
 
--- Clear all animations
-function AnimationManager:clear()
-    self.animations = {}
+function AnimationManager.clear(state)
+    state.animations = {}
 end
 
 return AnimationManager
-
