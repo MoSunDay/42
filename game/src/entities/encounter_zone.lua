@@ -11,11 +11,11 @@ function EncounterZone.create(x, y, radius)
     state.x = x
     state.y = y
     state.radius = radius or 40
-    state.isActive = true
+    state.is_active = true
     state.isTriggered = false
 
-    state.enemyType = Enemy.getRandomType()
-    state.color = EncounterZone.getColorForType(state.enemyType)
+    state.enemyType = Enemy.get_random_type()
+    state.color = EncounterZone.get_color_for_type(state.enemyType)
     state.animationTime = math.random() * 10
     state.assetManager = nil
     state.sprite = nil
@@ -23,7 +23,7 @@ function EncounterZone.create(x, y, radius)
     return state
 end
 
-function EncounterZone.setAssetManager(state, assetManager)
+function EncounterZone.set_asset_manager(state, assetManager)
     state.assetManager = assetManager
     if assetManager then
         local spriteMap = {
@@ -36,12 +36,12 @@ function EncounterZone.setAssetManager(state, assetManager)
             chaos_serpent = "chaos_serpent", dragon = "ancient_dragon"
         }
         local spriteId = spriteMap[state.enemyType] or state.enemyType
-        state.sprite = assetManager:getEnemySprite(spriteId, "south")
+        state.sprite = assetManager:get_enemy_sprite(spriteId, "south")
     end
 end
 
 -- Get color based on enemy type
-function EncounterZone.getColorForType(enemyType)
+function EncounterZone.get_color_for_type(enemyType)
     local colors = {
         slime = {0.2, 0.8, 0.3},      -- Green
         goblin = {0.6, 0.4, 0.2},     -- Brown
@@ -56,7 +56,7 @@ end
 
 -- Check if point is inside zone (with player collision radius)
 function EncounterZone.contains(state, x, y)
-    if not state.isActive then
+    if not state.is_active then
         return false
     end
 
@@ -71,9 +71,9 @@ end
 
 -- Trigger the encounter
 function EncounterZone.trigger(state)
-    if state.isActive and not state.isTriggered then
+    if state.is_active and not state.isTriggered then
         state.isTriggered = true
-        state.isActive = false
+        state.is_active = false
         return true
     end
     return false
@@ -81,25 +81,25 @@ end
 
 -- Reset the zone
 function EncounterZone.reset(state)
-    state.isActive = true
+    state.is_active = true
     state.isTriggered = false
 end
 
 -- Deactivate the zone
 function EncounterZone.deactivate(state)
-    state.isActive = false
+    state.is_active = false
 end
 
 -- Update animation
 function EncounterZone.update(state, dt)
-    if state.isActive then
+    if state.is_active then
         state.animationTime = state.animationTime + dt
     end
 end
 
 -- Draw the visible monster (in world space, camera will transform)
 function EncounterZone.draw(state, camera)
-    if not state.isActive then
+    if not state.is_active then
         return
     end
 
@@ -134,7 +134,7 @@ function EncounterZone.draw(state, camera)
 end
 
 -- Get enemy type for battle
-function EncounterZone.getEnemyType(state)
+function EncounterZone.get_enemy_type(state)
     return state.enemyType
 end
 

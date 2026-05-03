@@ -10,12 +10,12 @@ function TilesetManager.create()
     state.animationFrames = {}
     state.autotileRules = {}
 
-    TilesetManager.registerDefaultTiles(state)
+    TilesetManager.register_default_tiles(state)
 
     return state
 end
 
-function TilesetManager.registerDefaultTiles(state)
+function TilesetManager.register_default_tiles(state)
     state.tileDefinitions["grass1"] = {
         id = 1,
         name = "grass1",
@@ -107,14 +107,14 @@ function TilesetManager.load(state, name, imagePath, config)
         end
         tileset.tileCount = tileset.columns * tileset.rows
 
-        TilesetManager.generateQuads(state, tileset)
+        TilesetManager.generate_quads(state, tileset)
     end
 
     state.tilesets[name] = tileset
     return tileset
 end
 
-function TilesetManager.generateQuads(state, tileset)
+function TilesetManager.generate_quads(state, tileset)
     tileset.quads = {}
 
     for i = 0, tileset.tileCount - 1 do
@@ -132,21 +132,21 @@ function TilesetManager.generateQuads(state, tileset)
     end
 end
 
-function TilesetManager.getTileset(state, name)
+function TilesetManager.get_tileset(state, name)
     return state.tilesets[name] or state.tilesets["default"]
 end
 
-function TilesetManager.getQuad(state, tilesetName, tileId)
-    local tileset = TilesetManager.getTileset(state, tilesetName)
+function TilesetManager.get_quad(state, tilesetName, tileId)
+    local tileset = TilesetManager.get_tileset(state, tilesetName)
     if tileset and tileset.quads and tileset.quads[tileId] then
         return tileset.quads[tileId]
     end
     return nil
 end
 
-function TilesetManager.drawTile(state, tilesetName, tileId, x, y, scale)
+function TilesetManager.draw_tile(state, tilesetName, tileId, x, y, scale)
     scale = scale or 1
-    local tileset = TilesetManager.getTileset(state, tilesetName)
+    local tileset = TilesetManager.get_tileset(state, tilesetName)
 
     if tileset and tileset.image and tileset.quads then
         local quad = tileset.quads[tileId]
@@ -156,7 +156,7 @@ function TilesetManager.drawTile(state, tilesetName, tileId, x, y, scale)
         end
     end
 
-    local def = state.tileDefinitions[tileId] or TilesetManager.getTileDefById(state, tileId)
+    local def = state.tileDefinitions[tileId] or TilesetManager.get_tile_def_by_id(state, tileId)
     if def and def.color then
         love.graphics.setColor(def.color)
         love.graphics.rectangle("fill", x, y, 32 * scale, 32 * scale)
@@ -166,7 +166,7 @@ function TilesetManager.drawTile(state, tilesetName, tileId, x, y, scale)
     return false
 end
 
-function TilesetManager.getTileDefById(state, id)
+function TilesetManager.get_tile_def_by_id(state, id)
     for name, def in pairs(state.tileDefinitions) do
         if def.id == id then
             return def
@@ -175,7 +175,7 @@ function TilesetManager.getTileDefById(state, id)
     return nil
 end
 
-function TilesetManager.registerTile(state, id, config)
+function TilesetManager.register_tile(state, id, config)
     state.tileDefinitions[id] = {
         id = config.id or id,
         name = config.name or tostring(id),
@@ -201,7 +201,7 @@ function TilesetManager.registerTile(state, id, config)
     end
 end
 
-function TilesetManager.updateAnimations(state, dt)
+function TilesetManager.update_animations(state, dt)
     for tileId, anim in pairs(state.animationFrames) do
         anim.timer = anim.timer + dt
         local frameTime = 1 / anim.fps
@@ -216,7 +216,7 @@ function TilesetManager.updateAnimations(state, dt)
     end
 end
 
-function TilesetManager.getAnimatedTileId(state, tileId)
+function TilesetManager.get_animated_tile_id(state, tileId)
     local anim = state.animationFrames[tileId]
     if anim then
         return anim.frames[anim.currentFrame]
@@ -224,23 +224,23 @@ function TilesetManager.getAnimatedTileId(state, tileId)
     return tileId
 end
 
-function TilesetManager.isWalkable(state, tileId)
-    local def = state.tileDefinitions[tileId] or TilesetManager.getTileDefById(state, tileId)
+function TilesetManager.is_walkable(state, tileId)
+    local def = state.tileDefinitions[tileId] or TilesetManager.get_tile_def_by_id(state, tileId)
     if def then
         return def.walkable
     end
     return true
 end
 
-function TilesetManager.hasOverlay(state, tileId)
-    local def = state.tileDefinitions[tileId] or TilesetManager.getTileDefById(state, tileId)
+function TilesetManager.has_overlay(state, tileId)
+    local def = state.tileDefinitions[tileId] or TilesetManager.get_tile_def_by_id(state, tileId)
     if def then
         return def.hasOverlay
     end
     return false
 end
 
-function TilesetManager.getAutotileRule(state, tileId)
+function TilesetManager.get_autotile_rule(state, tileId)
     return state.autotileRules[tileId]
 end
 
@@ -250,11 +250,11 @@ function TilesetManager.unload(state, name)
     end
 end
 
-function TilesetManager.unloadAll(state)
+function TilesetManager.unload_all(state)
     state.tilesets = {}
 end
 
-function TilesetManager.getTilesetNameForId(state, tileId, firstgids)
+function TilesetManager.get_tileset_name_for_id(state, tileId, firstgids)
     if not firstgids then
         return "default"
     end
@@ -268,7 +268,7 @@ function TilesetManager.getTilesetNameForId(state, tileId, firstgids)
     return "default"
 end
 
-function TilesetManager.createProceduralTileset(state, name, colors, tileSize)
+function TilesetManager.create_procedural_tileset(state, name, colors, tileSize)
     tileSize = tileSize or 32
     local width = #colors * tileSize
     local height = tileSize
@@ -298,7 +298,7 @@ function TilesetManager.createProceduralTileset(state, name, colors, tileSize)
         procedural = true
     }
 
-    TilesetManager.generateQuads(state, tileset)
+    TilesetManager.generate_quads(state, tileset)
     state.tilesets[name] = tileset
 
     return tileset

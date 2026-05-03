@@ -3,12 +3,12 @@ local Enemy = require("src.entities.enemy")
 
 local BattleAI = {}
 
-function BattleAI.autoPlayerAction(battleSystem)
-    local aliveEnemies = BattleSystem.getAliveEnemies(battleSystem)
+function BattleAI.auto_player_action(battleSystem)
+    local aliveEnemies = BattleSystem.get_alive_enemies(battleSystem)
     if #aliveEnemies > 0 then
-        local enemies = BattleSystem.getEnemies(battleSystem)
+        local enemies = BattleSystem.get_enemies(battleSystem)
         for i, enemy in ipairs(enemies) do
-            if Enemy.isAlive(enemy) then
+            if Enemy.is_alive(enemy) then
                 return "attack", i
             end
         end
@@ -16,7 +16,7 @@ function BattleAI.autoPlayerAction(battleSystem)
     return nil, nil
 end
 
-function BattleAI.enemyAction(enemy, player)
+function BattleAI.enemy_action(enemy, player)
     if math.random() < 0.8 then
         return "attack"
     else

@@ -22,19 +22,19 @@ function BattleTimer.update(state, dt)
     return false
 end
 
-function BattleTimer.getTime(state)
+function BattleTimer.get_time(state)
     return state.currentTime
 end
 
-function BattleTimer.getMaxTime(state)
+function BattleTimer.get_max_time(state)
     return state.maxTime
 end
 
-function BattleTimer.setAutoTriggered(state, value)
+function BattleTimer.set_auto_triggered(state, value)
     state.autoTriggeredByTimeout = value
 end
 
-function BattleTimer.isAutoTriggered(state)
+function BattleTimer.is_auto_triggered(state)
     return state.autoTriggeredByTimeout
 end
 

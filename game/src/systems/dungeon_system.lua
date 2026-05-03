@@ -2,10 +2,10 @@ local DungeonSystem = {}
 
 local SpiritCrystalSystem = require("src.systems.spirit_crystal_system")
 
-function DungeonSystem.new(player, spiritCrystalSystem)
+function DungeonSystem.create(player, spiritCrystalSystem)
     return {
         player = player,
-        spiritCrystalSystem = spiritCrystalSystem or SpiritCrystalSystem.new(),
+        spiritCrystalSystem = spiritCrystalSystem or SpiritCrystalSystem.create(),
         currentDungeon = nil,
         currentAreaIndex = 0,
         clearedAreas = {},
@@ -28,10 +28,9 @@ function DungeonSystem.new(player, spiritCrystalSystem)
     }
 end
 
-function DungeonSystem.loadDungeon(state, dungeonId)
+function DungeonSystem.load_dungeon(state, dungeonId)
     local success, dungeonData = pcall(require, "map.maps." .. dungeonId)
     if not success or not dungeonData then
-        print("Failed to load dungeon: " .. dungeonId)
         return false
     end
     
@@ -49,7 +48,7 @@ function DungeonSystem.loadDungeon(state, dungeonId)
     return true
 end
 
-function DungeonSystem.startDungeon(state)
+function DungeonSystem.start_dungeon(state)
     if not state.currentDungeon then return false end
     
     state.currentAreaIndex = state.currentDungeon.startArea or 1
@@ -57,13 +56,13 @@ function DungeonSystem.startDungeon(state)
     
     local area = state.currentDungeon:getArea(state.currentAreaIndex)
     if area then
-        DungeonSystem.setupArea(state, area)
+        DungeonSystem.setup_area(state, area)
     end
     
     return true
 end
 
-function DungeonSystem.setupArea(state, area)
+function DungeonSystem.setup_area(state, area)
     state.enemies = {}
     state.currentWave = 0
     state.wavesCleared = false
@@ -71,7 +70,7 @@ function DungeonSystem.setupArea(state, area)
     
     if area.enemies then
         for _, enemyData in ipairs(area.enemies) do
-            table.insert(state.enemies, DungeonSystem.createEnemy(state, enemyData))
+            table.insert(state.enemies, DungeonSystem.create_enemy(state, enemyData))
         end
     end
     
@@ -80,13 +79,13 @@ function DungeonSystem.setupArea(state, area)
         local wave = area.waves[1]
         if wave and wave.enemies then
             for _, enemyData in ipairs(wave.enemies) do
-                table.insert(state.enemies, DungeonSystem.createEnemy(state, enemyData))
+                table.insert(state.enemies, DungeonSystem.create_enemy(state, enemyData))
             end
         end
     end
     
     if area.boss then
-        state.currentBoss = DungeonSystem.createBoss(state, area.boss)
+        state.currentBoss = DungeonSystem.create_boss(state, area.boss)
     end
     
     if area.dialogue and area.dialogue.onEnter then
@@ -104,9 +103,9 @@ function DungeonSystem.setupArea(state, area)
     end
 end
 
-function DungeonSystem.createEnemy(state, enemyData)
+function DungeonSystem.create_enemy(state, enemyData)
     local Enemy = require("src.entities.enemy")
-    local enemy = Enemy.new(enemyData.type)
+    local enemy = Enemy.create(enemyData.type)
     
     enemy.x = enemyData.x
     enemy.y = enemyData.y
@@ -120,7 +119,7 @@ function DungeonSystem.createEnemy(state, enemyData)
     return enemy
 end
 
-function DungeonSystem.createBoss(state, bossData)
+function DungeonSystem.create_boss(state, bossData)
     local BOSSES = require("npcs.bosses")
     local bossTemplate = BOSSES[bossData.id]
     
@@ -150,7 +149,7 @@ function DungeonSystem.createBoss(state, bossData)
     return boss
 end
 
-function DungeonSystem.areaCleared(state)
+function DungeonSystem.area_cleared(state)
     if state.currentBoss and state.currentBoss.hp > 0 then
         return false
     end
@@ -173,8 +172,8 @@ function DungeonSystem.areaCleared(state)
     return true
 end
 
-function DungeonSystem.checkAreaProgress(state)
-    if not DungeonSystem.areaCleared(state) then return false end
+function DungeonSystem.check_area_progress(state)
+    if not DungeonSystem.area_cleared(state) then return false end
     
     local areaIndex = state.currentAreaIndex
     if state.areaClearedFlags[areaIndex] then return false end
@@ -210,7 +209,7 @@ function DungeonSystem.checkAreaProgress(state)
     return true
 end
 
-function DungeonSystem.advanceToNextArea(state)
+function DungeonSystem.advance_to_next_area(state)
     local nextAreaIndex = state.currentAreaIndex + 1
     if nextAreaIndex > state.currentDungeon:getAreaCount() then
         return false
@@ -219,13 +218,13 @@ function DungeonSystem.advanceToNextArea(state)
     state.currentAreaIndex = nextAreaIndex
     local area = state.currentDungeon:getArea(nextAreaIndex)
     if area then
-        DungeonSystem.setupArea(state, area)
+        DungeonSystem.setup_area(state, area)
     end
     
     return true
 end
 
-function DungeonSystem.processWave(state)
+function DungeonSystem.process_wave(state)
     local area = state.currentDungeon:getArea(state.currentAreaIndex)
     if not area or not area.waves then return false end
     
@@ -236,7 +235,7 @@ function DungeonSystem.processWave(state)
         local wave = area.waves[state.currentWave]
         if wave and wave.enemies then
             for _, enemyData in ipairs(wave.enemies) do
-                table.insert(state.enemies, DungeonSystem.createEnemy(state, enemyData))
+                table.insert(state.enemies, DungeonSystem.create_enemy(state, enemyData))
             end
         end
         
@@ -254,7 +253,7 @@ function DungeonSystem.processWave(state)
     return false
 end
 
-function DungeonSystem.claimRewards(state)
+function DungeonSystem.claim_rewards(state)
     if not state.pendingRewards then return nil end
     
     local rewards = state.pendingRewards
@@ -262,22 +261,22 @@ function DungeonSystem.claimRewards(state)
     
     for _, reward in ipairs(rewards) do
         if reward.tier and state.spiritCrystalSystem then
-            state.spiritCrystalSystem:addCrystal(reward.tier, reward.count)
+            state.spiritCrystalSystem:add_crystal(reward.tier, reward.count)
         end
     end
     
     return rewards
 end
 
-function DungeonSystem.skipDialogue(state)
+function DungeonSystem.skip_dialogue(state)
     state.pendingDialogue = nil
 end
 
-function DungeonSystem.skipTutorial(state)
+function DungeonSystem.skip_tutorial(state)
     state.pendingTutorial = nil
 end
 
-function DungeonSystem.getSpawnPosition(state)
+function DungeonSystem.get_spawn_position(state)
     local area = state.currentDungeon:getArea(state.currentAreaIndex)
     if area and area.spawnPoint then
         return area.spawnPoint.x, area.spawnPoint.y
@@ -285,7 +284,7 @@ function DungeonSystem.getSpawnPosition(state)
     return state.currentDungeon.startPosition.x, state.currentDungeon.startPosition.y
 end
 
-function DungeonSystem.getExitPosition(state)
+function DungeonSystem.get_exit_position(state)
     local area = state.currentDungeon:getArea(state.currentAreaIndex)
     if area and area.exitPoint then
         return area.exitPoint.x, area.exitPoint.y
@@ -293,27 +292,27 @@ function DungeonSystem.getExitPosition(state)
     return nil, nil
 end
 
-function DungeonSystem.getEnemies(state)
+function DungeonSystem.get_enemies(state)
     return state.enemies
 end
 
-function DungeonSystem.getBoss(state)
+function DungeonSystem.get_boss(state)
     return state.currentBoss
 end
 
-function DungeonSystem.isAtExit(state, playerX, playerY)
-    local exitX, exitY = DungeonSystem.getExitPosition(state)
+function DungeonSystem.is_at_exit(state, playerX, playerY)
+    local exitX, exitY = DungeonSystem.get_exit_position(state)
     if not exitX then return false end
     
     local distance = math.sqrt((playerX - exitX)^2 + (playerY - exitY)^2)
     return distance < 50
 end
 
-function DungeonSystem.getCurrentAreaInfo(state)
+function DungeonSystem.get_current_area_info(state)
     return state.currentDungeon:getArea(state.currentAreaIndex)
 end
 
-function DungeonSystem.getProgress(state)
+function DungeonSystem.get_progress(state)
     return {
         dungeonId = state.currentDungeon and state.currentDungeon.id,
         currentArea = state.currentAreaIndex,
@@ -324,27 +323,27 @@ function DungeonSystem.getProgress(state)
     }
 end
 
-function DungeonSystem.isDungeonComplete(state)
+function DungeonSystem.is_dungeon_complete(state)
     return state.state == "completed"
 end
 
-function DungeonSystem.setOnDialogueCallback(state, callback)
+function DungeonSystem.set_on_dialogue_callback(state, callback)
     state.onDialogueCallback = callback
 end
 
-function DungeonSystem.setOnTutorialCallback(state, callback)
+function DungeonSystem.set_on_tutorial_callback(state, callback)
     state.onTutorialCallback = callback
 end
 
-function DungeonSystem.setOnRewardsCallback(state, callback)
+function DungeonSystem.set_on_rewards_callback(state, callback)
     state.onRewardsCallback = callback
 end
 
-function DungeonSystem.setOnDungeonCompleteCallback(state, callback)
+function DungeonSystem.set_on_dungeon_complete_callback(state, callback)
     state.onDungeonCompleteCallback = callback
 end
 
-function DungeonSystem.setOnAreaTransitionCallback(state, callback)
+function DungeonSystem.set_on_area_transition_callback(state, callback)
     state.onAreaTransitionCallback = callback
 end
 
@@ -363,7 +362,7 @@ function DungeonSystem.update(state, dt, playerX, playerY)
         state.onRewardsCallback(state.pendingRewards)
     end
     
-    if DungeonSystem.isAtExit(state, playerX, playerY) and DungeonSystem.areaCleared(state) then
+    if DungeonSystem.is_at_exit(state, playerX, playerY) and DungeonSystem.area_cleared(state) then
         if state.onAreaTransitionCallback then
             state.onAreaTransitionCallback(state.currentAreaIndex + 1)
         end
@@ -386,7 +385,7 @@ function DungeonSystem.deserialize(state, data)
     if not data then return end
     
     if data.currentDungeonId then
-        DungeonSystem.loadDungeon(state, data.currentDungeonId)
+        DungeonSystem.load_dungeon(state, data.currentDungeonId)
     end
     
     state.currentAreaIndex = data.currentAreaIndex or 0

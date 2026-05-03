@@ -19,11 +19,11 @@ local SLOT_NAMES = {
 
 local DATABASE = ItemData.ITEMS
 
-function ItemDatabase.getItem(itemId)
+function ItemDatabase.get_item(itemId)
     return DATABASE[itemId]
 end
 
-function ItemDatabase.getEquipmentBySlot(slot)
+function ItemDatabase.get_equipment_by_slot(slot)
     local items = {}
     for id, item in pairs(DATABASE) do
         if item.type == ItemDatabase.TYPE.EQUIPMENT and item.slot == slot then

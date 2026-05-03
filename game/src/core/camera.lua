@@ -44,12 +44,12 @@ function Camera.create()
     return state
 end
 
-function Camera.updateScreenSize(state)
+function Camera.update_screen_size(state)
     state.screenWidth = love.graphics.getWidth()
     state.screenHeight = love.graphics.getHeight()
 end
 
-function Camera.setBounds(state, mapWidth, mapHeight)
+function Camera.set_bounds(state, mapWidth, mapHeight)
     state.bounds.enabled = true
     state.bounds.minX = 0
     state.bounds.minY = 0
@@ -58,7 +58,7 @@ function Camera.setBounds(state, mapWidth, mapHeight)
     state.bounds.maxY = math.max(0, mapHeight - state.screenHeight / safeScale)
 end
 
-function Camera.clearBounds(state)
+function Camera.clear_bounds(state)
     state.bounds.enabled = false
 end
 
@@ -94,17 +94,17 @@ function Camera.follow(state, targetX, targetY, dt)
     state.x = state.x + (desiredX - state.x) * factor
     state.y = state.y + (desiredY - state.y) * factor
 
-    Camera.applyBounds(state)
+    Camera.apply_bounds(state)
 end
 
-function Camera.setPosition(state, x, y, instant)
+function Camera.set_position(state, x, y, instant)
     state.x = x - state.screenWidth / 2
     state.y = y - state.screenHeight / 2
 
-    Camera.applyBounds(state)
+    Camera.apply_bounds(state)
 end
 
-function Camera.applyBounds(state)
+function Camera.apply_bounds(state)
     if state.bounds.enabled then
         state.x = math.max(state.bounds.minX, math.min(state.bounds.maxX, state.x))
         state.y = math.max(state.bounds.minY, math.min(state.bounds.maxY, state.y))
@@ -114,7 +114,7 @@ end
 function Camera.apply(state)
     love.graphics.push()
 
-    Camera.updateShake(state, love.timer.getDelta and love.timer.getDelta() or 0)
+    Camera.update_shake(state, love.timer.getDelta and love.timer.getDelta() or 0)
 
     love.graphics.translate(-state.x + state.shake.offsetX, -state.y + state.shake.offsetY)
     love.graphics.scale(state.scale, state.scale)
@@ -124,15 +124,15 @@ function Camera.reset(state)
     love.graphics.pop()
 end
 
-function Camera.toWorld(state, screenX, screenY)
+function Camera.to_world(state, screenX, screenY)
     return (screenX / state.scale) + state.x, (screenY / state.scale) + state.y
 end
 
-function Camera.toScreen(state, worldX, worldY)
+function Camera.to_screen(state, worldX, worldY)
     return (worldX - state.x) * state.scale, (worldY - state.y) * state.scale
 end
 
-function Camera.getVisibleBounds(state)
+function Camera.get_visible_bounds(state)
     local x1 = math.max(0, state.x)
     local y1 = math.max(0, state.y)
     local x2 = state.x + state.screenWidth / state.scale
@@ -141,29 +141,29 @@ function Camera.getVisibleBounds(state)
     return x1, y1, x2, y2
 end
 
-function Camera.isVisible(state, x, y, width, height)
+function Camera.is_visible(state, x, y, width, height)
     width = width or 0
     height = height or 0
 
-    local x1, y1, x2, y2 = Camera.getVisibleBounds(state)
+    local x1, y1, x2, y2 = Camera.get_visible_bounds(state)
 
     return x + width >= x1 and x <= x2 and y + height >= y1 and y <= y2
 end
 
-function Camera.startShake(state, intensity, duration)
+function Camera.start_shake(state, intensity, duration)
     state.shake.active = true
     state.shake.intensity = intensity or 5
     state.shake.duration = duration or 0.3
     state.shake.timer = 0
 end
 
-function Camera.stopShake(state)
+function Camera.stop_shake(state)
     state.shake.active = false
     state.shake.offsetX = 0
     state.shake.offsetY = 0
 end
 
-function Camera.updateShake(state, dt)
+function Camera.update_shake(state, dt)
     if not state.shake.active then
         return
     end
@@ -171,7 +171,7 @@ function Camera.updateShake(state, dt)
     state.shake.timer = state.shake.timer + dt
 
     if state.shake.timer >= state.shake.duration then
-        Camera.stopShake(state)
+        Camera.stop_shake(state)
         return
     end
 
@@ -182,7 +182,7 @@ function Camera.updateShake(state, dt)
     state.shake.offsetY = (math.random() * 2 - 1) * currentIntensity
 end
 
-function Camera.setDeadzone(state, x, y, width, height)
+function Camera.set_deadzone(state, x, y, width, height)
     state.deadzone.enabled = true
     state.deadzone.x = x or 0
     state.deadzone.y = y or 0
@@ -190,11 +190,11 @@ function Camera.setDeadzone(state, x, y, width, height)
     state.deadzone.height = height or state.screenHeight * 0.3
 end
 
-function Camera.clearDeadzone(state)
+function Camera.clear_deadzone(state)
     state.deadzone.enabled = false
 end
 
-function Camera.setScale(state, scale, centerX, centerY)
+function Camera.set_scale(state, scale, centerX, centerY)
     local oldScale = state.scale
     state.scale = math.max(0.1, math.min(4, scale))
 
@@ -204,7 +204,7 @@ function Camera.setScale(state, scale, centerX, centerY)
         state.y = centerY - (centerY - state.y) * scaleRatio
     end
 
-    Camera.applyBounds(state)
+    Camera.apply_bounds(state)
 end
 
 return Camera

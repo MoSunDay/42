@@ -139,15 +139,15 @@ ClassDatabase.CATEGORIES = {
     },
 }
 
-function ClassDatabase.getClass(classId)
+function ClassDatabase.get_class(classId)
     return ClassDatabase.CLASSES[classId]
 end
 
-function ClassDatabase.getCategory(categoryId)
+function ClassDatabase.get_category(categoryId)
     return ClassDatabase.CATEGORIES[categoryId]
 end
 
-function ClassDatabase.getClassesByCategory(categoryId)
+function ClassDatabase.get_classes_by_category(categoryId)
     local classes = {}
     for _, classId in ipairs(ClassDatabase.CATEGORIES[categoryId].classIds) do
         table.insert(classes, ClassDatabase.CLASSES[classId])
@@ -155,8 +155,8 @@ function ClassDatabase.getClassesByCategory(categoryId)
     return classes
 end
 
-function ClassDatabase.applyPassiveBonus(classId, stats)
-    local class = ClassDatabase.getClass(classId)
+function ClassDatabase.apply_passive_bonus(classId, stats)
+    local class = ClassDatabase.get_class(classId)
     if not class then return stats end
     
     local bonus = class.passiveBonus
@@ -189,8 +189,8 @@ function ClassDatabase.applyPassiveBonus(classId, stats)
     return result
 end
 
-function ClassDatabase.getBaseStats(classId)
-    local class = ClassDatabase.getClass(classId)
+function ClassDatabase.get_base_stats(classId)
+    local class = ClassDatabase.get_class(classId)
     if not class then return nil end
     
     local stats = {}
@@ -200,7 +200,7 @@ function ClassDatabase.getBaseStats(classId)
     stats.maxHp = stats.hp
     stats.maxMp = stats.mp
     
-    return ClassDatabase.applyPassiveBonus(classId, stats)
+    return ClassDatabase.apply_passive_bonus(classId, stats)
 end
 
 return ClassDatabase

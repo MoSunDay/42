@@ -34,7 +34,7 @@ end
 function BattleBackground.draw(w, h, mapType)
     local bgColors = Theme.colors.battleBg[mapType] or Theme.colors.battleBg.forest
     
-    Theme.drawGradient(0, 0, w, h * 0.6, bgColors.gradient1, bgColors.gradient2, 12)
+    Theme.draw_gradient(0, 0, w, h * 0.6, bgColors.gradient1, bgColors.gradient2, 12)
 
     love.graphics.setColor(bgColors.ground)
     love.graphics.rectangle("fill", 0, h * 0.6, w, h * 0.4)
@@ -45,7 +45,7 @@ function BattleBackground.draw(w, h, mapType)
     end
 end
 
-function BattleBackground.getMapType(map)
+function BattleBackground.get_map_type(map)
     if not map then return "forest" end
     
     local name = map.name and map.name:lower() or ""

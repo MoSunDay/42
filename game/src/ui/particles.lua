@@ -133,28 +133,28 @@ local PRESETS = {
     }
 }
 
-local function randomRange(min, max)
+local function random_range(min, max)
     return min + math.random() * (max - min)
 end
 
-local function pickColor(colors)
+local function pick_color(colors)
     return colors[math.random(#colors)]
 end
 
-local function createParticle(x, y, preset)
+local function create_particle(x, y, preset)
     local angle = math.atan2(preset.direction[2], preset.direction[1])
-    angle = angle + randomRange(-preset.spread, preset.spread)
-    local speed = randomRange(preset.speedMin, preset.speedMax)
+    angle = angle + random_range(-preset.spread, preset.spread)
+    local speed = random_range(preset.speedMin, preset.speedMax)
 
     return {
-        x = x + randomRange(-5, 5),
-        y = y + randomRange(-5, 5),
+        x = x + random_range(-5, 5),
+        y = y + random_range(-5, 5),
         vx = math.cos(angle) * speed,
         vy = math.sin(angle) * speed,
-        life = randomRange(preset.lifeMin, preset.lifeMax),
+        life = random_range(preset.lifeMin, preset.lifeMax),
         maxLife = 0,
-        size = randomRange(preset.sizeMin, preset.sizeMax),
-        color = pickColor(preset.colors),
+        size = random_range(preset.sizeMin, preset.sizeMax),
+        color = pick_color(preset.colors),
         fadeOut = preset.fadeOut,
         shrink = preset.shrink,
         gravity = preset.gravity or 0,
@@ -179,7 +179,7 @@ function Particles.emit(x, y, presetName, count)
 
     for _ = 1, preset.count do
         if emitter.remaining <= 0 then break end
-        local p = createParticle(x, y, preset)
+        local p = create_particle(x, y, preset)
         p.maxLife = p.life
         table.insert(emitter.particles, p)
         emitter.remaining = emitter.remaining - 1
@@ -207,7 +207,7 @@ function Particles.burst(x, y, presetName, count)
     }
 
     for _ = 1, count do
-        local p = createParticle(x, y, preset)
+        local p = create_particle(x, y, preset)
         p.maxLife = p.life
         table.insert(emitter.particles, p)
     end
@@ -247,7 +247,7 @@ function Particles.update(dt)
             emitter.emitTimer = emitter.emitTimer + dt
             while emitter.emitTimer >= emitter.emitInterval and emitter.remaining > 0 do
                 emitter.emitTimer = emitter.emitTimer - emitter.emitInterval
-                local p = createParticle(emitter.x, emitter.y, emitter.preset)
+                local p = create_particle(emitter.x, emitter.y, emitter.preset)
                 p.maxLife = p.life
                 table.insert(emitter.particles, p)
                 emitter.remaining = emitter.remaining - 1
@@ -303,7 +303,7 @@ function Particles.draw()
     love.graphics.setColor(1, 1, 1)
 end
 
-function Particles.drawAt(x, y, presetName)
+function Particles.draw_at(x, y, presetName)
     return Particles.continuous(x, y, presetName, 5)
 end
 
@@ -311,14 +311,14 @@ function Particles.clear()
     Particles.emitters = {}
 end
 
-function Particles.stopEmitter(emitter)
+function Particles.stop_emitter(emitter)
     if emitter then
         emitter.active = false
         emitter.remaining = 0
     end
 end
 
-function Particles.moveEmitter(emitter, x, y)
+function Particles.move_emitter(emitter, x, y)
     if emitter then
         emitter.x = x
         emitter.y = y

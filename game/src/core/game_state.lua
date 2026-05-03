@@ -37,13 +37,13 @@ function GameState.create(assetManager)
 
     state.mode = GAME_MODE.LOGIN
 
-    state.network = NetworkManager.new()
+    state.network = NetworkManager.create()
 
     if USE_NETWORK then
         state.network:connect(SERVER_HOST, SERVER_PORT)
     end
 
-    state.loginUI = LoginUI.new(assetManager)
+    state.loginUI = LoginUI.create(assetManager)
     state.loginUI:setNetwork(state.network)
     state.loginUI:onLogin(function(characters, username)
         state.currentUsername = username
@@ -52,10 +52,10 @@ function GameState.create(assetManager)
         state.characterSelectUI:setNetwork(state.network)
     end)
 
-    state.characterSelectUI = CharacterSelectUI.new(assetManager)
+    state.characterSelectUI = CharacterSelectUI.create(assetManager)
     state.characterSelectUI:onCharacterSelected(function(character)
         state.network:set_character(character)
-        GameState.initializeWorld(state, character)
+        GameState.initialize_world(state, character)
     end)
 
     state.currentUsername = nil
@@ -74,7 +74,7 @@ function GameState.create(assetManager)
     return state
 end
 
-function GameState.initializeWorld(state, character)
+function GameState.initialize_world(state, character)
     print("Initializing game world for: " .. character.characterName)
 
     local mapId = character.mapId or "town_01"
@@ -92,36 +92,36 @@ function GameState.initializeWorld(state, character)
     state.animationManager = AnimationManager.create()
 
     state.player = Player.create(character.x, character.y, state.assetManager)
-    Player.setAnimationManager(state.player, state.animationManager)
+    Player.set_animation_manager(state.player, state.animationManager)
 
-    Player.setAppearance(state.player, character)
+    Player.set_appearance(state.player, character)
 
     state.equipmentSystem = EquipmentSystem.create()
     if character.equipment then
         EquipmentSystem.deserialize(state.equipmentSystem, character.equipment)
     end
-    Player.setEquipmentSystem(state.player, state.equipmentSystem)
+    Player.set_equipment_system(state.player, state.equipmentSystem)
 
     state.inventorySystem = InventorySystem.create()
     if character.inventory then
         InventorySystem.deserialize(state.inventorySystem, character.inventory)
     else
-        InventorySystem.addItem(state.inventorySystem, "health_potion")
-        InventorySystem.addItem(state.inventorySystem, "health_potion")
-        InventorySystem.addItem(state.inventorySystem, "large_health_potion")
-        InventorySystem.addItem(state.inventorySystem, "antidote")
-        InventorySystem.addItem(state.inventorySystem, "iron_sword")
-        InventorySystem.addItem(state.inventorySystem, "leather_cap")
-        InventorySystem.addItem(state.inventorySystem, "leather_vest")
-        InventorySystem.addItem(state.inventorySystem, "leather_boots")
-        InventorySystem.addItem(state.inventorySystem, "copper_necklace")
+        InventorySystem.add_item(state.inventorySystem, "health_potion")
+        InventorySystem.add_item(state.inventorySystem, "health_potion")
+        InventorySystem.add_item(state.inventorySystem, "large_health_potion")
+        InventorySystem.add_item(state.inventorySystem, "antidote")
+        InventorySystem.add_item(state.inventorySystem, "iron_sword")
+        InventorySystem.add_item(state.inventorySystem, "leather_cap")
+        InventorySystem.add_item(state.inventorySystem, "leather_vest")
+        InventorySystem.add_item(state.inventorySystem, "leather_boots")
+        InventorySystem.add_item(state.inventorySystem, "copper_necklace")
     end
 
     state.player.maxHp = character.maxHp
     state.player.hp = character.hp
     state.player.baseAttack = character.attack
     state.player.baseDefense = character.defense
-    Player.updateStatsWithEquipment(state.player)
+    Player.update_stats_with_equipment(state.player)
 
     if character.maxMp then
         state.player.maxMp = character.maxMp
@@ -150,18 +150,18 @@ function GameState.initializeWorld(state, character)
     end
     EquipmentSystem.setSpiritCrystalSystem(state.equipmentSystem, state.spiritCrystalSystem)
 
-    state.companionSystem = CompanionSystem.new()
+    state.companionSystem = CompanionSystem.create()
     if character.companions then
         local ItemDatabase = require("src.systems.item_database")
         state.companionSystem:deserialize(character.companions, ItemDatabase)
     end
 
-    Player.setMapBounds(state.player, state.map.width, state.map.height)
+    Player.set_map_bounds(state.player, state.map.width, state.map.height)
 
     state.collisionSystem = CollisionSystem.create(state.map)
-    Player.setCollisionSystem(state.player, state.collisionSystem)
+    Player.set_collision_system(state.player, state.collisionSystem)
 
-    if not CollisionSystem.isWalkable(state.collisionSystem, state.player.x, state.player.y) then
+    if not CollisionSystem.is_walkable(state.collisionSystem, state.player.x, state.player.y) then
         print("Warning: Player spawned in non-walkable area, finding valid position...")
         local validX, validY = CollisionSystem.getValidPosition(
             state.collisionSystem, state.player.x, state.player.y, state.player.collisionRadius
@@ -179,14 +179,14 @@ function GameState.initializeWorld(state, character)
     state.camera = Camera.create()
 
     state.encounterZones = {}
-    GameState.generateEncounterZones(state, 20)
+    GameState.generate_encounter_zones(state, 20)
 
     state.audioSystem = AudioSystem.create()
-    AudioSystem.playBGM(state.audioSystem, "exploration")
+    AudioSystem.play_bgm(state.audioSystem, "exploration")
 
     state.battleSystem = BattleSystem.create(state.player, state.audioSystem, state.animationManager, state.assetManager, state.companionSystem)
 
-    state.partySystem = PartySystem.new()
+    state.partySystem = PartySystem.create()
     state.partySystem:setPartyName("My Party")
 
     local playerMember = PartySystem.createMemberData(
@@ -196,11 +196,11 @@ function GameState.initializeWorld(state, character)
         character.maxHp,
         character.avatarColor
     )
-    state.partySystem:addMember(playerMember)
+    state.partySystem:add_member(playerMember)
 
-    state.chatSystem = ChatSystem.new()
+    state.chatSystem = ChatSystem.create()
 
-    state.chatSystem:addMessage("System", "Welcome to the game!", {0.4, 0.8, 1.0})
+    state.chatSystem:add_message("System", "Welcome to the game!", {0.4, 0.8, 1.0})
 
     state.mode = GAME_MODE.EXPLORATION
 
@@ -235,28 +235,28 @@ function GameState.update(state, dt)
         if state.encounterSafeTimer and state.encounterSafeTimer > 0 then
             state.encounterSafeTimer = state.encounterSafeTimer - dt
         else
-            GameState.checkEncounters(state)
+            GameState.check_encounters(state)
         end
     elseif state.mode == GAME_MODE.BATTLE then
         BattleSystem.update(state.battleSystem, dt)
 
         if not state.battleSystem.isActive then
-            GameState.endBattle(state)
+            GameState.end_battle(state)
         end
     end
 end
 
-function GameState.getPlayerPosition(state)
+function GameState.get_player_position(state)
     return state.player.x, state.player.y
 end
 
-function GameState.movePlayerTo(state, worldX, worldY)
+function GameState.move_player_to(state, worldX, worldY)
     if state.mode == GAME_MODE.EXPLORATION then
-        Player.moveTo(state.player, worldX, worldY)
+        Player.move_to(state.player, worldX, worldY)
     end
 end
 
-function GameState.generateEncounterZones(state, count)
+function GameState.generate_encounter_zones(state, count)
     state.encounterZones = {}
 
     for i = 1, count do
@@ -266,7 +266,7 @@ function GameState.generateEncounterZones(state, count)
 
         local zone = EncounterZone.create(x, y, radius)
         if state.assetManager then
-            EncounterZone.setAssetManager(zone, state.assetManager)
+            EncounterZone.set_asset_manager(zone, state.assetManager)
         end
         table.insert(state.encounterZones, zone)
     end
@@ -274,7 +274,7 @@ function GameState.generateEncounterZones(state, count)
     print("Generated " .. count .. " visible encounter monsters")
 end
 
-function GameState.checkEncounters(state)
+function GameState.check_encounters(state)
     if state.encounterSafeTimer and state.encounterSafeTimer > 0 then
         return
     end
@@ -282,54 +282,54 @@ function GameState.checkEncounters(state)
     for _, zone in ipairs(state.encounterZones) do
         if EncounterZone.contains(zone, state.player.x, state.player.y) then
             if EncounterZone.trigger(zone) then
-                GameState.startBattle(state)
+                GameState.start_battle(state)
                 break
             end
         end
     end
 end
 
-function GameState.startBattle(state)
+function GameState.start_battle(state)
     print("Battle triggered!")
     state.mode = GAME_MODE.BATTLE
     state.player.isMoving = false
 
     local enemyCount = math.random(1, 3)
-    BattleSystem.startBattle(state.battleSystem, enemyCount)
+    BattleSystem.start_battle(state.battleSystem, enemyCount)
 
-    AudioSystem.playBGM(state.audioSystem, "battle")
+    AudioSystem.play_bgm(state.audioSystem, "battle")
 end
 
-function GameState.endBattle(state)
+function GameState.end_battle(state)
     local battleState = BattleSystem.getState(state.battleSystem)
 
     if battleState == "victory" then
-        local rewards = BattleSystem.endBattle(state.battleSystem, "victory")
+        local rewards = BattleSystem.end_battle(state.battleSystem, "victory")
         if rewards then
             if rewards.crystals and state.spiritCrystalSystem then
                 for _, crystal in ipairs(rewards.crystals) do
-                    SpiritCrystalSystem.addCrystal(state.spiritCrystalSystem, crystal.type, crystal.tier, 1)
+                    SpiritCrystalSystem.add_crystal(state.spiritCrystalSystem, crystal.type, crystal.tier, 1)
                     print(string.format("Obtained: %s", crystal.name))
                 end
             end
         end
-        AudioSystem.playSFX(state.audioSystem, "victory")
+        AudioSystem.play_sfx(state.audioSystem, "victory")
     elseif battleState == "defeat" then
         print("Player defeated!")
         state.player.hp = state.player.maxHp
         state.player.x = 1000
         state.player.y = 1000
-        AudioSystem.playSFX(state.audioSystem, "defeat")
+        AudioSystem.play_sfx(state.audioSystem, "defeat")
     end
 
-    GameState.syncPlayerToCharacter(state)
+    GameState.sync_player_to_character(state)
 
     state.mode = GAME_MODE.EXPLORATION
     state.encounterSafeTimer = 2.0
-    AudioSystem.playBGM(state.audioSystem, "exploration")
+    AudioSystem.play_bgm(state.audioSystem, "exploration")
 end
 
-function GameState.syncPlayerToCharacter(state)
+function GameState.sync_player_to_character(state)
     local character = state.network and state.network:get_character()
     if character and state.player then
         character.hp = state.player.hp
@@ -366,27 +366,27 @@ function GameState.syncPlayerToCharacter(state)
     end
 end
 
-function GameState.getMode(state)
+function GameState.get_mode(state)
     return state.mode
 end
 
-function GameState.getBattleSystem(state)
+function GameState.get_battle_system(state)
     return state.battleSystem
 end
 
-function GameState.getAudioSystem(state)
+function GameState.get_audio_system(state)
     return state.audioSystem
 end
 
-function GameState.getPartySystem(state)
+function GameState.get_party_system(state)
     return state.partySystem
 end
 
-function GameState.getChatSystem(state)
+function GameState.get_chat_system(state)
     return state.chatSystem
 end
 
-function GameState.sendChatMessage(state, text)
+function GameState.send_chat_message(state, text)
     if state.chatSystem and state.player then
         local character = state.network and state.network:get_character()
         local senderName = character and character.characterName or "Player"
@@ -396,15 +396,15 @@ function GameState.sendChatMessage(state, text)
     end
 end
 
-function GameState.getLoginUI(state)
+function GameState.get_login_ui(state)
     return state.loginUI
 end
 
-function GameState.getCharacterSelectUI(state)
+function GameState.get_character_select_ui(state)
     return state.characterSelectUI
 end
 
-function GameState.getCurrentUsername(state)
+function GameState.get_current_username(state)
     return state.currentUsername
 end
 
@@ -432,23 +432,23 @@ function GameState.mousepressed(state, x, y, button)
     end
 end
 
-function GameState.getEquipmentSystem(state)
+function GameState.get_equipment_system(state)
     return state.equipmentSystem
 end
 
-function GameState.getInventorySystem(state)
+function GameState.get_inventory_system(state)
     return state.inventorySystem
 end
 
-function GameState.getSpiritCrystalSystem(state)
+function GameState.get_spirit_crystal_system(state)
     return state.spiritCrystalSystem
 end
 
-function GameState.getCompanionSystem(state)
+function GameState.get_companion_system(state)
     return state.companionSystem
 end
 
-function GameState.getSkillPanel(state)
+function GameState.get_skill_panel(state)
     return state.skillPanel
 end
 

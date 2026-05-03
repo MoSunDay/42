@@ -29,7 +29,7 @@ print("2. Testing class database...")
 local classes = {"dual_blade", "great_sword", "blade_master", "sealer", "healer", "elementalist"}
 print("   Checking 6 classes...")
 for _, classId in ipairs(classes) do
-    local class = ClassDatabase.getClass(classId)
+    local class = ClassDatabase.get_class(classId)
     if class then
         print("   ✓ " .. class.name .. " (" .. class.category .. ")")
     else
@@ -49,7 +49,7 @@ local testCases = {
 }
 
 for _, tc in ipairs(testCases) do
-    local class = ClassDatabase.getClass(tc.classId)
+    local class = ClassDatabase.get_class(tc.classId)
     if class and class.passiveBonus then
         print("   ✓ " .. class.name .. ": " .. tc.expected)
     else
@@ -60,8 +60,8 @@ print()
 
 print("4. Testing base stats with passives...")
 for _, classId in ipairs(classes) do
-    local stats = ClassDatabase.getBaseStats(classId)
-    local class = ClassDatabase.getClass(classId)
+    local stats = ClassDatabase.get_base_stats(classId)
+    local class = ClassDatabase.get_class(classId)
     if stats and class then
         print(string.format("   %s: HP=%d MP=%d ATK=%d DEF=%d SPD=%d MATK=%d",
             class.name, stats.maxHp, stats.maxMp, stats.attack, stats.defense, stats.speed, stats.magicAttack))
@@ -94,11 +94,11 @@ local classSkillCounts = {
 }
 
 for classId, expectedCount in pairs(classSkillCounts) do
-    local skills = SkillDatabase.getSkillsByClass(classId)
+    local skills = SkillDatabase.get_skillsByClass(classId)
     local count = 0
     for _ in pairs(skills) do count = count + 1 end
     if count == expectedCount then
-        local class = ClassDatabase.getClass(classId)
+        local class = ClassDatabase.get_class(classId)
         print("   ✓ " .. class.name .. ": " .. count .. " skills")
     else
         print("   ✗ " .. classId .. ": expected " .. expectedCount .. ", got " .. count)
@@ -110,7 +110,7 @@ print("7. Testing upgrade cost formula...")
 local testLevels = {1, 2, 5, 10, 20, 50}
 print("   Upgrade costs by level:")
 for _, level in ipairs(testLevels) do
-    local cost = SkillDatabase.getUpgradeCost(level)
+    local cost = SkillDatabase.get_upgrade_cost(level)
     print(string.format("     Lv%d → Lv%d: %d crystals", level, level + 1, cost))
 end
 print("   ✓ Upgrade formula: cost = 40 × level × (1 + 0.08 × level)")
@@ -119,7 +119,7 @@ print()
 print("8. Testing effect multiplier...")
 print("   Effect bonus by level:")
 for _, level in ipairs({1, 5, 10, 20, 50}) do
-    local mult = SkillDatabase.getEffectMultiplier(level)
+    local mult = SkillDatabase.get_effect_multiplier(level)
     local bonus = (mult - 1) * 100
     print(string.format("     Lv%d: %.2fx (+%d%%)", level, mult, bonus))
 end
@@ -129,7 +129,7 @@ print()
 print("9. Testing skill unlock costs...")
 print("   Tier unlock costs:")
 for tier = 1, 3 do
-    local cost = SkillDatabase.getUnlockCost(tier)
+    local cost = SkillDatabase.get_unlock_cost(tier)
     print("     Tier " .. tier .. ": " .. cost .. " crystals")
 end
 print("   ✓ Unlock costs defined")
@@ -207,10 +207,10 @@ print("   ✓ Skill upgrade logic works")
 print()
 
 print("14. Testing effective damage calculation...")
-local skill = SkillDatabase.getSkill("whirlwind")
+local skill = SkillDatabase.get_skill("whirlwind")
 if skill then
     for level = 1, 5 do
-        local dmg = SkillDatabase.getEffectiveDamage(skill, level)
+        local dmg = SkillDatabase.get_effective_damage(skill, level)
         print(string.format("   Whirlwind Lv%d: %.0f%% damage", level, dmg * 100))
     end
 end
@@ -227,9 +227,9 @@ local targetTests = {
 }
 
 for _, tt in ipairs(targetTests) do
-    local skill = SkillDatabase.getSkill(tt.skillId)
+    local skill = SkillDatabase.get_skill(tt.skillId)
     if skill then
-        local minT, maxT = SkillDatabase.getTargetCount(skill)
+        local minT, maxT = SkillDatabase.get_target_count(skill)
         print("   " .. skill.name .. ": " .. minT .. "-" .. maxT .. " targets (" .. tt.desc .. ")")
     end
 end

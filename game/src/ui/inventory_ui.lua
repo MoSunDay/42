@@ -42,17 +42,17 @@ function InventoryUI.draw(state, inventorySystem, x, y, width, height)
             local isHovered = state.hoveredSlot == slotIndex
             local isSelected = state.selectedSlot == slotIndex
             
-            InventoryUI.drawSlot(state, slotIndex, item, slotX, slotY, isHovered, isSelected)
+            InventoryUI.draw_slot(state, slotIndex, item, slotX, slotY, isHovered, isSelected)
         end
     end
 end
 
-function InventoryUI.drawSlot(state, slotIndex, item, x, y, isHovered, isSelected)
+function InventoryUI.draw_slot(state, slotIndex, item, x, y, isHovered, isSelected)
     local slotState = isSelected and "selected" or (isHovered and "hover" or "normal")
-    Components.drawSlot(x, y, state.slotSize, slotState, state.assetManager)
+    Components.draw_slot(x, y, state.slotSize, slotState, state.assetManager)
     
     if item then
-        local itemColor = SlotUtils.getItemColor(item)
+        local itemColor = SlotUtils.get_itemColor(item)
         love.graphics.setColor(itemColor[1], itemColor[2], itemColor[3], 0.3)
         love.graphics.rectangle("fill", x + 3, y + 3, state.slotSize - 6, state.slotSize - 6, 3, 3)
         
@@ -66,7 +66,7 @@ function InventoryUI.drawSlot(state, slotIndex, item, x, y, isHovered, isSelecte
         if #name > 8 then
             name = string.sub(name, 1, 7) .. ".."
         end
-        local font = love.graphics.getFont()
+        local font = love.graphics.get_font()
         local textWidth = font:getWidth(name)
         local textX = x + (state.slotSize - textWidth) / 2
         love.graphics.print(name, textX, y + state.slotSize - 18, 0, 0.8, 0.8)
@@ -80,14 +80,14 @@ function InventoryUI.drawSlot(state, slotIndex, item, x, y, isHovered, isSelecte
     end
 end
 
-function InventoryUI.drawItemDetail(state, inventorySystem, x, y, width, height)
+function InventoryUI.draw_item_detail(state, inventorySystem, x, y, width, height)
     local item = nil
     local itemData = nil
     
     if state.selectedSlot then
-        item = InventorySystem.getItem(inventorySystem, state.selectedSlot)
+        item = InventorySystem.get_item(inventorySystem, state.selectedSlot)
     elseif state.hoveredSlot then
-        item = InventorySystem.getItem(inventorySystem, state.hoveredSlot)
+        item = InventorySystem.get_item(inventorySystem, state.hoveredSlot)
     end
     
     if not item then
@@ -96,7 +96,7 @@ function InventoryUI.drawItemDetail(state, inventorySystem, x, y, width, height)
         return
     end
     
-    itemData = ItemDatabase.getItem(item.id)
+    itemData = ItemDatabase.get_item(item.id)
     
     Components.drawOrnatePanel(x, y, width, height, state.assetManager, {title = nil, corners = true, glow = true, shimmer = false})
     
@@ -156,7 +156,7 @@ function InventoryUI.drawItemDetail(state, inventorySystem, x, y, width, height)
         textY = textY + 20
         
         love.graphics.setColor(state.colors.text)
-        local effectText = InventoryUI.getEffectText(state, itemData)
+        local effectText = InventoryUI.get_effect_text(state, itemData)
         love.graphics.print("Effect: " .. effectText, textX, textY)
         textY = textY + 25
     end
@@ -168,7 +168,7 @@ function InventoryUI.drawItemDetail(state, inventorySystem, x, y, width, height)
     end
 end
 
-function InventoryUI.getEffectText(state, itemData)
+function InventoryUI.get_effect_text(state, itemData)
     if itemData.effect == "heal" then
         return "Restore " .. itemData.value .. " HP"
     elseif itemData.effect == "full_heal" then
@@ -183,7 +183,7 @@ function InventoryUI.getEffectText(state, itemData)
     return itemData.effect or "Unknown"
 end
 
-function InventoryUI.updateHover(state, inventorySystem, mouseX, mouseY, gridX, gridY, gridWidth)
+function InventoryUI.update_hover(state, inventorySystem, mouseX, mouseY, gridX, gridY, gridWidth)
     local startX = gridX + (gridWidth - state.cols * (state.slotSize + state.slotPadding) + state.slotPadding) / 2
     
     for row = 1, state.rows do
@@ -204,8 +204,8 @@ function InventoryUI.updateHover(state, inventorySystem, mouseX, mouseY, gridX, 
     return nil
 end
 
-function InventoryUI.handleClick(state, inventorySystem, mouseX, mouseY, gridX, gridY, gridWidth)
-    local slotIndex = InventoryUI.updateHover(state, inventorySystem, mouseX, mouseY, gridX, gridY, gridWidth)
+function InventoryUI.handle_click(state, inventorySystem, mouseX, mouseY, gridX, gridY, gridWidth)
+    local slotIndex = InventoryUI.update_hover(state, inventorySystem, mouseX, mouseY, gridX, gridY, gridWidth)
     
     if slotIndex then
         if state.selectedSlot == slotIndex then
@@ -219,15 +219,15 @@ function InventoryUI.handleClick(state, inventorySystem, mouseX, mouseY, gridX, 
     return nil
 end
 
-function InventoryUI.getSelectedSlot(state)
+function InventoryUI.get_selected_slot(state)
     return state.selectedSlot
 end
 
-function InventoryUI.clearSelection(state)
+function InventoryUI.clear_selection(state)
     state.selectedSlot = nil
 end
 
-function InventoryUI.getGridDimensions(state)
+function InventoryUI.get_grid_dimensions(state)
     local width = state.cols * (state.slotSize + state.slotPadding) - state.slotPadding
     local height = state.rows * (state.slotSize + state.slotPadding) - state.slotPadding
     return width, height

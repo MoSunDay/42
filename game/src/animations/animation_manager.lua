@@ -9,7 +9,7 @@ function AnimationManager.create()
     }
 end
 
-function AnimationManager.createAnimationSet(state, entityId)
+function AnimationManager.create_animation_set(state, entityId)
     state.animations[entityId] = {
         breathing = BreathingEffect.create(),
         running = RunningEffect.create()
@@ -17,22 +17,22 @@ function AnimationManager.createAnimationSet(state, entityId)
     return state.animations[entityId]
 end
 
-function AnimationManager.getAnimationSet(state, entityId)
+function AnimationManager.get_animation_set(state, entityId)
     if not state.animations[entityId] then
-        return AnimationManager.createAnimationSet(state, entityId)
+        return AnimationManager.create_animation_set(state, entityId)
     end
     return state.animations[entityId]
 end
 
-function AnimationManager.updateEntity(state, entityId, dt, isMoving)
-    local anims = AnimationManager.getAnimationSet(state, entityId)
+function AnimationManager.update_entity(state, entityId, dt, isMoving)
+    local anims = AnimationManager.get_animation_set(state, entityId)
 
     BreathingEffect.update(anims.breathing, dt)
     RunningEffect.update(anims.running, dt, isMoving or false)
 end
 
-function AnimationManager.getTransform(state, entityId)
-    local anims = AnimationManager.getAnimationSet(state, entityId)
+function AnimationManager.get_transform(state, entityId)
+    local anims = AnimationManager.get_animation_set(state, entityId)
 
     local offsetX = 0
     local offsetY = 0
@@ -40,15 +40,15 @@ function AnimationManager.getTransform(state, entityId)
     local scaleX = 1.0
     local scaleY = 1.0
 
-    local breathScale = BreathingEffect.getScale(anims.breathing)
+    local breathScale = BreathingEffect.get_scale(anims.breathing)
     scaleX = scaleX * breathScale
     scaleY = scaleY * breathScale
 
-    if RunningEffect.isActive(anims.running) or anims.running.time > 0 then
-        offsetY = offsetY + RunningEffect.getBobOffset(anims.running)
-        rotation = RunningEffect.getTilt(anims.running)
+    if RunningEffect.is_active(anims.running) or anims.running.time > 0 then
+        offsetY = offsetY + RunningEffect.get_bob_offset(anims.running)
+        rotation = RunningEffect.get_tilt(anims.running)
 
-        local runScaleX, runScaleY = RunningEffect.getScale(anims.running)
+        local runScaleX, runScaleY = RunningEffect.get_scale(anims.running)
         scaleX = scaleX * runScaleX
         scaleY = scaleY * runScaleY
     end
@@ -56,7 +56,7 @@ function AnimationManager.getTransform(state, entityId)
     return offsetX, offsetY, rotation, scaleX, scaleY
 end
 
-function AnimationManager.removeEntity(state, entityId)
+function AnimationManager.remove_entity(state, entityId)
     state.animations[entityId] = nil
 end
 

@@ -287,15 +287,15 @@ SkillDatabase.SKILLS = {
     },
 }
 
-function SkillDatabase.getSkill(skillId)
+function SkillDatabase.get_skill(skillId)
     return SkillDatabase.SKILLS[skillId]
 end
 
-function SkillDatabase.getAllSkills()
+function SkillDatabase.get_all_skills()
     return SkillDatabase.SKILLS
 end
 
-function SkillDatabase.calculateEffect(skill, caster)
+function SkillDatabase.calculate_effect(skill, caster)
     if not skill then return 0 end
     
     local base = skill.baseEffect or 0
@@ -319,7 +319,7 @@ function SkillDatabase.calculateEffect(skill, caster)
     return math.floor(effect)
 end
 
-function SkillDatabase.getMpCost(skill, level)
+function SkillDatabase.get_mp_cost(skill, level)
     if not skill then return 0 end
     
     local base = skill.mpCost or 0
@@ -329,16 +329,16 @@ function SkillDatabase.getMpCost(skill, level)
     return math.floor(base * (1 + costBonus))
 end
 
-function SkillDatabase.getSkillsForClass(classId)
+function SkillDatabase.get_skills_for_class(classId)
     local ClassDatabase = require("src.data.class_database")
-    local class = ClassDatabase.getClass(classId)
+    local class = ClassDatabase.get_class(classId)
     if not class or not class.skillIds then
         return {}
     end
     
     local skills = {}
     for _, skillId in ipairs(class.skillIds) do
-        local skill = SkillDatabase.getSkill(skillId)
+        local skill = SkillDatabase.get_skill(skillId)
         if skill then
             table.insert(skills, skill)
         end

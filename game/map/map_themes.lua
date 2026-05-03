@@ -131,7 +131,7 @@ MapThemes.SEASON_THEMES = {
     }
 }
 
-function MapThemes.getSeasonTheme(season)
+function MapThemes.get_season_theme(season)
     return MapThemes.SEASON_THEMES[season] or MapThemes.SEASON_THEMES.spring
 end
 

@@ -27,7 +27,7 @@ function BattleSystem.create(player, audioSystem, animationManager, assetManager
         battleLog = BattleLog.create(),
         introTimer = 0,
         actionTimer = 0,
-        isActive = false,
+        is_active = false,
         autoBattle = false,
         skillMode = false,
         selectedSkill = nil,
@@ -40,28 +40,28 @@ function BattleSystem.create(player, audioSystem, animationManager, assetManager
     }
 end
 
-function BattleSystem.getPartySize(state)
+function BattleSystem.get_party_size(state)
     local size = 1
     if state.companionSystem then
-        size = size + state.companionSystem:getPartySize()
+        size = size + state.companionSystem:get_party_size()
     end
     return size
 end
 
-function BattleSystem.startBattle(state, enemyCount)
+function BattleSystem.start_battle(state, enemyCount)
     enemyCount = enemyCount or 1
 
-    local partySize = BattleSystem.getPartySize(state)
+    local partySize = BattleSystem.get_party_size(state)
 
     state.enemies = {}
     for i = 1, math.min(enemyCount, 3) do
-        local enemyType = Enemy.getRandomType()
+        local enemyType = Enemy.get_random_type()
         local enemy = Enemy.create(enemyType, state.assetManager)
 
-        Enemy.scaleForPartySize(enemy, partySize)
+        Enemy.scale_for_party_size(enemy, partySize)
 
         if state.animationManager then
-            Enemy.setAnimationManager(enemy, state.animationManager, "enemy_" .. i)
+            Enemy.set_animation_manager(enemy, state.animationManager, "enemy_" .. i)
         end
 
         table.insert(state.enemies, enemy)
@@ -71,16 +71,16 @@ function BattleSystem.startBattle(state, enemyCount)
     state.turn = 1
     BattleLog.clear(state.battleLog)
     state.introTimer = 1.5
-    state.isActive = true
+    state.is_active = true
 
-    BattleSystem.addLog(state, "Battle started!")
-    BattleSystem.addLog(state, "Encountered " .. #state.enemies .. " enemy(ies)!")
+    BattleSystem.add_log(state, "Battle started!")
+    BattleSystem.add_log(state, "Encountered " .. #state.enemies .. " enemy(ies)!")
 
     return true
 end
 
-function BattleSystem.endBattle(state, result)
-    state.isActive = false
+function BattleSystem.end_battle(state, result)
+    state.is_active = false
     state.state = result
 
     if result == BATTLE_STATE.VICTORY then
@@ -102,23 +102,23 @@ function BattleSystem.endBattle(state, result)
             end
         end
 
-        BattleSystem.addLog(state, "Victory!")
+        BattleSystem.add_log(state, "Victory!")
         if #allCrystals > 0 then
-            BattleSystem.addLog(state, "Obtained " .. #allCrystals .. " Spirit Crystal(s)!")
+            BattleSystem.add_log(state, "Obtained " .. #allCrystals .. " Spirit Crystal(s)!")
         end
 
         return {crystals = allCrystals}
     elseif result == BATTLE_STATE.DEFEAT then
-        BattleSystem.addLog(state, "Defeat...")
+        BattleSystem.add_log(state, "Defeat...")
     elseif result == BATTLE_STATE.ESCAPED then
-        BattleSystem.addLog(state, "Escaped successfully!")
+        BattleSystem.add_log(state, "Escaped successfully!")
     end
 
     return nil
 end
 
 function BattleSystem.update(state, dt)
-    if not state.isActive then
+    if not state.is_active then
         return
     end
 
@@ -126,8 +126,8 @@ function BattleSystem.update(state, dt)
 
     if state.animationManager then
         for i, enemy in ipairs(state.enemies) do
-            if Enemy.isAlive(enemy) and enemy.animationId then
-                AnimationManager.updateEntity(state.animationManager, enemy.animationId, dt, false)
+            if Enemy.is_alive(enemy) and enemy.animationId then
+                AnimationManager.update_entity(state.animationManager, enemy.animationId, dt, false)
             end
         end
     end
@@ -138,39 +138,39 @@ function BattleSystem.update(state, dt)
             state.state = BATTLE_STATE.PLAYER_TURN
             BattleTimer.reset(state.timer)
             if state.autoBattle then
-                BattleSystem.autoExecutePlayerAction(state)
+                BattleSystem.auto_execute_player_action(state)
             end
         end
     elseif state.state == BATTLE_STATE.PLAYER_TURN then
         if not state.autoBattle then
             local timeUp = BattleTimer.update(state.timer, dt)
             if timeUp then
-                BattleSystem.addLog(state, "Time's up! Defending automatically...")
-                BattleSystem.selectAction(state, "defend", nil)
+                BattleSystem.add_log(state, "Time's up! Defending automatically...")
+                BattleSystem.select_action(state, "defend", nil)
             end
         end
     elseif state.state == BATTLE_STATE.EXECUTING then
-        if not BattleAnimation.isPlaying(state.animation) then
+        if not BattleAnimation.is_playing(state.animation) then
             state.actionTimer = state.actionTimer - dt
             if state.actionTimer <= 0 then
-                BattleSystem.nextTurn(state)
+                BattleSystem.next_turn(state)
             end
         end
     elseif state.state == BATTLE_STATE.ENEMY_TURN then
-        if not BattleAnimation.isPlaying(state.animation) then
+        if not BattleAnimation.is_playing(state.animation) then
             state.actionTimer = state.actionTimer - dt
             if state.actionTimer <= 0 then
                 if state.currentEnemyIndex and state.currentEnemyIndex < #state.enemies then
-                    BattleSystem.executeNextEnemyAttack(state)
+                    BattleSystem.execute_next_enemy_attack(state)
                 else
-                    BattleSystem.nextTurn(state)
+                    BattleSystem.next_turn(state)
                 end
             end
         end
     end
 end
 
-function BattleSystem.selectAction(state, action, targetIndex)
+function BattleSystem.select_action(state, action, targetIndex)
     if state.state ~= BATTLE_STATE.PLAYER_TURN then
         return false
     end
@@ -178,12 +178,12 @@ function BattleSystem.selectAction(state, action, targetIndex)
     state.selectedAction = action
     state.selectedTarget = targetIndex
 
-    BattleSystem.executePlayerAction(state)
+    BattleSystem.execute_player_action(state)
 
     return true
 end
 
-function BattleSystem.executePlayerAction(state)
+function BattleSystem.execute_player_action(state)
     state.state = BATTLE_STATE.EXECUTING
     state.actionTimer = 1.0
 
@@ -192,10 +192,10 @@ function BattleSystem.executePlayerAction(state)
     local targetIndex = state.selectedTarget or 1
     local target = state.enemies[targetIndex]
 
-    if target and not Enemy.isAlive(target) then
+    if target and not Enemy.is_alive(target) then
         target = nil
         for i, enemy in ipairs(state.enemies) do
-            if Enemy.isAlive(enemy) then
+            if Enemy.is_alive(enemy) then
                 target = enemy
                 targetIndex = i
                 state.selectedTarget = i
@@ -205,58 +205,58 @@ function BattleSystem.executePlayerAction(state)
     end
 
     if action == "attack" then
-        if target and Enemy.isAlive(target) then
-            BattleExecutor.executePlayerAttack(state, target, targetIndex)
+        if target and Enemy.is_alive(target) then
+            BattleExecutor.execute_player_attack(state, target, targetIndex)
         end
     elseif action == "skill" then
         if state.selectedSkill then
-            local targets, indices = BattleExecutor.selectSkillTargets(state, state.selectedSkill)
+            local targets, indices = BattleExecutor.select_skill_targets(state, state.selectedSkill)
             if #targets > 0 then
-                BattleExecutor.executePlayerSkill(state, state.selectedSkill, targets, indices)
+                BattleExecutor.execute_player_skill(state, state.selectedSkill, targets, indices)
             else
                 local skillData = require("src.data.skill_database").getSkill(state.selectedSkill)
                 if skillData and (skillData.targets == "self" or skillData.targets == "all_allies") then
-                    BattleExecutor.executePlayerSkill(state, state.selectedSkill, {}, {})
+                    BattleExecutor.execute_player_skill(state, state.selectedSkill, {}, {})
                 else
-                    BattleSystem.addLog(state, "No valid target for skill!")
+                    BattleSystem.add_log(state, "No valid target for skill!")
                     state.state = BATTLE_STATE.PLAYER_TURN
                 end
             end
         end
     elseif action == "defend" then
-        BattleExecutor.executePlayerDefend(state)
+        BattleExecutor.execute_player_defend(state)
     elseif action == "escape" then
-        if BattleExecutor.executePlayerEscape(state, BATTLE_STATE) then
+        if BattleExecutor.execute_player_escape(state, BATTLE_STATE) then
             return
         end
     end
 
-    if BattleSystem.checkVictory(state) then
-        BattleSystem.endBattle(state, BATTLE_STATE.VICTORY)
+    if BattleSystem.check_victory(state) then
+        BattleSystem.end_battle(state, BATTLE_STATE.VICTORY)
         return
     end
 end
 
-function BattleSystem.executeEnemyTurn(state)
+function BattleSystem.execute_enemy_turn(state)
     state.state = BATTLE_STATE.ENEMY_TURN
     state.currentEnemyIndex = 0
-    BattleSystem.executeNextEnemyAttack(state)
+    BattleSystem.execute_next_enemy_attack(state)
 end
 
-function BattleSystem.executeNextEnemyAttack(state)
+function BattleSystem.execute_next_enemy_attack(state)
     state.currentEnemyIndex = state.currentEnemyIndex + 1
 
     while state.currentEnemyIndex <= #state.enemies do
         local enemy = state.enemies[state.currentEnemyIndex]
 
-        if Enemy.isAlive(enemy) then
+        if Enemy.is_alive(enemy) then
             state.actionTimer = 0.8
-            local action = BattleAI.enemyAction(enemy, state.player)
+            local action = BattleAI.enemy_action(enemy, state.player)
 
             if action == "attack" then
-                BattleExecutor.executeEnemyAttack(state, enemy, state.currentEnemyIndex)
+                BattleExecutor.execute_enemy_attack(state, enemy, state.currentEnemyIndex)
             elseif action == "defend" then
-                BattleExecutor.executeEnemyDefend(state, enemy)
+                BattleExecutor.execute_enemy_defend(state, enemy)
             end
 
             return
@@ -268,19 +268,19 @@ function BattleSystem.executeNextEnemyAttack(state)
     state.actionTimer = 0.5
 end
 
-function BattleSystem.nextTurn(state)
+function BattleSystem.next_turn(state)
     state.player.isDefending = false
     for _, enemy in ipairs(state.enemies) do
         enemy.isDefending = false
     end
 
     if state.state == BATTLE_STATE.EXECUTING then
-        if BattleSystem.checkVictory(state) then
-            BattleSystem.endBattle(state, BATTLE_STATE.VICTORY)
+        if BattleSystem.check_victory(state) then
+            BattleSystem.end_battle(state, BATTLE_STATE.VICTORY)
             return
         end
 
-        BattleSystem.executeEnemyTurn(state)
+        BattleSystem.execute_enemy_turn(state)
     elseif state.state == BATTLE_STATE.ENEMY_TURN then
         state.turn = state.turn + 1
         state.state = BATTLE_STATE.PLAYER_TURN
@@ -288,112 +288,112 @@ function BattleSystem.nextTurn(state)
         BattleTimer.reset(state.timer)
 
         if state.autoBattle then
-            BattleSystem.autoExecutePlayerAction(state)
+            BattleSystem.auto_execute_player_action(state)
         end
 
-        if not Player.isAlive(state.player) then
-            BattleSystem.endBattle(state, BATTLE_STATE.DEFEAT)
+        if not Player.is_alive(state.player) then
+            BattleSystem.end_battle(state, BATTLE_STATE.DEFEAT)
             return
         end
     end
 end
 
-function BattleSystem.checkVictory(state)
-    return BattleUtils.checkVictory(state.enemies)
+function BattleSystem.check_victory(state)
+    return BattleUtils.check_victory(state.enemies)
 end
 
-function BattleSystem.addLog(state, message)
+function BattleSystem.add_log(state, message)
     BattleLog.add(state.battleLog, message)
 end
 
-function BattleSystem.getState(state)
+function BattleSystem.get_state(state)
     return state.state
 end
 
-function BattleSystem.getLog(state)
-    return BattleLog.getMessages(state.battleLog)
+function BattleSystem.get_log(state)
+    return BattleLog.get_messages(state.battleLog)
 end
 
-function BattleSystem.getEnemies(state)
+function BattleSystem.get_enemies(state)
     return state.enemies
 end
 
-function BattleSystem.getAliveEnemies(state)
-    return BattleUtils.getAliveEnemies(state.enemies)
+function BattleSystem.get_alive_enemies(state)
+    return BattleUtils.get_alive_enemies(state.enemies)
 end
 
-function BattleSystem.getAnimation(state)
+function BattleSystem.get_animation(state)
     return state.animation
 end
 
-function BattleSystem.toggleAutoBattle(state)
+function BattleSystem.toggle_auto_battle(state)
     state.autoBattle = not state.autoBattle
     if state.autoBattle then
-        BattleSystem.addLog(state, "Auto battle enabled!")
+        BattleSystem.add_log(state, "Auto battle enabled!")
         if state.state == BATTLE_STATE.PLAYER_TURN then
-            BattleSystem.autoExecutePlayerAction(state)
+            BattleSystem.auto_execute_player_action(state)
         end
     else
-        BattleSystem.addLog(state, "Auto battle disabled!")
+        BattleSystem.add_log(state, "Auto battle disabled!")
     end
     return state.autoBattle
 end
 
-function BattleSystem.isAutoBattle(state)
+function BattleSystem.is_auto_battle(state)
     return state.autoBattle
 end
 
-function BattleSystem.autoExecutePlayerAction(state)
+function BattleSystem.auto_execute_player_action(state)
     if state.state ~= BATTLE_STATE.PLAYER_TURN then
         return
     end
 
-    local action, target = BattleAI.autoPlayerAction(state)
+    local action, target = BattleAI.auto_player_action(state)
     if action and target then
         state.selectedAction = action
         state.selectedTarget = target
-        BattleSystem.executePlayerAction(state)
+        BattleSystem.execute_player_action(state)
     end
 end
 
-function BattleSystem.getAnimationManager(state)
+function BattleSystem.get_animation_manager(state)
     return state.animationManager
 end
 
-function BattleSystem.getTurnTimer(state)
-    return BattleTimer.getTime(state.timer)
+function BattleSystem.get_turn_timer(state)
+    return BattleTimer.get_time(state.timer)
 end
 
-function BattleSystem.getMaxTurnTime(state)
-    return BattleTimer.getMaxTime(state.timer)
+function BattleSystem.get_max_turn_time(state)
+    return BattleTimer.get_max_time(state.timer)
 end
 
-function BattleSystem.isAutoTriggeredByTimeout(state)
-    return BattleTimer.isAutoTriggered(state.timer)
+function BattleSystem.is_auto_triggered_by_timeout(state)
+    return BattleTimer.is_auto_triggered(state.timer)
 end
 
-function BattleSystem.getAvailableSkills(state)
+function BattleSystem.get_available_skills(state)
     if not state.player or not state.player.skills then
         return {}
     end
     return SkillSystem.getAvailableSkills(state.player)
 end
 
-function BattleSystem.selectSkill(state, skillId)
+function BattleSystem.select_skill(state, skillId)
     state.selectedSkill = skillId
     state.skillMode = true
 end
 
-function BattleSystem.clearSkillSelection(state)
+function BattleSystem.clear_skill_selection(state)
     state.selectedSkill = nil
     state.skillMode = false
 end
 
-function BattleSystem.isSkillMode(state)
+function BattleSystem.is_skill_mode(state)
     return state.skillMode
 end
 
-function BattleSystem.getSelectedSkill(state)
+function BattleSystem.get_selected_skill(state)
     return state.selectedSkill
 end
 

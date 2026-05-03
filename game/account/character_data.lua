@@ -10,7 +10,7 @@ function CharacterData.create(config)
         classId = config.classId or "dual_blade",
     }
     
-    local baseStats = ClassDatabase.getBaseStats(state.classId)
+    local baseStats = ClassDatabase.get_base_stats(state.classId)
     
     state.hp = config.hp or baseStats.hp
     state.maxHp = config.maxHp or baseStats.maxHp
@@ -44,7 +44,7 @@ end
 
 CharacterData.new = CharacterData.create
 
-function CharacterData.toTable(state)
+function CharacterData.to_table(state)
     return {
         username = state.username,
         characterName = state.characterName,
@@ -70,7 +70,7 @@ function CharacterData.toTable(state)
     }
 end
 
-function CharacterData.takeDamage(state, damage)
+function CharacterData.take_damage(state, damage)
     local actualDamage = math.max(1, damage - state.defense)
     state.hp = math.max(0, state.hp - actualDamage)
     return actualDamage
@@ -80,17 +80,17 @@ function CharacterData.heal(state, amount)
     state.hp = math.min(state.maxHp, state.hp + amount)
 end
 
-function CharacterData.healPercent(state, percent)
+function CharacterData.heal_percent(state, percent)
     local amount = math.floor(state.maxHp * percent)
     CharacterData.heal(state, amount)
     return amount
 end
 
-function CharacterData.restoreMp(state, amount)
+function CharacterData.restore_mp(state, amount)
     state.mp = math.min(state.maxMp, state.mp + amount)
 end
 
-function CharacterData.useMp(state, amount)
+function CharacterData.use_mp(state, amount)
     if state.mp >= amount then
         state.mp = state.mp - amount
         return true
@@ -98,20 +98,20 @@ function CharacterData.useMp(state, amount)
     return false
 end
 
-function CharacterData.isAlive(state)
+function CharacterData.is_alive(state)
     return state.hp > 0
 end
 
-function CharacterData.getClass(state)
-    return ClassDatabase.getClass(state.classId)
+function CharacterData.get_class(state)
+    return ClassDatabase.get_class(state.classId)
 end
 
-function CharacterData.getClassName(state)
-    local class = CharacterData.getClass(state)
+function CharacterData.get_class_name(state)
+    local class = CharacterData.get_class(state)
     return class and class.name or "未知"
 end
 
-function CharacterData.createCharacter(name, classId)
+function CharacterData.create_character(name, classId)
     classId = classId or "dual_blade"
     
     return CharacterData.create({
@@ -120,7 +120,7 @@ function CharacterData.createCharacter(name, classId)
     })
 end
 
-function CharacterData.fromTable(data)
+function CharacterData.from_table(data)
     return CharacterData.create(data)
 end
 

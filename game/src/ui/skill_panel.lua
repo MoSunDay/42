@@ -24,7 +24,7 @@ function SkillPanel.open(state, player)
     state.isOpen = true
     state.selectedSkillIndex = 1
     state.tab = "unlocked"
-    SkillPanel.updateSkillLists(state)
+    SkillPanel.update_skill_lists(state)
 end
 
 function SkillPanel.close(state)
@@ -32,7 +32,7 @@ function SkillPanel.close(state)
     state.player = nil
 end
 
-function SkillPanel.updateSkillLists(state)
+function SkillPanel.update_skill_lists(state)
     if not state.player then return end
     
     state.unlockedSkills = SkillSystem.getAvailableSkills(state.player)
@@ -47,7 +47,7 @@ function SkillPanel.toggle(state, player)
     end
 end
 
-function SkillPanel.showMessage(state, msg)
+function SkillPanel.show_message(state, msg)
     state.message = msg
     state.messageTimer = 3
 end
@@ -72,7 +72,7 @@ function SkillPanel.draw(state)
     local panelX = (w - panelW) / 2
     local panelY = (h - panelH) / 2
     
-    local class = ClassDatabase.getClass(state.player.classId)
+    local class = ClassDatabase.get_class(state.player.classId)
     local title = string.format("技能面板 - %s", class and class.name or "Unknown")
     Components.drawOrnatePanel(panelX, panelY, panelW, panelH, state.assetManager, {title = title, corners = true, glow = true})
     
@@ -86,8 +86,8 @@ function SkillPanel.draw(state)
     local unlockedTabX = panelX + panelW/2 - tabW - 10
     local lockedTabX = panelX + panelW/2 + 10
     
-    Components.drawTab(unlockedTabX, tabY, tabW, tabH, "已解锁", state.tab == "unlocked", state.assetManager, love.graphics.getFont())
-    Components.drawTab(lockedTabX, tabY, tabW, tabH, "未解锁", state.tab == "locked", state.assetManager, love.graphics.getFont())
+    Components.drawTab(unlockedTabX, tabY, tabW, tabH, "已解锁", state.tab == "unlocked", state.assetManager, love.graphics.get_font())
+    Components.drawTab(lockedTabX, tabY, tabW, tabH, "未解锁", state.tab == "locked", state.assetManager, love.graphics.get_font())
     
     local listY = tabY + tabH + 15
     local listH = 280
@@ -151,7 +151,7 @@ function SkillPanel.draw(state)
                 love.graphics.print(skill.description, listX + 15, itemY + 22)
                 
                 love.graphics.setColor(0.6, 0.6, 0.6)
-                love.graphics.print(string.format("等级: %s", SkillDatabase.getSkillTierName(skill.tier)), listX + 15, itemY + 39)
+                love.graphics.print(string.format("等级: %s", SkillDatabase.get_skill_tier_name(skill.tier)), listX + 15, itemY + 39)
                 
                 love.graphics.setColor(0.9, 0.6, 0.3)
                 love.graphics.print(string.format("解锁: %d灵晶", skillData.unlockCost), listX + 350, itemY + 39)
@@ -169,12 +169,12 @@ function SkillPanel.draw(state)
     local btnH = 35
     
     if state.tab == "unlocked" and #state.unlockedSkills > 0 then
-        Components.drawOrnateButton(panelX + 50, btnY, btnW, btnH, "升级技能", "normal", state.assetManager, love.graphics.getFont())
+        Components.drawOrnateButton(panelX + 50, btnY, btnW, btnH, "升级技能", "normal", state.assetManager, love.graphics.get_font())
     elseif state.tab == "locked" and #state.lockedSkills > 0 then
-        Components.drawOrnateButton(panelX + 50, btnY, btnW, btnH, "解锁技能", "normal", state.assetManager, love.graphics.getFont())
+        Components.drawOrnateButton(panelX + 50, btnY, btnW, btnH, "解锁技能", "normal", state.assetManager, love.graphics.get_font())
     end
     
-    Components.drawOrnateButton(panelX + panelW - 170, btnY, btnW, btnH, "关闭", "normal", state.assetManager, love.graphics.getFont())
+    Components.drawOrnateButton(panelX + panelW - 170, btnY, btnW, btnH, "关闭", "normal", state.assetManager, love.graphics.get_font())
     
     love.graphics.setColor(0.5, 0.5, 0.5)
     love.graphics.printf("↑↓选择  Enter确认  Tab切换  ESC关闭", panelX, panelY + panelH - 20, panelW, "center")
@@ -207,15 +207,15 @@ function SkillPanel.keypressed(state, key)
             local skillData = skills[state.selectedSkillIndex]
             if state.tab == "unlocked" then
                 local success, msg = SkillSystem.upgradeSkill(state.player, skillData.id)
-                SkillPanel.showMessage(state, msg)
+                SkillPanel.show_message(state, msg)
                 if success then
-                    SkillPanel.updateSkillLists(state)
+                    SkillPanel.update_skill_lists(state)
                 end
             else
                 local success, msg = SkillSystem.unlockSkill(state.player, skillData.id)
-                SkillPanel.showMessage(state, msg)
+                SkillPanel.show_message(state, msg)
                 if success then
-                    SkillPanel.updateSkillLists(state)
+                    SkillPanel.update_skill_lists(state)
                 end
             end
         end
@@ -284,15 +284,15 @@ function SkillPanel.mousepressed(state, x, y, button)
                     local skillData = skills[state.selectedSkillIndex]
                     if state.tab == "unlocked" then
                         local success, msg = SkillSystem.upgradeSkill(state.player, skillData.id)
-                        SkillPanel.showMessage(state, msg)
+                        SkillPanel.show_message(state, msg)
                         if success then
-                            SkillPanel.updateSkillLists(state)
+                            SkillPanel.update_skill_lists(state)
                         end
                     else
                         local success, msg = SkillSystem.unlockSkill(state.player, skillData.id)
-                        SkillPanel.showMessage(state, msg)
+                        SkillPanel.show_message(state, msg)
                         if success then
-                            SkillPanel.updateSkillLists(state)
+                            SkillPanel.update_skill_lists(state)
                         end
                     end
                 end

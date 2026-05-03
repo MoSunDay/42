@@ -50,8 +50,8 @@ function UnifiedMenu.create(assetManager)
         necklace = Theme.colors.equipment.necklace
     }
     
-    state.font = assetManager:getFont("default")
-    state.fontLarge = assetManager:getFont("large")
+    state.font = assetManager:get_font("default")
+    state.fontLarge = assetManager:get_font("large")
     
     state.inventoryUI = InventoryUI.create(assetManager)
     
@@ -74,26 +74,26 @@ end
 
 function UnifiedMenu.close(state)
     state.isOpen = false
-    InventoryUI.clearSelection(state.inventoryUI)
+    InventoryUI.clear_selection(state.inventoryUI)
     state.selectedEquipSlot = nil
     state.showEquipDialog = false
 end
 
-function UnifiedMenu.isMenuOpen(state)
+function UnifiedMenu.is_menu_open(state)
     return state.isOpen
 end
 
-function UnifiedMenu.switchTab(state, tabIndex)
+function UnifiedMenu.switch_tab(state, tabIndex)
     if tabIndex >= 1 and tabIndex <= #state.tabs then
         state.currentTab = tabIndex
-        InventoryUI.clearSelection(state.inventoryUI)
+        InventoryUI.clear_selection(state.inventoryUI)
         state.selectedEquipSlot = nil
         state.showEquipDialog = false
     end
 end
 
-function UnifiedMenu.setTab(state, tabIndex)
-    UnifiedMenu.switchTab(state, tabIndex)
+function UnifiedMenu.set_tab(state, tabIndex)
+    UnifiedMenu.switch_tab(state, tabIndex)
 end
 
 function UnifiedMenu.draw(state, gameState)
@@ -110,45 +110,45 @@ function UnifiedMenu.draw(state, gameState)
         font = state.fontLarge
     })
     
-    UnifiedMenu.drawTabs(state)
+    UnifiedMenu.draw_tabs(state)
     
     local contentY = state.y + state.tabHeight + 10
     local contentHeight = state.height - state.tabHeight - 20
     
     if state.tabs[state.currentTab].key == "equipment" then
-        UnifiedMenu.drawEquipmentTab(state, gameState, contentY, contentHeight)
+        UnifiedMenu.draw_equipment_tab(state, gameState, contentY, contentHeight)
     elseif state.tabs[state.currentTab].key == "items" then
-        UnifiedMenu.drawItemsTab(state, gameState, contentY, contentHeight)
+        UnifiedMenu.draw_items_tab(state, gameState, contentY, contentHeight)
     elseif state.tabs[state.currentTab].key == "party" then
-        UnifiedMenu.drawPartyTab(state, gameState, contentY, contentHeight)
+        UnifiedMenu.draw_party_tab(state, gameState, contentY, contentHeight)
     elseif state.tabs[state.currentTab].key == "pet" then
-        UnifiedMenu.drawPetTab(state, gameState, contentY, contentHeight)
+        UnifiedMenu.draw_pet_tab(state, gameState, contentY, contentHeight)
     end
     
-    UnifiedMenu.drawCloseButton(state)
+    UnifiedMenu.draw_close_button(state)
 end
 
-function UnifiedMenu.drawTabs(state)
+function UnifiedMenu.draw_tabs(state)
     for i, tab in ipairs(state.tabs) do
         local tabX = state.x + (i - 1) * state.tabWidth
         local tabY = state.y + 5
-        local isActive = i == state.currentTab
+        local is_active = i == state.currentTab
 
-        Components.drawTab(tabX + 2, tabY, state.tabWidth - 4, state.tabHeight, tab.name, isActive, state.assetManager, state.font)
+        Components.drawTab(tabX + 2, tabY, state.tabWidth - 4, state.tabHeight, tab.name, is_active, state.assetManager, state.font)
 
-        if isActive then
+        if is_active then
             love.graphics.setColor(Theme.gold.normal)
             love.graphics.setLineWidth(1)
             love.graphics.rectangle("line", tabX + 2, tabY, state.tabWidth - 4, state.tabHeight, 5, 5)
         end
 
         love.graphics.setFont(state.font)
-        love.graphics.setColor(isActive and Theme.gold.bright or Theme.colors.text)
+        love.graphics.setColor(is_active and Theme.gold.bright or Theme.colors.text)
         love.graphics.printf(tab.name, tabX + 2, tabY + (state.tabHeight - state.font:getHeight()) / 2, state.tabWidth - 4, "center")
     end
 end
 
-function UnifiedMenu.drawCloseButton(state)
+function UnifiedMenu.draw_close_button(state)
     local btnSize = 30
     local btnX = state.x + state.width - btnSize - 10
     local btnY = state.y + 10
@@ -156,7 +156,7 @@ function UnifiedMenu.drawCloseButton(state)
     Components.drawOrnateButton(btnX, btnY, btnSize, btnSize, "X", "normal", state.assetManager, state.font)
 end
 
-function UnifiedMenu.drawEquipmentTab(state, gameState, contentY, contentHeight)
+function UnifiedMenu.draw_equipment_tab(state, gameState, contentY, contentHeight)
     local equipmentSystem = gameState:getEquipmentSystem()
     local inventorySystem = gameState:getInventorySystem()
     
@@ -190,11 +190,11 @@ function UnifiedMenu.drawEquipmentTab(state, gameState, contentY, contentHeight)
     for i, slotInfo in ipairs(slots) do
         local y = slotY + (i - 1) * (slotHeight + 5)
         
-        UnifiedMenu.drawEquipmentSlot(state, equipmentSystem, slotInfo.slot, slotInfo.name, leftPanelX + 10, y, leftPanelWidth - 20, slotHeight)
+        UnifiedMenu.draw_equipment_slot(state, equipmentSystem, slotInfo.slot, slotInfo.name, leftPanelX + 10, y, leftPanelWidth - 20, slotHeight)
     end
     
     local statsY = slotY + #slots * (slotHeight + 5) + 20
-    UnifiedMenu.drawTotalStats(state, equipmentSystem, leftPanelX, statsY, leftPanelWidth)
+    UnifiedMenu.draw_total_stats(state, equipmentSystem, leftPanelX, statsY, leftPanelWidth)
     
     local rightPanelX = state.x + leftPanelWidth + 40
     local rightPanelWidth = state.width - leftPanelWidth - 60
@@ -212,10 +212,10 @@ function UnifiedMenu.drawEquipmentTab(state, gameState, contentY, contentHeight)
     
     InventoryUI.draw(state.inventoryUI, inventorySystem, gridX, gridY + detailHeight + 10, gridWidth, gridHeight - detailHeight - 10)
     
-    InventoryUI.drawItemDetail(state.inventoryUI, inventorySystem, gridX, gridY, gridWidth, detailHeight)
+    InventoryUI.draw_item_detail(state.inventoryUI, inventorySystem, gridX, gridY, gridWidth, detailHeight)
 end
 
-function UnifiedMenu.drawEquipmentSlot(state, equipmentSystem, slot, slotName, x, y, width, height)
+function UnifiedMenu.draw_equipment_slot(state, equipmentSystem, slot, slotName, x, y, width, height)
     local isSelected = state.selectedEquipSlot == slot
     
     Components.drawOrnatePanel(x, y, width, height, state.assetManager, {
@@ -248,9 +248,9 @@ function UnifiedMenu.drawEquipmentSlot(state, equipmentSystem, slot, slotName, x
     end
 end
 
-function UnifiedMenu.drawTotalStats(state, equipmentSystem, x, y, width)
-    local stats = EquipmentSystem.getTotalStats(equipmentSystem)
-    local defPercent = EquipmentSystem.getDefensePercent(equipmentSystem)
+function UnifiedMenu.draw_total_stats(state, equipmentSystem, x, y, width)
+    local stats = EquipmentSystem.get_total_stats(equipmentSystem)
+    local defPercent = EquipmentSystem.get_defense_percent(equipmentSystem)
     
     Components.drawOrnatePanel(x, y, width, 80, state.assetManager, { corners = true, glow = false })
     
@@ -281,7 +281,7 @@ function UnifiedMenu.drawTotalStats(state, equipmentSystem, x, y, width)
     love.graphics.print("EVA: +" .. stats.eva .. "%", statX + 220, statY)
 end
 
-function UnifiedMenu.drawItemsTab(state, gameState, contentY, contentHeight)
+function UnifiedMenu.draw_items_tab(state, gameState, contentY, contentHeight)
     local inventorySystem = gameState:getInventorySystem()
     
     love.graphics.setFont(state.fontLarge)
@@ -289,7 +289,7 @@ function UnifiedMenu.drawItemsTab(state, gameState, contentY, contentHeight)
     love.graphics.printf("Items", state.x, contentY + 10, state.width, "center")
     
     local inventoryInfo = string.format("Inventory: %d / %d", 
-        InventorySystem.getUsedSlots(inventorySystem), 
+        InventorySystem.get_used_slots(inventorySystem), 
         InventorySystem.getMaxSlots(inventorySystem))
     love.graphics.setFont(state.font)
     love.graphics.setColor(state.colors.textDim)
@@ -309,9 +309,9 @@ function UnifiedMenu.drawItemsTab(state, gameState, contentY, contentHeight)
     
     Components.drawOrnatePanel(detailX, gridY, detailWidth, gridHeight, state.assetManager, { corners = true, glow = false })
     
-    InventoryUI.drawItemDetail(state.inventoryUI, inventorySystem, detailX + 10, gridY + 10, detailWidth - 20, gridHeight - 60)
+    InventoryUI.draw_item_detail(state.inventoryUI, inventorySystem, detailX + 10, gridY + 10, detailWidth - 20, gridHeight - 60)
     
-    local selectedItem = InventoryUI.getSelectedSlot(state.inventoryUI) and InventorySystem.getItem(inventorySystem, InventoryUI.getSelectedSlot(state.inventoryUI))
+    local selectedItem = InventoryUI.get_selected_slot(state.inventoryUI) and InventorySystem.get_item(inventorySystem, InventoryUI.get_selected_slot(state.inventoryUI))
     
     if selectedItem then
         local btnX = detailX + 10
@@ -320,18 +320,18 @@ function UnifiedMenu.drawItemsTab(state, gameState, contentY, contentHeight)
         local btnHeight = 35
         
         if selectedItem.type == ItemDatabase.TYPE.EQUIPMENT then
-            UnifiedMenu.drawButton(state, "Equip", btnX, btnY, btnWidth, btnHeight, state.buttonHover_equip)
+            UnifiedMenu.draw_button(state, "Equip", btnX, btnY, btnWidth, btnHeight, state.buttonHover_equip)
         elseif selectedItem.type == ItemDatabase.TYPE.CONSUMABLE then
-            UnifiedMenu.drawButton(state, "Use", btnX, btnY, btnWidth, btnHeight, state.buttonHover_use)
+            UnifiedMenu.draw_button(state, "Use", btnX, btnY, btnWidth, btnHeight, state.buttonHover_use)
         end
     end
 end
 
-function UnifiedMenu.drawButton(state, text, x, y, width, height, isHovered)
+function UnifiedMenu.draw_button(state, text, x, y, width, height, isHovered)
     Components.drawOrnateButton(x, y, width, height, text, isHovered and "hover" or "normal", state.assetManager, state.font)
 end
 
-function UnifiedMenu.drawPartyTab(state, gameState, contentY, contentHeight)
+function UnifiedMenu.draw_party_tab(state, gameState, contentY, contentHeight)
     local partySystem = gameState:getPartySystem()
     if not partySystem then
         love.graphics.setColor(state.colors.textDim)
@@ -346,7 +346,7 @@ function UnifiedMenu.drawPartyTab(state, gameState, contentY, contentHeight)
     love.graphics.setFont(state.font)
     love.graphics.print("Party Name: " .. partySystem:getPartyName(), state.x + 50, contentY + 60)
     
-    local members = partySystem:getMembers()
+    local members = partySystem:get_members()
     love.graphics.print("Members: " .. #members .. "/5", state.x + 50, contentY + 85)
     
     local memberY = contentY + 120
@@ -376,7 +376,7 @@ function UnifiedMenu.drawPartyTab(state, gameState, contentY, contentHeight)
     end
 end
 
-function UnifiedMenu.drawPetTab(state, gameState, contentY, contentHeight)
+function UnifiedMenu.draw_pet_tab(state, gameState, contentY, contentHeight)
     love.graphics.setFont(state.fontLarge)
     love.graphics.setColor(state.colors.text)
     love.graphics.printf("Pet Management", state.x, contentY + 10, state.width, "center")
@@ -406,7 +406,7 @@ function UnifiedMenu.mousepressed(state, x, y, button, gameState)
         local tabY = state.y
         
         if x >= tabX and x <= tabX + state.tabWidth and y >= tabY and y <= tabY + state.tabHeight then
-            UnifiedMenu.switchTab(state, i)
+            UnifiedMenu.switch_tab(state, i)
             return true
         end
     end
@@ -414,15 +414,15 @@ function UnifiedMenu.mousepressed(state, x, y, button, gameState)
     if not gameState then return false end
     
     if state.tabs[state.currentTab].key == "equipment" then
-        return UnifiedMenu.handleEquipmentClick(state, gameState, x, y)
+        return UnifiedMenu.handle_equipment_click(state, gameState, x, y)
     elseif state.tabs[state.currentTab].key == "items" then
-        return UnifiedMenu.handleItemsClick(state, gameState, x, y)
+        return UnifiedMenu.handle_items_click(state, gameState, x, y)
     end
     
     return false
 end
 
-function UnifiedMenu.handleEquipmentClick(state, gameState, x, y)
+function UnifiedMenu.handle_equipment_click(state, gameState, x, y)
     local equipmentSystem = gameState:getEquipmentSystem()
     local inventorySystem = gameState:getInventorySystem()
     local player = gameState.player
@@ -450,7 +450,7 @@ function UnifiedMenu.handleEquipmentClick(state, gameState, x, y)
             if item then
                 local success = EquipmentSystem.unequipToInventory(equipmentSystem, slot, inventorySystem)
                 if success then
-                    Player.updateStatsWithEquipment(player)
+                    Player.update_stats_with_equipment(player)
                     gameState:syncPlayerToCharacter()
                 end
             end
@@ -464,15 +464,15 @@ function UnifiedMenu.handleEquipmentClick(state, gameState, x, y)
     local gridY = contentY + 90 + 110
     local gridWidth = rightPanelWidth - 20
     
-    local clickedSlot = InventoryUI.handleClick(state.inventoryUI, inventorySystem, x, y, gridX, gridY, gridWidth)
+    local clickedSlot = InventoryUI.handle_click(state.inventoryUI, inventorySystem, x, y, gridX, gridY, gridWidth)
     if clickedSlot then
-        local item = InventorySystem.getItem(inventorySystem, clickedSlot)
+        local item = InventorySystem.get_item(inventorySystem, clickedSlot)
         if item and item.type == ItemDatabase.TYPE.EQUIPMENT then
             local success, msg = EquipmentSystem.equipFromInventory(equipmentSystem, inventorySystem, clickedSlot)
             if success then
-                Player.updateStatsWithEquipment(player)
+                Player.update_stats_with_equipment(player)
                 gameState:syncPlayerToCharacter()
-                InventoryUI.clearSelection(state.inventoryUI)
+                InventoryUI.clear_selection(state.inventoryUI)
             end
         end
         return true
@@ -481,7 +481,7 @@ function UnifiedMenu.handleEquipmentClick(state, gameState, x, y)
     return false
 end
 
-function UnifiedMenu.handleItemsClick(state, gameState, x, y)
+function UnifiedMenu.handle_items_click(state, gameState, x, y)
     local inventorySystem = gameState:getInventorySystem()
     local player = gameState.player
     
@@ -490,7 +490,7 @@ function UnifiedMenu.handleItemsClick(state, gameState, x, y)
     local gridY = contentY + 70
     local gridWidth = state.width - 250
     
-    local clickedSlot = InventoryUI.handleClick(state.inventoryUI, inventorySystem, x, y, gridX, gridY, gridWidth)
+    local clickedSlot = InventoryUI.handle_click(state.inventoryUI, inventorySystem, x, y, gridX, gridY, gridWidth)
     if clickedSlot then
         return true
     end
@@ -504,20 +504,20 @@ function UnifiedMenu.handleItemsClick(state, gameState, x, y)
     local btnHeight = 35
     
     if x >= btnX and x <= btnX + btnWidth and y >= btnY and y <= btnY + btnHeight then
-        local selectedSlot = InventoryUI.getSelectedSlot(state.inventoryUI)
+        local selectedSlot = InventoryUI.get_selected_slot(state.inventoryUI)
         if selectedSlot then
-            local item = InventorySystem.getItem(inventorySystem, selectedSlot)
+            local item = InventorySystem.get_item(inventorySystem, selectedSlot)
             if item then
                 if item.type == ItemDatabase.TYPE.EQUIPMENT then
                     local equipmentSystem = gameState:getEquipmentSystem()
                     local success, msg = EquipmentSystem.equipFromInventory(equipmentSystem, inventorySystem, selectedSlot)
                     if success then
-                        Player.updateStatsWithEquipment(player)
+                        Player.update_stats_with_equipment(player)
                         gameState:syncPlayerToCharacter()
-                        InventoryUI.clearSelection(state.inventoryUI)
+                        InventoryUI.clear_selection(state.inventoryUI)
                     end
                 elseif item.type == ItemDatabase.TYPE.CONSUMABLE then
-                    UnifiedMenu.useConsumable(state, gameState, selectedSlot)
+                    UnifiedMenu.use_consumable(state, gameState, selectedSlot)
                 end
             end
         end
@@ -527,29 +527,29 @@ function UnifiedMenu.handleItemsClick(state, gameState, x, y)
     return false
 end
 
-function UnifiedMenu.useConsumable(state, gameState, slotIndex)
+function UnifiedMenu.use_consumable(state, gameState, slotIndex)
     local inventorySystem = gameState:getInventorySystem()
     local player = gameState.player
     
-    local item = InventorySystem.getItem(inventorySystem, slotIndex)
+    local item = InventorySystem.get_item(inventorySystem, slotIndex)
     if not item then return end
     
-    local itemData = ItemDatabase.getItem(item.id)
+    local itemData = ItemDatabase.get_item(item.id)
     if not itemData then return end
     
     if itemData.effect == "heal" then
         CombatUtils.healMutating(player, itemData.value)
-        InventorySystem.removeItem(inventorySystem, slotIndex)
-        InventoryUI.clearSelection(state.inventoryUI)
+        InventorySystem.remove_item(inventorySystem, slotIndex)
+        InventoryUI.clear_selection(state.inventoryUI)
         gameState:syncPlayerToCharacter()
     elseif itemData.effect == "full_heal" then
         player.hp = player.maxHp
-        InventorySystem.removeItem(inventorySystem, slotIndex)
-        InventoryUI.clearSelection(state.inventoryUI)
+        InventorySystem.remove_item(inventorySystem, slotIndex)
+        InventoryUI.clear_selection(state.inventoryUI)
         gameState:syncPlayerToCharacter()
     elseif itemData.effect == "cure_poison" then
-        InventorySystem.removeItem(inventorySystem, slotIndex)
-        InventoryUI.clearSelection(state.inventoryUI)
+        InventorySystem.remove_item(inventorySystem, slotIndex)
+        InventoryUI.clear_selection(state.inventoryUI)
     elseif itemData.effect == "random" then
         local effects = {"heal_small", "heal_large", "damage", "nothing"}
         local effect = effects[math.random(1, #effects)]
@@ -558,10 +558,10 @@ function UnifiedMenu.useConsumable(state, gameState, slotIndex)
         elseif effect == "heal_large" then
             CombatUtils.healMutating(player, 100)
         elseif effect == "damage" then
-            CombatUtils.takeDamageMutating(player, 20)
+            CombatUtils.take_damageMutating(player, 20)
         end
-        InventorySystem.removeItem(inventorySystem, slotIndex)
-        InventoryUI.clearSelection(state.inventoryUI)
+        InventorySystem.remove_item(inventorySystem, slotIndex)
+        InventoryUI.clear_selection(state.inventoryUI)
         gameState:syncPlayerToCharacter()
     end
 end
@@ -580,7 +580,7 @@ function UnifiedMenu.mousemoved(state, x, y, gameState)
         local gridWidth = rightPanelWidth - 20
         
         if gameState then
-            InventoryUI.updateHover(state.inventoryUI, gameState:getInventorySystem(), x, y, gridX, gridY, gridWidth)
+            InventoryUI.update_hover(state.inventoryUI, gameState:getInventorySystem(), x, y, gridX, gridY, gridWidth)
         end
     elseif state.tabs[state.currentTab].key == "items" then
         local gridX = state.x + 20
@@ -588,7 +588,7 @@ function UnifiedMenu.mousemoved(state, x, y, gameState)
         local gridWidth = state.width - 250
         
         if gameState then
-            InventoryUI.updateHover(state.inventoryUI, gameState:getInventorySystem(), x, y, gridX, gridY, gridWidth)
+            InventoryUI.update_hover(state.inventoryUI, gameState:getInventorySystem(), x, y, gridX, gridY, gridWidth)
         end
         
         local detailX = gridX + gridWidth + 10
@@ -602,9 +602,9 @@ function UnifiedMenu.mousemoved(state, x, y, gameState)
         state.buttonHover_use = false
         state.buttonHover_equip = false
         
-        local selectedSlot = InventoryUI.getSelectedSlot(state.inventoryUI)
+        local selectedSlot = InventoryUI.get_selected_slot(state.inventoryUI)
         if selectedSlot then
-            local item = InventorySystem.getItem(gameState:getInventorySystem(), selectedSlot)
+            local item = InventorySystem.get_item(gameState:getInventorySystem(), selectedSlot)
             if item then
                 if x >= btnX and x <= btnX + btnWidth and y >= btnY and y <= btnY + btnHeight then
                     if item.type == ItemDatabase.TYPE.EQUIPMENT then

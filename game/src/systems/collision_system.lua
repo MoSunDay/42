@@ -12,14 +12,14 @@ function CollisionSystem.create(map)
 end
 
 -- Check if a point is walkable
-function CollisionSystem.isWalkable(state, x, y)
+function CollisionSystem.is_walkable(state, x, y)
     -- Check map boundaries
     if x < 0 or x > state.map.width or y < 0 or y > state.map.height then
         return false
     end
 
     -- Check buildings collision
-    if CollisionSystem.checkBuildingCollision(state, x, y) then
+    if CollisionSystem.check_building_collision(state, x, y) then
         return false
     end
 
@@ -37,7 +37,7 @@ function CollisionSystem.isWalkable(state, x, y)
 end
 
 -- Check collision with buildings
-function CollisionSystem.checkBuildingCollision(state, x, y, radius)
+function CollisionSystem.check_building_collision(state, x, y, radius)
     radius = radius or 16  -- Default player radius
 
     for _, building in ipairs(state.map.buildings or {}) do
@@ -54,7 +54,7 @@ function CollisionSystem.checkBuildingCollision(state, x, y, radius)
 end
 
 -- Check if a rectangle collides with buildings
-function CollisionSystem.checkRectCollision(state, x, y, width, height)
+function CollisionSystem.check_rect_collision(state, x, y, width, height)
     for _, building in ipairs(state.map.buildings or {}) do
         -- AABB collision detection
         if x < building.x + building.width and
@@ -69,7 +69,7 @@ function CollisionSystem.checkRectCollision(state, x, y, width, height)
 end
 
 -- Get valid position (adjust position if colliding)
-function CollisionSystem.getValidPosition(state, x, y, radius)
+function CollisionSystem.get_valid_position(state, x, y, radius)
     radius = radius or 16
 
     -- Check map boundaries
@@ -77,14 +77,14 @@ function CollisionSystem.getValidPosition(state, x, y, radius)
     y = math.max(radius, math.min(y, state.map.height - radius))
 
     -- If position is valid, return it
-    if CollisionSystem.isWalkable(state, x, y) then
+    if CollisionSystem.is_walkable(state, x, y) then
         return x, y
     end
 
     -- Check if inside a building, if so teleport to building edge
-    local building = CollisionSystem.getBuildingAt(state, x, y)
+    local building = CollisionSystem.get_building_at(state, x, y)
     if building then
-        return CollisionSystem.teleportToBuildingEdge(state, x, y, building, radius)
+        return CollisionSystem.teleport_to_building_edge(state, x, y, building, radius)
     end
 
     -- Try to find nearby valid position
@@ -96,7 +96,7 @@ function CollisionSystem.getValidPosition(state, x, y, radius)
             local testX = x + math.cos(angle) * r
             local testY = y + math.sin(angle) * r
 
-            if CollisionSystem.isWalkable(state, testX, testY) then
+            if CollisionSystem.is_walkable(state, testX, testY) then
                 return testX, testY
             end
         end
@@ -107,11 +107,11 @@ function CollisionSystem.getValidPosition(state, x, y, radius)
 end
 
 -- Check if movement from (x1, y1) to (x2, y2) is valid
-function CollisionSystem.canMove(state, x1, y1, x2, y2, radius)
+function CollisionSystem.can_move(state, x1, y1, x2, y2, radius)
     radius = radius or 16
 
     -- Check destination
-    if not CollisionSystem.isWalkable(state, x2, y2) then
+    if not CollisionSystem.is_walkable(state, x2, y2) then
         return false, x1, y1
     end
 
@@ -131,7 +131,7 @@ function CollisionSystem.canMove(state, x1, y1, x2, y2, radius)
         local checkX = x1 + dx * t
         local checkY = y1 + dy * t
 
-        if not CollisionSystem.isWalkable(state, checkX, checkY) then
+        if not CollisionSystem.is_walkable(state, checkX, checkY) then
             -- Find last valid position
             if i > 0 then
                 t = (i - 1) / steps
@@ -146,11 +146,11 @@ function CollisionSystem.canMove(state, x1, y1, x2, y2, radius)
 end
 
 -- Get closest walkable position to target
-function CollisionSystem.getClosestWalkable(state, targetX, targetY, fromX, fromY, radius)
+function CollisionSystem.get_closest_walkable(state, targetX, targetY, fromX, fromY, radius)
     radius = radius or 16
 
     -- If target is walkable, return it
-    if CollisionSystem.isWalkable(state, targetX, targetY) then
+    if CollisionSystem.is_walkable(state, targetX, targetY) then
         return targetX, targetY
     end
 
@@ -173,7 +173,7 @@ function CollisionSystem.getClosestWalkable(state, targetX, targetY, fromX, from
         local testX = fromX + dx * mid
         local testY = fromY + dy * mid
 
-        if CollisionSystem.isWalkable(state, testX, testY) then
+        if CollisionSystem.is_walkable(state, testX, testY) then
             bestT = mid
             low = mid
         else
@@ -185,7 +185,7 @@ function CollisionSystem.getClosestWalkable(state, targetX, targetY, fromX, from
 end
 
 -- Check if a circle collides with any obstacle
-function CollisionSystem.checkCircleCollision(state, x, y, radius)
+function CollisionSystem.check_circle_collision(state, x, y, radius)
     -- Check map boundaries
     if x - radius < 0 or x + radius > state.map.width or
        y - radius < 0 or y + radius > state.map.height then
@@ -212,12 +212,12 @@ function CollisionSystem.checkCircleCollision(state, x, y, radius)
 end
 
 -- Update map reference
-function CollisionSystem.setMap(state, map)
+function CollisionSystem.set_map(state, map)
     state.map = map
 end
 
 -- Get building at position
-function CollisionSystem.getBuildingAt(state, x, y)
+function CollisionSystem.get_building_at(state, x, y)
     if not state.map.buildings then
         return nil
     end
@@ -233,7 +233,7 @@ function CollisionSystem.getBuildingAt(state, x, y)
 end
 
 -- Teleport to building edge (find closest edge position)
-function CollisionSystem.teleportToBuildingEdge(state, x, y, building, radius)
+function CollisionSystem.teleport_to_building_edge(state, x, y, building, radius)
     radius = radius or 16
     local margin = radius + 5  -- Extra margin from building edge
 
@@ -251,7 +251,7 @@ function CollisionSystem.teleportToBuildingEdge(state, x, y, building, radius)
 
     for _, edge in ipairs(edges) do
         -- Check if edge position is walkable
-        if CollisionSystem.isWalkable(state, edge.x, edge.y) then
+        if CollisionSystem.is_walkable(state, edge.x, edge.y) then
             local dist = math.sqrt((edge.x - x)^2 + (edge.y - y)^2)
             if dist < closestDist then
                 closestDist = dist
@@ -260,8 +260,6 @@ function CollisionSystem.teleportToBuildingEdge(state, x, y, building, radius)
         end
     end
 
-    print(string.format("Teleported from building interior (%.0f, %.0f) to edge (%.0f, %.0f)",
-                       x, y, closestPos.x, closestPos.y))
 
     return closestPos.x, closestPos.y
 end

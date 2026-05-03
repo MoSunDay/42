@@ -10,7 +10,7 @@ function PetUI.create()
     return state
 end
 
-function PetUI.drawPet(state, pet, playerX, playerY, animationManager, assetManager)
+function PetUI.draw_pet(state, pet, playerX, playerY, animationManager, assetManager)
     if not pet then return end
 
     local petX = playerX - 40
@@ -18,7 +18,7 @@ function PetUI.drawPet(state, pet, playerX, playerY, animationManager, assetMana
 
     local offsetX, offsetY, rotation, scaleX, scaleY = 0, 0, 0, 1, 1
     if animationManager and pet.animationId then
-        offsetX, offsetY, rotation, scaleX, scaleY = AnimationManager.getTransform(animationManager, pet.animationId)
+        offsetX, offsetY, rotation, scaleX, scaleY = AnimationManager.get_transform(animationManager, pet.animationId)
     end
 
     love.graphics.push()
@@ -43,7 +43,7 @@ function PetUI.drawPet(state, pet, playerX, playerY, animationManager, assetMana
     )
 end
 
-function PetUI.drawPetPanel(state, pet, x, y, width, height, assetManager)
+function PetUI.draw_pet_panel(state, pet, x, y, width, height, assetManager)
     if not pet then return end
 
     Components.drawOrnatePanel(x, y, width, height, assetManager, {
@@ -53,10 +53,10 @@ function PetUI.drawPetPanel(state, pet, x, y, width, height, assetManager)
         shimmer = true
     })
 
-    Theme.drawGemIcon(x + 25, y + 25, 12, Theme.gem.emerald)
+    Theme.draw_gem_icon(x + 25, y + 25, 12, Theme.gem.emerald)
 
     love.graphics.setColor(Theme.gold.bright)
-    love.graphics.setFont(love.graphics.getFont())
+    love.graphics.setFont(love.graphics.get_font())
     love.graphics.print(pet.name, x + 45, y + 12)
 
     local hpPercent = pet.hp / pet.maxHp

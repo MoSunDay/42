@@ -10,7 +10,7 @@ function PartyUI.create(assetManager)
     state.y = 220
     state.width = 200
     state.memberHeight = 65
-    state.font = assetManager:getFont("default")
+    state.font = assetManager:get_font("default")
     state.isVisible = true
     return state
 end
@@ -19,7 +19,7 @@ function PartyUI.toggle(state)
     state.isVisible = not state.isVisible
 end
 
-function PartyUI.setVisible(state, visible)
+function PartyUI.set_visible(state, visible)
     state.isVisible = visible
 end
 
@@ -28,7 +28,7 @@ function PartyUI.draw(state, partySystem)
         return
     end
 
-    local members = partySystem:getMembers()
+    local members = partySystem:get_members()
     local leaderIndex = partySystem.leaderIndex
     local totalHeight = 30 + #members * (state.memberHeight + 5)
 
@@ -42,12 +42,12 @@ function PartyUI.draw(state, partySystem)
 
     local memberY = state.y + 30
     for i, member in ipairs(members) do
-        PartyUI.drawMember(state, member, state.x + 5, memberY, i == leaderIndex)
+        PartyUI.draw_member(state, member, state.x + 5, memberY, i == leaderIndex)
         memberY = memberY + state.memberHeight + 5
     end
 end
 
-function PartyUI.drawMember(state, member, x, y, isLeader)
+function PartyUI.draw_member(state, member, x, y, isLeader)
     local w = state.width - 10
     local h = state.memberHeight
 
@@ -93,12 +93,12 @@ function PartyUI.drawMember(state, member, x, y, isLeader)
     end
 end
 
-function PartyUI.isMouseOver(state, x, y, partySystem)
+function PartyUI.is_mouse_over(state, x, y, partySystem)
     if not state.isVisible or partySystem:isEmpty() then
         return false
     end
 
-    local members = partySystem:getMembers()
+    local members = partySystem:get_members()
     local totalHeight = 30 + #members * (state.memberHeight + 5)
 
     return x >= state.x and x <= state.x + state.width and

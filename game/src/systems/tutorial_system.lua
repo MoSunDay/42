@@ -127,22 +127,21 @@ local TUTORIALS = {
     }
 }
 
-function TutorialSystem.new()
+function TutorialSystem.create()
     return {
         completedTutorials = {},
         currentTutorial = nil,
         currentPage = 1,
-        isActive = false,
+        is_active = false,
         highlightElement = nil,
         onCompleteCallback = nil,
         onSkipCallback = nil,
     }
 end
 
-function TutorialSystem.startTutorial(state, tutorialId)
+function TutorialSystem.start_tutorial(state, tutorialId)
     local tutorial = TUTORIALS[tutorialId]
     if not tutorial then
-        print("Tutorial not found: " .. tutorialId)
         return false
     end
     
@@ -152,25 +151,25 @@ function TutorialSystem.startTutorial(state, tutorialId)
     
     state.currentTutorial = tutorial
     state.currentPage = 1
-    state.isActive = true
+    state.is_active = true
     state.highlightElement = tutorial.pages[1].highlight
     
     return true
 end
 
-function TutorialSystem.nextPage(state)
-    if not state.isActive or not state.currentTutorial then return end
+function TutorialSystem.next_page(state)
+    if not state.is_active or not state.currentTutorial then return end
     
     if state.currentPage < #state.currentTutorial.pages then
         state.currentPage = state.currentPage + 1
         state.highlightElement = state.currentTutorial.pages[state.currentPage].highlight
     else
-        TutorialSystem.completeTutorial(state)
+        TutorialSystem.complete_tutorial(state)
     end
 end
 
-function TutorialSystem.prevPage(state)
-    if not state.isActive or not state.currentTutorial then return end
+function TutorialSystem.prev_page(state)
+    if not state.is_active or not state.currentTutorial then return end
     
     if state.currentPage > 1 then
         state.currentPage = state.currentPage - 1
@@ -178,7 +177,7 @@ function TutorialSystem.prevPage(state)
     end
 end
 
-function TutorialSystem.skipTutorial(state)
+function TutorialSystem.skip_tutorial(state)
     if not state.currentTutorial then return end
     
     if not state.currentTutorial.skipable then
@@ -186,7 +185,7 @@ function TutorialSystem.skipTutorial(state)
     end
     
     state.completedTutorials[state.currentTutorial.id] = true
-    state.isActive = false
+    state.is_active = false
     
     if state.onSkipCallback then
         state.onSkipCallback(state.currentTutorial.id)
@@ -199,11 +198,11 @@ function TutorialSystem.skipTutorial(state)
     return true
 end
 
-function TutorialSystem.completeTutorial(state)
+function TutorialSystem.complete_tutorial(state)
     if not state.currentTutorial then return end
     
     state.completedTutorials[state.currentTutorial.id] = true
-    state.isActive = false
+    state.is_active = false
     
     if state.onCompleteCallback then
         state.onCompleteCallback(state.currentTutorial.id)
@@ -214,50 +213,50 @@ function TutorialSystem.completeTutorial(state)
     state.highlightElement = nil
 end
 
-function TutorialSystem.isTutorialActive(state)
-    return state.isActive
+function TutorialSystem.is_tutorial_active(state)
+    return state.is_active
 end
 
-function TutorialSystem.getCurrentPage(state)
+function TutorialSystem.get_current_page(state)
     if not state.currentTutorial then return nil end
     return state.currentTutorial.pages[state.currentPage]
 end
 
-function TutorialSystem.getCurrentHighlight(state)
+function TutorialSystem.get_current_highlight(state)
     return state.highlightElement
 end
 
-function TutorialSystem.isFirstPage(state)
+function TutorialSystem.is_first_page(state)
     return state.currentPage == 1
 end
 
-function TutorialSystem.isLastPage(state)
+function TutorialSystem.is_last_page(state)
     if not state.currentTutorial then return true end
     return state.currentPage == #state.currentTutorial.pages
 end
 
-function TutorialSystem.canSkip(state)
+function TutorialSystem.can_skip(state)
     return state.currentTutorial and state.currentTutorial.skipable
 end
 
-function TutorialSystem.getProgress(state)
+function TutorialSystem.get_progress(state)
     if not state.currentTutorial then return 0, 0 end
     return state.currentPage, #state.currentTutorial.pages
 end
 
-function TutorialSystem.isCompleted(state, tutorialId)
+function TutorialSystem.is_completed(state, tutorialId)
     return state.completedTutorials[tutorialId] == true
 end
 
-function TutorialSystem.setOnCompleteCallback(state, callback)
+function TutorialSystem.set_on_complete_callback(state, callback)
     state.onCompleteCallback = callback
 end
 
-function TutorialSystem.setOnSkipCallback(state, callback)
+function TutorialSystem.set_on_skip_callback(state, callback)
     state.onSkipCallback = callback
 end
 
-function TutorialSystem.getAllTutorials()
+function TutorialSystem.get_all_tutorials()
     return TUTORIALS
 end
 

@@ -57,13 +57,13 @@ function SpiritCrystalSystem.create()
     return state
 end
 
-function SpiritCrystalSystem.addCrystal(state, tier, amount)
+function SpiritCrystalSystem.add_crystal(state, tier, amount)
     if tier < 1 or tier > 4 then return false end
     state.crystals[tier] = state.crystals[tier] + (amount or 1)
     return true
 end
 
-function SpiritCrystalSystem.addCrystalValue(state, value)
+function SpiritCrystalSystem.add_crystal_value(state, value)
     local remaining = value
     for tier = 4, 1, -1 do
         local tierValue = SpiritCrystalSystem.TIER_VALUES[tier]
@@ -80,12 +80,12 @@ function SpiritCrystalSystem.addCrystalValue(state, value)
     return true
 end
 
-function SpiritCrystalSystem.getCrystalCount(state, tier)
+function SpiritCrystalSystem.get_crystal_count(state, tier)
     if tier < 1 or tier > 4 then return 0 end
     return state.crystals[tier]
 end
 
-function SpiritCrystalSystem.getTotalValue(state)
+function SpiritCrystalSystem.get_total_value(state)
     local total = 0
     for tier = 1, 4 do
         total = total + state.crystals[tier] * SpiritCrystalSystem.TIER_VALUES[tier]
@@ -93,7 +93,7 @@ function SpiritCrystalSystem.getTotalValue(state)
     return total
 end
 
-function SpiritCrystalSystem.removeCrystal(state, tier, amount)
+function SpiritCrystalSystem.remove_crystal(state, tier, amount)
     if state.crystals[tier] < (amount or 1) then
         return false
     end
@@ -101,8 +101,8 @@ function SpiritCrystalSystem.removeCrystal(state, tier, amount)
     return true
 end
 
-function SpiritCrystalSystem.spendValue(state, cost)
-    if SpiritCrystalSystem.getTotalValue(state) < cost then
+function SpiritCrystalSystem.spend_value(state, cost)
+    if SpiritCrystalSystem.get_total_value(state) < cost then
         return false, "灵晶不足"
     end
 
@@ -129,13 +129,13 @@ function SpiritCrystalSystem.spendValue(state, cost)
     return true
 end
 
-function SpiritCrystalSystem.canEnhance(state, currentLevel)
+function SpiritCrystalSystem.can_enhance(state, currentLevel)
     if currentLevel >= SpiritCrystalSystem.MAX_ENHANCE_LEVEL then
         return false, "已达最大强化等级"
     end
 
     local cost = SpiritCrystalSystem.ENHANCE_COSTS[currentLevel + 1]
-    local totalValue = SpiritCrystalSystem.getTotalValue(state)
+    local totalValue = SpiritCrystalSystem.get_total_value(state)
 
     if totalValue < cost then
         return false, string.format("需要 %d 灵晶，当前 %d", cost, totalValue)
@@ -145,20 +145,20 @@ function SpiritCrystalSystem.canEnhance(state, currentLevel)
 end
 
 function SpiritCrystalSystem.enhance(state, currentLevel)
-    local canEnhanceResult, costOrMsg = SpiritCrystalSystem.canEnhance(state, currentLevel)
+    local canEnhanceResult, costOrMsg = SpiritCrystalSystem.can_enhance(state, currentLevel)
     if not canEnhanceResult then
         return false, costOrMsg
     end
 
-    return SpiritCrystalSystem.spendValue(state, costOrMsg)
+    return SpiritCrystalSystem.spend_value(state, costOrMsg)
 end
 
-function SpiritCrystalSystem.getEnhancementBonus(crystalType, level)
+function SpiritCrystalSystem.get_enhancement_bonus(crystalType, level)
     level = level or 0
     return level * 2
 end
 
-function SpiritCrystalSystem.generateDrop(enemyTier, preferredType)
+function SpiritCrystalSystem.generate_drop(enemyTier, preferredType)
     local drops = {}
     local dropCount = enemyTier
 
@@ -195,15 +195,15 @@ function SpiritCrystalSystem.generateDrop(enemyTier, preferredType)
     return drops
 end
 
-function SpiritCrystalSystem.getPreferredCrystalType(enemy)
+function SpiritCrystalSystem.get_preferred_crystal_type(enemy)
     return nil
 end
 
-function SpiritCrystalSystem.getAllCrystals(state)
+function SpiritCrystalSystem.get_all_crystals(state)
     return state.crystals
 end
 
-function SpiritCrystalSystem.getCrystalInfo(state, tier)
+function SpiritCrystalSystem.get_crystal_info(state, tier)
     if tier < 1 or tier > 4 then return nil end
 
     return {

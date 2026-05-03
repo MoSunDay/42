@@ -8,17 +8,17 @@ local Theme = require("src.ui.theme")
 local AvatarRenderer = {}
 
 -- Draw character avatar (uses unified appearance system)
-function AvatarRenderer.drawAvatar(x, y, size, character)
+function AvatarRenderer.draw_avatar(x, y, size, character)
     if not character then
         return
     end
 
-    local appearance = AppearanceSystem.createAppearance(character)
-    AppearanceSystem.drawAvatar(x, y, size, appearance)
+    local appearance = AppearanceSystem.create_appearance(character)
+    AppearanceSystem.draw_avatar(x, y, size, appearance)
 end
 
 -- Draw character info panel
-function AvatarRenderer.drawCharacterPanel(x, y, width, height, character, font, assetManager)
+function AvatarRenderer.draw_character_panel(x, y, width, height, character, font, assetManager)
     if not character then
         return
     end
@@ -31,7 +31,7 @@ function AvatarRenderer.drawCharacterPanel(x, y, width, height, character, font,
     local avatarSize = 30
     local avatarX = x + avatarSize + 10
     local avatarY = y + avatarSize + 10
-    AvatarRenderer.drawAvatar(avatarX, avatarY, avatarSize, character)
+    AvatarRenderer.draw_avatar(avatarX, avatarY, avatarSize, character)
     
     -- Character name
     love.graphics.setFont(font)
@@ -53,7 +53,7 @@ function AvatarRenderer.drawCharacterPanel(x, y, width, height, character, font,
 end
 
 -- Draw HP bar (for battle)
-function AvatarRenderer.drawHPBar(x, y, width, height, current, max, assetManager)
+function AvatarRenderer.draw_hp_bar(x, y, width, height, current, max, assetManager)
     local hpPercent = current / max
     Components.drawOrnateHPBar(x, y, width, height, hpPercent, nil, assetManager)
     

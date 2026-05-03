@@ -74,7 +74,7 @@ end
 print("\n2. 测试对象创建...")
 
 local assetManager = AssetManager.create()
-AssetManager.loadAll(assetManager)
+AssetManager.load_all(assetManager)
 print("   ✓ AssetManager 创建成功")
 
 local camera = Camera.create()
@@ -89,7 +89,7 @@ print("   ✓ Map 创建成功")
 -- 测试玩家移动
 print("\n3. 测试玩家移动...")
 
-Player.moveTo(player, 200, 200)
+Player.move_to(player, 200, 200)
 print("   ✓ 设置移动目标")
 
 -- 模拟更新
@@ -110,7 +110,7 @@ Camera.follow(camera, player.x, player.y, 0.016)
 print("   ✓ 相机位置: (" .. camera.x .. ", " .. camera.y .. ")")
 
 -- 测试坐标转换
-local worldX, worldY = Camera.toWorld(camera, 640, 360)
+local worldX, worldY = Camera.to_world(camera, 640, 360)
 print("   ✓ 屏幕坐标转世界坐标: (640, 360) -> (" .. worldX .. ", " .. worldY .. ")")
 
 print("\n=== 所有测试通过！ ===\n")
