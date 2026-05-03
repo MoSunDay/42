@@ -44,12 +44,12 @@ function MapData.create(config)
     return state
 end
 
-function MapData.getSpawnPoint(state, index)
+function MapData.get_spawn_point(state, index)
     index = index or 1
     return state.spawnPoints[index] or state.spawnPoints[1]
 end
 
-function MapData.isCollision(state, x, y)
+function MapData.is_collision(state, x, y)
     local tileX = math.floor(x / state.tileSize)
     local tileY = math.floor(y / state.tileSize)
 
@@ -60,18 +60,18 @@ function MapData.isCollision(state, x, y)
     return false
 end
 
-function MapData.getSeasonTheme(state, season)
+function MapData.get_season_theme(state, season)
     if state.cachedSeason == season and state.themeCache[season] then
         return state.themeCache[season]
     end
 
-    state.themeCache[season] = MapThemes.getSeasonTheme(season)
+    state.themeCache[season] = MapThemes.get_season_theme(season)
     state.cachedSeason = season
 
     return state.themeCache[season]
 end
 
-function MapData.getVisibleTileRange(state, camera)
+function MapData.get_visible_tile_range(state, camera)
     if not camera then
         local tilesX = math.floor(state.width / state.tileSize)
         local tilesY = math.floor(state.height / state.tileSize)
@@ -90,20 +90,20 @@ end
 
 function MapData.draw(state, camera)
     local season = state.season or "spring"
-    local theme = MapData.getSeasonTheme(state, season)
+    local theme = MapData.get_season_theme(state, season)
 
     love.graphics.setColor(state.backgroundColor)
     love.graphics.rectangle("fill", 0, 0, state.width, state.height)
 
-    MapData.drawGroundLayer(state, camera, theme)
+    MapData.draw_ground_layer(state, camera, theme)
 end
 
-function MapData.drawGroundLayer(state, camera, theme)
-    local startX, startY, endX, endY = MapData.getVisibleTileRange(state, camera)
+function MapData.draw_ground_layer(state, camera, theme)
+    local startX, startY, endX, endY = MapData.get_visible_tile_range(state, camera)
     local season = state.season or "spring"
 
     if not theme then
-        theme = MapData.getSeasonTheme(state, season)
+        theme = MapData.get_season_theme(state, season)
     end
 
     for y = startY, endY do
@@ -122,26 +122,26 @@ function MapData.drawGroundLayer(state, camera, theme)
                 end
             end
 
-            local tileTheme = MapData.getSeasonTheme(state, tileSeason)
+            local tileTheme = MapData.get_season_theme(state, tileSeason)
 
-            MapData.drawTile(state, x, y, px, py, tileTheme, tileSeason)
+            MapData.draw_tile(state, x, y, px, py, tileTheme, tileSeason)
         end
     end
 
-    MapData.drawBuildings(state)
+    MapData.draw_buildings(state)
 end
 
-function MapData.drawTile(state, x, y, px, py, theme, season)
+function MapData.draw_tile(state, x, y, px, py, theme, season)
     local isRoad = (x % 5 == 0 or y % 5 == 0)
 
     if isRoad then
-        MapData.drawRoadTile(state, x, y, px, py, theme)
+        MapData.draw_road_tile(state, x, y, px, py, theme)
     else
-        MapData.drawGrassTile(state, x, y, px, py, theme, season)
+        MapData.draw_grass_tile(state, x, y, px, py, theme, season)
     end
 end
 
-function MapData.drawRoadTile(state, x, y, px, py, theme)
+function MapData.draw_road_tile(state, x, y, px, py, theme)
     local colorIndex = (x + y) % 2
     if colorIndex == 0 then
         love.graphics.setColor(theme.road1)
@@ -166,7 +166,7 @@ function MapData.drawRoadTile(state, x, y, px, py, theme)
     end
 end
 
-function MapData.drawGrassTile(state, x, y, px, py, theme, season)
+function MapData.draw_grass_tile(state, x, y, px, py, theme, season)
     local noise = (math.sin(x * 0.5) + math.cos(y * 0.7)) * 0.5
     local colorIndex = (x + y) % 2
 
@@ -181,10 +181,10 @@ function MapData.drawGrassTile(state, x, y, px, py, theme, season)
     end
     love.graphics.rectangle("fill", px, py, state.tileSize, state.tileSize)
 
-    MapData.drawSeasonalDecoration(state, x, y, px, py, theme, season)
+    MapData.draw_seasonal_decoration(state, x, y, px, py, theme, season)
 end
 
-function MapData.drawSeasonalDecoration(state, x, y, px, py, theme, season)
+function MapData.draw_seasonal_decoration(state, x, y, px, py, theme, season)
     if season == "spring" then
         if (x * 7 + y * 11) % 15 == 0 then
             local flowerColors = {theme.flower1, theme.flower2, theme.flower3}
@@ -216,15 +216,15 @@ function MapData.drawSeasonalDecoration(state, x, y, px, py, theme, season)
     end
 end
 
-function MapData.drawObjectsLayer(state, camera)
-    local startX, startY, endX, endY = MapData.getVisibleTileRange(state, camera)
+function MapData.draw_objects_layer(state, camera)
+    local startX, startY, endX, endY = MapData.get_visible_tile_range(state, camera)
 
     for _, obj in ipairs(state.objects) do
         local tileX = math.floor(obj.x / state.tileSize)
         local tileY = math.floor(obj.y / state.tileSize)
 
         if tileX >= startX and tileX <= endX and tileY >= startY and tileY <= endY then
-            MapData.drawObject(state, obj)
+            MapData.draw_object(state, obj)
         end
     end
 
@@ -234,31 +234,31 @@ function MapData.drawObjectsLayer(state, camera)
             visible = camera:isVisible(building.x, building.y, building.width, building.height)
         end
         if visible then
-            MapData.drawBuilding(state, building)
+            MapData.draw_building(state, building)
         end
     end
 end
 
-function MapData.drawObject(state, obj)
+function MapData.draw_object(state, obj)
     local objType = obj.type or "tree"
-    local theme = MapData.getSeasonTheme(state, state.season)
+    local theme = MapData.get_season_theme(state, state.season)
 
     if objType == "tree" then
-        MapObjectRenderer.drawTree(obj.x, obj.y, obj.size or 1, obj.theme or theme)
+        MapObjectRenderer.draw_tree(obj.x, obj.y, obj.size or 1, obj.theme or theme)
     elseif objType == "rock" then
-        MapObjectRenderer.drawRock(obj.x, obj.y, obj.size or 1, obj.theme or theme)
+        MapObjectRenderer.draw_rock(obj.x, obj.y, obj.size or 1, obj.theme or theme)
     elseif objType == "water" then
-        MapObjectRenderer.drawWater(obj.x, obj.y, obj.width or state.tileSize, obj.height or state.tileSize, obj.theme or theme)
+        MapObjectRenderer.draw_water(obj.x, obj.y, obj.width or state.tileSize, obj.height or state.tileSize, obj.theme or theme)
     end
 end
 
-function MapData.drawBuildings(state)
+function MapData.draw_buildings(state)
     for _, building in ipairs(state.buildings) do
-        MapData.drawBuilding(state, building)
+        MapData.draw_building(state, building)
     end
 end
 
-function MapData.drawBuilding(state, building)
+function MapData.draw_building(state, building)
     love.graphics.setColor(0, 0, 0, 0.12)
     love.graphics.polygon("fill",
         building.x + 8, building.y + building.height,
@@ -312,7 +312,7 @@ function MapData.drawBuilding(state, building)
     end
 end
 
-function MapData.drawOverlayLayer(state, camera)
+function MapData.draw_overlay_layer(state, camera)
     for _, overlay in ipairs(state.overlays) do
         local isVisible = true
         if camera and camera.isVisible then
@@ -320,12 +320,12 @@ function MapData.drawOverlayLayer(state, camera)
         end
 
         if isVisible then
-            MapData.drawOverlay(state, overlay)
+            MapData.draw_overlay(state, overlay)
         end
     end
 end
 
-function MapData.drawOverlay(state, overlay)
+function MapData.draw_overlay(state, overlay)
     love.graphics.setColor(overlay.color or {0.5, 0.5, 0.5, 0.8})
     if overlay.shape == "tree_top" then
         love.graphics.circle("fill", overlay.x + (overlay.width or state.tileSize) / 2,
@@ -337,15 +337,15 @@ function MapData.drawOverlay(state, overlay)
     end
 end
 
-function MapData.addObject(state, obj)
+function MapData.add_object(state, obj)
     table.insert(state.objects, obj)
 end
 
-function MapData.addOverlay(state, overlay)
+function MapData.add_overlay(state, overlay)
     table.insert(state.overlays, overlay)
 end
 
-function MapData.getObjectsInArea(state, x, y, width, height)
+function MapData.get_objects_in_area(state, x, y, width, height)
     local result = {}
     for _, obj in ipairs(state.objects) do
         if obj.x >= x and obj.x <= x + width and
@@ -356,7 +356,7 @@ function MapData.getObjectsInArea(state, x, y, width, height)
     return result
 end
 
-function MapData.getObjectAt(state, x, y)
+function MapData.get_object_at(state, x, y)
     for _, obj in ipairs(state.objects) do
         local objWidth = obj.width or state.tileSize
         local objHeight = obj.height or state.tileSize
@@ -368,7 +368,7 @@ function MapData.getObjectAt(state, x, y)
     return nil
 end
 
-function MapData.drawBorder(state)
+function MapData.draw_border(state)
     local season = state.season or "spring"
     local borderColor = season == "winter" and {0.6, 0.65, 0.7} or
                        season == "autumn" and {0.6, 0.4, 0.2} or
@@ -383,10 +383,10 @@ function MapData.drawBorder(state)
     love.graphics.setColor(1, 1, 1)
 end
 
-function MapData.drawFull(state, camera)
+function MapData.draw_full(state, camera)
     MapData.draw(state, camera)
-    MapData.drawObjectsLayer(state, camera)
-    MapData.drawBorder(state)
+    MapData.draw_objects_layer(state, camera)
+    MapData.draw_border(state)
 end
 
 return MapData

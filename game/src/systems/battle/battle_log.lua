@@ -16,7 +16,7 @@ function BattleLog.add(state, message)
     end
 end
 
-function BattleLog.getMessages(state)
+function BattleLog.get_messages(state)
     return state.messages
 end
 
@@ -25,11 +25,11 @@ function BattleLog.clear(state)
     state.scrollOffset = 0
 end
 
-function BattleLog.getScrollOffset(state)
+function BattleLog.get_scroll_offset(state)
     return state.scrollOffset
 end
 
-function BattleLog.setScrollOffset(state, offset)
+function BattleLog.set_scroll_offset(state, offset)
     state.scrollOffset = offset
 end
 

@@ -58,7 +58,7 @@ print("   ✓ Equipment works")
 print()
 
 print("5. Testing stat bonuses...")
-local totalStats = system:getTotalStats()
+local totalStats = system:get_total_stats()
 print("   Total stats from equipment:")
 for stat, value in pairs(totalStats) do
     if value > 0 then
@@ -74,7 +74,7 @@ end
 print()
 
 print("6. Testing defense percentage...")
-local defPercent = system:getDefensePercent()
+local defPercent = system:get_defense_percent()
 print("   Defense reduction: " .. string.format("%.1f", defPercent * 100) .. "%")
 if defPercent > 0 then
     print("   ✓ Defense percentage calculated")
@@ -178,11 +178,11 @@ local reqItem = {
     requirements = {level = 20, strength = 30}
 }
 
-local canEquip = system:canEquip("weapon", reqItem, {level = 15, strength = 25})
-if canEquip == false then
+local can_equip = system:can_equip("weapon", reqItem, {level = 15, strength = 25})
+if can_equip == false then
     print("   Requirements: Level 20, STR 30")
     print("   Player: Level 15, STR 25")
-    print("   Can equip: " .. tostring(canEquip))
+    print("   Can equip: " .. tostring(can_equip))
     print("   ✓ Requirement checking works")
 else
     print("   - Requirements not implemented")
@@ -199,8 +199,8 @@ if data then
     local newSystem = EquipmentSystem.new()
     newSystem:deserialize(data)
     
-    local stats1 = system:getTotalStats()
-    local stats2 = newSystem:getTotalStats()
+    local stats1 = system:get_total_stats()
+    local stats2 = newSystem:get_total_stats()
     
     if stats1.attack == stats2.attack then
         print("   ✓ Serialization preserves stats")

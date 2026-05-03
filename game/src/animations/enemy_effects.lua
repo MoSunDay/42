@@ -58,7 +58,7 @@ function EnemyEffects.create()
     }
 end
 
-function EnemyEffects.getEffectData(enemyType)
+function EnemyEffects.get_effect_data(enemyType)
     for key, effect in pairs(EFFECT_DATABASE) do
         if string.find(string.lower(enemyType), key) then
             return effect
@@ -74,8 +74,8 @@ function EnemyEffects.getEffectData(enemyType)
     }
 end
 
-function EnemyEffects.createAttackEffect(state, enemyType, x, y, targetX, targetY)
-    local effect = EnemyEffects.getEffectData(enemyType)
+function EnemyEffects.create_attack_effect(state, enemyType, x, y, targetX, targetY)
+    local effect = EnemyEffects.get_effect_data(enemyType)
 
     local attackEffect = {
         type = effect.attackParticles,
@@ -178,8 +178,8 @@ function EnemyEffects.draw(state)
     end
 end
 
-function EnemyEffects.getMovementOffset(enemyType, time)
-    local effect = EnemyEffects.getEffectData(enemyType)
+function EnemyEffects.get_movement_offset(enemyType, time)
+    local effect = EnemyEffects.get_effect_data(enemyType)
     local offsetX, offsetY = 0, 0
 
     if effect.moveStyle == "bounce" then

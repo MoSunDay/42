@@ -20,11 +20,11 @@ for id, data in pairs(Bosses) do
     NPC_DATABASE[id] = data
 end
 
-local function getNPCData(npcId)
+local function get_npc_data(npcId)
     return NPC_DATABASE[npcId]
 end
 
-local function getNPCsByType(npcType)
+local function get_npcs_by_type(npcType)
     local result = {}
     for id, data in pairs(NPC_DATABASE) do
         if data.type == npcType then
@@ -34,7 +34,7 @@ local function getNPCsByType(npcType)
     return result
 end
 
-local function getRandomMonster()
+local function get_random_monster()
     local monsters = {}
     for id, data in pairs(NPC_DATABASE) do
         if data.type == "monster" then
@@ -48,7 +48,7 @@ local function getRandomMonster()
     return nil
 end
 
-local function getRandomBoss()
+local function get_random_boss()
     local bosses = {}
     for id, data in pairs(NPC_DATABASE) do
         if data.type == "boss" then
@@ -62,11 +62,11 @@ local function getRandomBoss()
     return nil
 end
 
-local function getMonstersByTheme(theme)
+local function get_monsters_by_theme(theme)
     return Monsters.getByTheme(theme)
 end
 
-local function getMonsterCount()
+local function get_monster_count()
     local count = 0
     for _ in pairs(allMonsters) do
         count = count + 1
@@ -76,10 +76,10 @@ end
 
 return {
     database = NPC_DATABASE,
-    getNPCData = getNPCData,
-    getNPCsByType = getNPCsByType,
-    getRandomMonster = getRandomMonster,
-    getRandomBoss = getRandomBoss,
-    getMonstersByTheme = getMonstersByTheme,
-    getMonsterCount = getMonsterCount
+    get_npc_data = get_npc_data,
+    get_npcs_by_type = get_npcs_by_type,
+    get_random_monster = get_random_monster,
+    get_random_boss = get_random_boss,
+    get_monsters_by_theme = get_monsters_by_theme,
+    get_monster_count = get_monster_count
 }

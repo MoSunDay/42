@@ -41,21 +41,20 @@ local PET_DATABASE = {
     }
 }
 
-function PetSystem.new()
+function PetSystem.create()
     return {
         activePet = nil,
         animationManager = nil,
     }
 end
 
-function PetSystem.setAnimationManager(state, animManager)
+function PetSystem.set_animation_manager(state, animManager)
     state.animationManager = animManager
 end
 
 function PetSystem.summon(state, petId)
     local template = PET_DATABASE[petId]
     if not template then
-        print("Warning: Unknown pet: " .. tostring(petId))
         return false
     end
     
@@ -75,32 +74,30 @@ function PetSystem.summon(state, petId)
     }
     
     if state.animationManager then
-        AnimationManager.createAnimationSet(state.animationManager, state.activePet.animationId)
+        AnimationManager.create_animation_set(state.animationManager, state.activePet.animationId)
     end
     
-    print("Summoned: " .. state.activePet.name)
     return true
 end
 
 function PetSystem.dismiss(state)
     if state.activePet then
         if state.animationManager then
-            AnimationManager.removeEntity(state.animationManager, state.activePet.animationId)
+            AnimationManager.remove_entity(state.animationManager, state.activePet.animationId)
         end
-        print("Dismissed: " .. state.activePet.name)
         state.activePet = nil
     end
 end
 
-function PetSystem.getActivePet(state)
+function PetSystem.get_active_pet(state)
     return state.activePet
 end
 
-function PetSystem.hasPet(state)
+function PetSystem.has_pet(state)
     return state.activePet ~= nil
 end
 
-function PetSystem.takeDamage(state, damage)
+function PetSystem.take_damage(state, damage)
     if not state.activePet then
         return 0
     end
@@ -122,7 +119,7 @@ function PetSystem.takeDamage(state, damage)
     return actualDamage
 end
 
-function PetSystem.calculateDamage(state)
+function PetSystem.calculate_damage(state)
     if not state.activePet then
         return 0, false
     end
@@ -139,7 +136,7 @@ function PetSystem.calculateDamage(state)
     return damage, isCrit
 end
 
-function PetSystem.isAlive(state)
+function PetSystem.is_alive(state)
     return state.activePet and state.activePet.hp > 0
 end
 
@@ -149,7 +146,7 @@ function PetSystem.heal(state, amount)
     end
 end
 
-function PetSystem.getHPPercent(state)
+function PetSystem.get_hp_percent(state)
     if not state.activePet then
         return 0
     end
@@ -158,15 +155,15 @@ end
 
 function PetSystem.update(state, dt)
     if state.activePet and state.animationManager then
-        AnimationManager.updateEntity(state.animationManager, state.activePet.animationId, dt, false)
+        AnimationManager.update_entity(state.animationManager, state.activePet.animationId, dt, false)
     end
 end
 
-function PetSystem.getAllPets()
+function PetSystem.get_all_pets()
     return PET_DATABASE
 end
 
-function PetSystem.getPetData(petId)
+function PetSystem.get_pet_data(petId)
     return PET_DATABASE[petId]
 end
 

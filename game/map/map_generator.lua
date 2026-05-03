@@ -133,11 +133,11 @@ local BUILDING_TEMPLATES = {
     tomb = {width = 140, height = 160}
 }
 
-local function randomInRange(min, max)
+local function random_in_range(min, max)
     return math.random() * (max - min) + min
 end
 
-local function checkOverlap(x, y, w, h, existing, padding)
+local function check_overlap(x, y, w, h, existing, padding)
     padding = padding or 50
     for _, obj in ipairs(existing) do
         if not (x + w + padding < obj.x or x > obj.x + obj.width + padding or
@@ -148,7 +148,7 @@ local function checkOverlap(x, y, w, h, existing, padding)
     return false
 end
 
-local function generateBuildings(theme, mapWidth, mapHeight, count)
+local function generate_buildings(theme, mapWidth, mapHeight, count)
     local buildings = {}
     local themeData = THEMES[theme]
     local bTypes = themeData.buildingTypes
@@ -166,7 +166,7 @@ local function generateBuildings(theme, mapWidth, mapHeight, count)
             x = math.random(150, mapWidth - template.width - 150)
             y = math.random(150, mapHeight - template.height - 150)
             attempts = attempts + 1
-        until not checkOverlap(x, y, template.width, template.height, buildings, 80) or attempts >= maxAttempts
+        until not check_overlap(x, y, template.width, template.height, buildings, 80) or attempts >= maxAttempts
 
         if attempts < maxAttempts then
             table.insert(buildings, {
@@ -184,7 +184,7 @@ local function generateBuildings(theme, mapWidth, mapHeight, count)
     return buildings
 end
 
-local function generateEncounterZones(theme, mapWidth, mapHeight, count, level)
+local function generate_encounter_zones(theme, mapWidth, mapHeight, count, level)
     local zones = {}
     local themeData = THEMES[theme]
     local monsters = themeData.monsters
@@ -207,7 +207,7 @@ local function generateEncounterZones(theme, mapWidth, mapHeight, count, level)
     return zones
 end
 
-local function generateSpawnPoints(mapWidth, mapHeight, count)
+local function generate_spawn_points(mapWidth, mapHeight, count)
     local spawns = {}
 
     table.insert(spawns, {
@@ -229,7 +229,7 @@ local function generateSpawnPoints(mapWidth, mapHeight, count)
     return spawns
 end
 
-local function generateCollisionMap(mapWidth, mapHeight, tileSize)
+local function generate_collision_map(mapWidth, mapHeight, tileSize)
     local tilesX = math.floor(mapWidth / tileSize)
     local tilesY = math.floor(mapHeight / tileSize)
     local collisionMap = {}
@@ -277,10 +277,10 @@ function MapGenerator.generate(config)
         season = themeData.season,
         backgroundColor = themeData.bgColor,
 
-        buildings = generateBuildings(theme, mapWidth, mapHeight, buildingCount),
-        encounterZones = generateEncounterZones(theme, mapWidth, mapHeight, encounterCount, config.level or 1),
-        spawnPoints = generateSpawnPoints(mapWidth, mapHeight, spawnCount),
-        collisionMap = generateCollisionMap(mapWidth, mapHeight, tileSize),
+        buildings = generate_buildings(theme, mapWidth, mapHeight, buildingCount),
+        encounterZones = generate_encounter_zones(theme, mapWidth, mapHeight, encounterCount, config.level or 1),
+        spawnPoints = generate_spawn_points(mapWidth, mapHeight, spawnCount),
+        collisionMap = generate_collision_map(mapWidth, mapHeight, tileSize),
 
         npcs = {},
         objects = {},
@@ -309,7 +309,7 @@ function MapGenerator.generate(config)
     return map
 end
 
-function MapGenerator.getThemes()
+function MapGenerator.get_themes()
     local themes = {}
     for name, _ in pairs(THEMES) do
         table.insert(themes, name)
@@ -317,7 +317,7 @@ function MapGenerator.getThemes()
     return themes
 end
 
-function MapGenerator.getThemeData(theme)
+function MapGenerator.get_theme_data(theme)
     return THEMES[theme]
 end
 

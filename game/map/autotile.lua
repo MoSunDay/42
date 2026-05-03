@@ -40,41 +40,41 @@ function Autotile.create()
     local state = {}
     state.rules = {}
 
-    Autotile.registerDefaultRules(state)
+    Autotile.register_default_rules(state)
 
     return state
 end
 
-function Autotile.registerDefaultRules(state)
-    Autotile.registerRule(state, "water", {
+function Autotile.register_default_rules(state)
+    Autotile.register_rule(state, "water", {
         type = "47_tile",
         baseTileId = 1,
         connectTo = {"water", "water_deep"},
         edgeTiles = {grass = 10, dirt = 20, stone = 30}
     })
 
-    Autotile.registerRule(state, "cliff", {
+    Autotile.register_rule(state, "cliff", {
         type = "47_tile",
         baseTileId = 50,
         connectTo = {"cliff"},
         edgeTiles = {}
     })
 
-    Autotile.registerRule(state, "road", {
+    Autotile.register_rule(state, "road", {
         type = "16_tile",
         baseTileId = 100,
         connectTo = {"road"},
         edgeTiles = {}
     })
 
-    Autotile.registerRule(state, "fence", {
+    Autotile.register_rule(state, "fence", {
         type = "16_tile",
         baseTileId = 150,
         connectTo = {"fence"},
         edgeTiles = {}
     })
 
-    Autotile.registerRule(state, "wall", {
+    Autotile.register_rule(state, "wall", {
         type = "47_tile",
         baseTileId = 200,
         connectTo = {"wall", "wall_stone", "wall_wood"},
@@ -82,7 +82,7 @@ function Autotile.registerDefaultRules(state)
     })
 end
 
-function Autotile.registerRule(state, name, config)
+function Autotile.register_rule(state, name, config)
     state.rules[name] = {
         name = name,
         type = config.type or "47_tile",
@@ -92,28 +92,28 @@ function Autotile.registerRule(state, name, config)
     }
 end
 
-function Autotile.getNeighborBitmask(state, tiles, x, y, width, height, connectTypes)
+function Autotile.get_neighbor_bitmask(state, tiles, x, y, width, height, connectTypes)
     local bitmask = 0
     local connectSet = {}
     for _, t in ipairs(connectTypes) do
         connectSet[t] = true
     end
 
-    local function getTile(nx, ny)
+    local function get_tile(nx, ny)
         if nx < 0 or nx >= width or ny < 0 or ny >= height then
             return nil
         end
         return tiles[ny * width + nx + 1]
     end
 
-    local n = getTile(x, y - 1)
-    local s = getTile(x, y + 1)
-    local e = getTile(x + 1, y)
-    local w = getTile(x - 1, y)
-    local ne = getTile(x + 1, y - 1)
-    local nw = getTile(x - 1, y - 1)
-    local se = getTile(x + 1, y + 1)
-    local sw = getTile(x - 1, y + 1)
+    local n = get_tile(x, y - 1)
+    local s = get_tile(x, y + 1)
+    local e = get_tile(x + 1, y)
+    local w = get_tile(x - 1, y)
+    local ne = get_tile(x + 1, y - 1)
+    local nw = get_tile(x - 1, y - 1)
+    local se = get_tile(x + 1, y + 1)
+    local sw = get_tile(x - 1, y + 1)
 
     local tile = tiles[y * width + x + 1]
     local isConnectable = tile and connectSet[tile]
@@ -152,7 +152,7 @@ function Autotile.getNeighborBitmask(state, tiles, x, y, width, height, connectT
     return bitmask
 end
 
-function Autotile.getTileIndex(state, bitmask, ruleType)
+function Autotile.get_tile_index(state, bitmask, ruleType)
     if ruleType == "47_tile" then
         return TILE_47[bitmask] or 1
     elseif ruleType == "16_tile" then
@@ -161,7 +161,7 @@ function Autotile.getTileIndex(state, bitmask, ruleType)
     return 1
 end
 
-function Autotile.processMap(state, tiles, width, height)
+function Autotile.process_map(state, tiles, width, height)
     local result = {}
 
     for i = 1, #tiles do
@@ -175,8 +175,8 @@ function Autotile.processMap(state, tiles, width, height)
             if tileType then
                 local rule = state.rules[tileType]
                 if rule then
-                    local bitmask = Autotile.getNeighborBitmask(state, tiles, x, y, width, height, rule.connectTo)
-                    local tileIndex = Autotile.getTileIndex(state, bitmask, rule.type)
+                    local bitmask = Autotile.get_neighbor_bitmask(state, tiles, x, y, width, height, rule.connectTo)
+                    local tileIndex = Autotile.get_tile_index(state, bitmask, rule.type)
                     result[y * width + x + 1] = rule.baseTileId + tileIndex - 1
                 end
             end
@@ -186,7 +186,7 @@ function Autotile.processMap(state, tiles, width, height)
     return result
 end
 
-function Autotile.processTile(state, tiles, x, y, width, height)
+function Autotile.process_tile(state, tiles, x, y, width, height)
     local tileType = tiles[y * width + x + 1]
 
     if not tileType then
@@ -198,13 +198,13 @@ function Autotile.processTile(state, tiles, x, y, width, height)
         return tileType
     end
 
-    local bitmask = Autotile.getNeighborBitmask(state, tiles, x, y, width, height, rule.connectTo)
-    local tileIndex = Autotile.getTileIndex(state, bitmask, rule.type)
+    local bitmask = Autotile.get_neighbor_bitmask(state, tiles, x, y, width, height, rule.connectTo)
+    local tileIndex = Autotile.get_tile_index(state, bitmask, rule.type)
 
     return rule.baseTileId + tileIndex - 1
 end
 
-function Autotile.processMapLayer(state, map, layerName)
+function Autotile.process_map_layer(state, map, layerName)
     if not map or not map.layers then return end
 
     local layer = map.layers[layerName]
@@ -213,10 +213,10 @@ function Autotile.processMapLayer(state, map, layerName)
     local width = math.floor(map.width / map.tileSize)
     local height = math.floor(map.height / map.tileSize)
 
-    layer.tiles = Autotile.processMap(state, layer.tiles, width, height)
+    layer.tiles = Autotile.process_map(state, layer.tiles, width, height)
 end
 
-function Autotile.updateTile(state, tiles, x, y, width, height)
+function Autotile.update_tile(state, tiles, x, y, width, height)
     local affectedTiles = {}
 
     for dy = -1, 1 do
@@ -227,7 +227,7 @@ function Autotile.updateTile(state, tiles, x, y, width, height)
             if nx >= 0 and nx < width and ny >= 0 and ny < height then
                 local tileType = tiles[ny * width + nx + 1]
                 if tileType and state.rules[tileType] then
-                    local newTileId = Autotile.processTile(state, tiles, nx, ny, width, height)
+                    local newTileId = Autotile.process_tile(state, tiles, nx, ny, width, height)
                     if newTileId then
                         tiles[ny * width + nx + 1] = newTileId
                         table.insert(affectedTiles, {x = nx, y = ny, tileId = newTileId})
@@ -240,14 +240,14 @@ function Autotile.updateTile(state, tiles, x, y, width, height)
     return affectedTiles
 end
 
-function Autotile.getTileSpritePosition(state, tileIndex, columns)
+function Autotile.get_tile_sprite_position(state, tileIndex, columns)
     columns = columns or 8
     local col = (tileIndex - 1) % columns
     local row = math.floor((tileIndex - 1) / columns)
     return col, row
 end
 
-function Autotile.drawDebugBitmask(state, x, y, tileSize, bitmask)
+function Autotile.draw_debug_bitmask(state, x, y, tileSize, bitmask)
     love.graphics.setColor(0, 0, 0, 0.5)
     love.graphics.rectangle("fill", x, y, tileSize, tileSize)
 
@@ -272,7 +272,7 @@ function Autotile.drawDebugBitmask(state, x, y, tileSize, bitmask)
     love.graphics.print(tostring(bitmask), x + 2, y + 2)
 end
 
-function Autotile.getRuleForTile(state, tileType)
+function Autotile.get_rule_for_tile(state, tileType)
     return state.rules[tileType]
 end
 

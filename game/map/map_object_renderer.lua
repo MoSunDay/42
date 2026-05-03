@@ -2,9 +2,9 @@ local MapThemes = require("map.map_themes")
 
 local MapObjectRenderer = {}
 
-function MapObjectRenderer.drawTree(x, y, size, theme)
+function MapObjectRenderer.draw_tree(x, y, size, theme)
     size = size or 1
-    theme = theme or MapThemes.getSeasonTheme("spring")
+    theme = theme or MapThemes.get_season_theme("spring")
 
     local trunkWidth = 8 * size
     local trunkHeight = 20 * size
@@ -29,9 +29,9 @@ function MapObjectRenderer.drawTree(x, y, size, theme)
     love.graphics.circle("fill", x + canopyRadius * 0.2, y + canopyRadius * 0.2, canopyRadius * 0.4)
 end
 
-function MapObjectRenderer.drawRock(x, y, size, theme)
+function MapObjectRenderer.draw_rock(x, y, size, theme)
     size = size or 1
-    theme = theme or MapThemes.getSeasonTheme("spring")
+    theme = theme or MapThemes.get_season_theme("spring")
 
     love.graphics.setColor(theme.rock)
     love.graphics.polygon("fill",
@@ -51,8 +51,8 @@ function MapObjectRenderer.drawRock(x, y, size, theme)
     )
 end
 
-function MapObjectRenderer.drawWater(x, y, width, height, theme)
-    theme = theme or MapThemes.getSeasonTheme("spring")
+function MapObjectRenderer.draw_water(x, y, width, height, theme)
+    theme = theme or MapThemes.get_season_theme("spring")
     local time = love.timer.getTime and love.timer.getTime() or 0
 
     love.graphics.setColor(theme.water)

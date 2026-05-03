@@ -126,7 +126,7 @@ end
 
 function MapRenderer.renderTiles(map, renderX, renderY, renderWidth, renderHeight, scaleX, scaleY)
     local season = map.season or "spring"
-    local theme = MapData.getSeasonTheme and MapData.getSeasonTheme(map, season) or MapRenderer.getDefaultTheme(season)
+    local theme = MapData.get_season_theme and MapData.get_season_theme(map, season) or MapRenderer.getDefaultTheme(season)
 
     local tileSizeX = map.tileSize * scaleX
     local tileSizeY = map.tileSize * scaleY
@@ -164,7 +164,7 @@ function MapRenderer.renderTiles(map, renderX, renderY, renderWidth, renderHeigh
                 end
             end
 
-            local tileTheme = MapData.getSeasonTheme and MapData.getSeasonTheme(map, tileSeason) or MapRenderer.getDefaultTheme(tileSeason)
+            local tileTheme = MapData.get_season_theme and MapData.get_season_theme(map, tileSeason) or MapRenderer.getDefaultTheme(tileSeason)
 
             local isRoad = (x % 5 == 0 or y % 5 == 0)
 
@@ -317,7 +317,7 @@ function MapRenderer.drawRoundedRectLine(x, y, width, height, radius)
 end
 
 function MapRenderer.drawMapLabel(x, y, text, font)
-    font = font or love.graphics.getFont()
+    font = font or love.graphics.get_font()
     
     local textWidth = font:getWidth(text)
     local textHeight = font:getHeight()

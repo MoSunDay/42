@@ -39,10 +39,10 @@ function TutorialPanel.init(state)
     state.titleFont = love.graphics.newFont(24)
     state.smallFont = love.graphics.newFont(14)
     
-    TutorialPanel.updatePosition(state)
+    TutorialPanel.update_position(state)
 end
 
-function TutorialPanel.updatePosition(state)
+function TutorialPanel.update_position(state)
     local screenWidth = love.graphics.getWidth()
     local screenHeight = love.graphics.getHeight()
     
@@ -62,7 +62,7 @@ function TutorialPanel.hide(state)
     state.alpha = 0
 end
 
-function TutorialPanel.isVisible(state)
+function TutorialPanel.is_visible(state)
     return state.visible
 end
 
@@ -73,9 +73,9 @@ function TutorialPanel.update(state, dt)
         state.alpha = math.min(1, state.alpha + dt * 4)
     end
     
-    TutorialPanel.updatePosition(state)
+    TutorialPanel.update_position(state)
     
-    local mx, my = love.mouse.getPosition()
+    local mx, my = love.mouse.get_position()
     state.hoveredButton = nil
     
     local buttonStartX = state.panelX + (state.panelWidth - 320) / 2
@@ -109,21 +109,21 @@ function TutorialPanel.draw(state)
     
     love.graphics.push("all")
     
-    TutorialPanel.drawBackground(state)
-    TutorialPanel.drawPanel(state)
-    TutorialPanel.drawContent(state)
-    TutorialPanel.drawButtons(state)
-    TutorialPanel.drawProgress(state)
+    TutorialPanel.draw_background(state)
+    TutorialPanel.draw_panel(state)
+    TutorialPanel.draw_content(state)
+    TutorialPanel.draw_buttons(state)
+    TutorialPanel.draw_progress(state)
     
     love.graphics.pop()
 end
 
-function TutorialPanel.drawBackground(state)
+function TutorialPanel.draw_background(state)
     love.graphics.setColor(0, 0, 0, 0.5 * state.alpha)
     love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
 end
 
-function TutorialPanel.drawPanel(state)
+function TutorialPanel.draw_panel(state)
     love.graphics.setColor(1, 1, 1, state.alpha)
 
     local tutorial = state.tutorialSystem.currentTutorial
@@ -139,7 +139,7 @@ function TutorialPanel.drawPanel(state)
     love.graphics.setColor(1, 1, 1, 1)
 end
 
-function TutorialPanel.drawContent(state)
+function TutorialPanel.draw_content(state)
     local page = state.tutorialSystem:getCurrentPage()
     if not page then return end
 
@@ -162,23 +162,23 @@ function TutorialPanel.drawContent(state)
     end
 end
 
-function TutorialPanel.drawButtons(state)
+function TutorialPanel.draw_buttons(state)
     local buttonStartX = state.panelX + (state.panelWidth - 320) / 2
     
     if state.tutorialSystem:canSkip() then
-        TutorialPanel.drawButton(state, buttonStartX, state.buttonY, "跳过", "skip")
+        TutorialPanel.draw_button(state, buttonStartX, state.buttonY, "跳过", "skip")
     end
     
     local prevX = buttonStartX + 110
     local prevEnabled = not state.tutorialSystem:isFirstPage()
-    TutorialPanel.drawButton(state, prevX, state.buttonY, "上一页", "prev", prevEnabled)
+    TutorialPanel.draw_button(state, prevX, state.buttonY, "上一页", "prev", prevEnabled)
     
     local nextX = buttonStartX + 220
     local nextText = state.tutorialSystem:isLastPage() and "完成" or "下一页"
-    TutorialPanel.drawButton(state, nextX, state.buttonY, nextText, state.tutorialSystem:isLastPage() and "complete" or "next")
+    TutorialPanel.draw_button(state, nextX, state.buttonY, nextText, state.tutorialSystem:isLastPage() and "complete" or "next")
 end
 
-function TutorialPanel.drawButton(state, x, y, text, id, enabled)
+function TutorialPanel.draw_button(state, x, y, text, id, enabled)
     enabled = enabled ~= false
 
     local btnState = "normal"
@@ -196,7 +196,7 @@ function TutorialPanel.drawButton(state, x, y, text, id, enabled)
     )
 end
 
-function TutorialPanel.drawProgress(state)
+function TutorialPanel.draw_progress(state)
     local current, total = state.tutorialSystem:getProgress()
     if total == 0 then return end
     
@@ -223,7 +223,7 @@ function TutorialPanel.drawProgress(state)
     end
 end
 
-function TutorialPanel.handleClick(state, x, y)
+function TutorialPanel.handle_click(state, x, y)
     if not state.visible then return false end
     
     local buttonStartX = state.panelX + (state.panelWidth - 320) / 2
@@ -261,7 +261,7 @@ function TutorialPanel.handleClick(state, x, y)
     return false
 end
 
-function TutorialPanel.handleKeyPress(state, key)
+function TutorialPanel.handle_key_press(state, key)
     if not state.visible then return false end
     
     if key == "right" or key == "space" or key == "return" then

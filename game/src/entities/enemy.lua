@@ -39,70 +39,70 @@ function Enemy.create(enemyType, assetManager)
     return state
 end
 
-function Enemy.setAssetManager(state, assetManager)
+function Enemy.set_asset_manager(state, assetManager)
     state.assetManager = assetManager
 end
 
-function Enemy.hasSprite(state)
+function Enemy.has_sprite(state)
     if state.assetManager then
-        return state.assetManager:hasEnemySprite(state.type)
+        return state.assetManager:has_enemy_sprite(state.type)
     end
     return false
 end
 
-function Enemy.getSprite(state, direction)
+function Enemy.get_sprite(state, direction)
     if state.assetManager then
-        return state.assetManager:getEnemySprite(state.type, direction or state.currentDirection)
+        return state.assetManager:get_enemy_sprite(state.type, direction or state.currentDirection)
     end
     return nil
 end
 
-function Enemy.getAnimation(state, animName, direction, frameIndex)
+function Enemy.get_animation(state, animName, direction, frameIndex)
     if state.assetManager then
-        return state.assetManager:getEnemyAnimation(state.type, animName, direction or state.currentDirection, frameIndex)
+        return state.assetManager:get_enemy_animation(state.type, animName, direction or state.currentDirection, frameIndex)
     end
     return nil
 end
 
-function Enemy.updateAnimation(state, dt)
+function Enemy.update_animation(state, dt)
     state.animTimer = state.animTimer + dt
     if state.animTimer >= state.animSpeed then
         state.animTimer = 0
         local frameCount = 1
         if state.assetManager then
-            frameCount = state.assetManager:getEnemyAnimationFrameCount(state.type, "idle", state.currentDirection)
+            frameCount = state.assetManager:get_enemy_animation_frame_count(state.type, "idle", state.currentDirection)
             if frameCount == 0 then frameCount = 1 end
         end
         state.animFrame = (state.animFrame % frameCount) + 1
     end
 end
 
-function Enemy.setAnimationManager(state, animManager, animId)
+function Enemy.set_animation_manager(state, animManager, animId)
     state.animationManager = animManager
     state.animationId = animId
     if animManager and animId then
-        AnimationManager.createAnimationSet(animManager, animId)
+        AnimationManager.create_animation_set(animManager, animId)
     end
 end
 
-function Enemy.takeDamage(state, damage)
-    return CombatUtils.takeDamageMutating(state, damage)
+function Enemy.take_damage(state, damage)
+    return CombatUtils.take_damageMutating(state, damage)
 end
 
 function Enemy.heal(state, amount)
     CombatUtils.healMutating(state, amount)
 end
 
-function Enemy.isAlive(state)
+function Enemy.is_alive(state)
     return state.hp > 0
 end
 
-function Enemy.getHPPercent(state)
+function Enemy.get_hp_percent(state)
     return state.hp / state.maxHp
 end
 
-function Enemy.decideAction(state, partySize)
-    local hpPercent = Enemy.getHPPercent(state)
+function Enemy.decide_action(state, partySize)
+    local hpPercent = Enemy.get_hp_percent(state)
 
     if hpPercent < 0.25 then
         if math.random() < 0.4 then
@@ -119,15 +119,15 @@ function Enemy.decideAction(state, partySize)
     return "attack"
 end
 
-function Enemy.calculateDamage(state)
-    return CombatUtils.calculateDamageMutating(state)
+function Enemy.calculate_damage(state)
+    return CombatUtils.calculate_damageMutating(state)
 end
 
-function Enemy.checkEvade(state)
-    return CombatUtils.checkEvade(state)
+function Enemy.check_evade(state)
+    return CombatUtils.check_evade(state)
 end
 
-function Enemy.getRandomType()
+function Enemy.get_random_type()
     local tierRoll = math.random(100)
     local tierSum = 0
     local selectedTier = 1
@@ -144,11 +144,11 @@ function Enemy.getRandomType()
     return tierTypes[math.random(#tierTypes)]
 end
 
-function Enemy.getAllTypes()
+function Enemy.get_all_types()
     return EnemyData.TYPES
 end
 
-function Enemy.getTypesByTier(tier)
+function Enemy.get_types_by_tier(tier)
     local result = {}
     for id, data in pairs(EnemyData.TYPES) do
         if data.tier == tier then
@@ -158,15 +158,15 @@ function Enemy.getTypesByTier(tier)
     return result
 end
 
-function Enemy.getTierSpawnWeight(tier)
+function Enemy.get_tier_spawn_weight(tier)
     return EnemyData.TIER_SPAWN_WEIGHTS[tier] or 0
 end
 
-function Enemy.getTypesByTierList(tier)
+function Enemy.get_types_by_tier_list(tier)
     return EnemyData.TYPES_BY_TIER[tier] or {}
 end
 
-function Enemy.scaleForPartySize(state, partySize)
+function Enemy.scale_for_party_size(state, partySize)
     if not partySize or partySize <= 1 then return end
 
     local baseMultiplier = 1.0

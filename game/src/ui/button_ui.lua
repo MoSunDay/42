@@ -32,7 +32,7 @@ function ButtonUI.create(assetManager)
     return state
 end
 
-function ButtonUI.updatePositions(state)
+function ButtonUI.update_positions(state)
     local w, h = love.graphics.getDimensions()
     local startX = w - 140
     local startY = h - 100
@@ -44,10 +44,10 @@ function ButtonUI.updatePositions(state)
 end
 
 function ButtonUI.draw(state)
-    ButtonUI.updatePositions(state)
+    ButtonUI.update_positions(state)
     
-    local mx, my = love.mouse.getPosition()
-    local font = love.graphics.getFont()
+    local mx, my = love.mouse.get_position()
+    local font = love.graphics.get_font()
     
     for _, button in ipairs(state.buttons) do
         local isHover = mx >= button.x and mx <= button.x + button.width and
@@ -62,7 +62,7 @@ function ButtonUI.draw(state)
     end
 end
 
-function ButtonUI.checkClick(state, x, y)
+function ButtonUI.check_click(state, x, y)
     for _, button in ipairs(state.buttons) do
         if x >= button.x and x <= button.x + button.width and
            y >= button.y and y <= button.y + button.height then

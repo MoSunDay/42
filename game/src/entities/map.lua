@@ -24,13 +24,13 @@ function Map.create(width, height)
     }
 
     -- 生成城镇布局（简单的道路系统）
-    Map.generateTownLayout(state)
+    Map.generate_town_layout(state)
 
     return state
 end
 
 -- 生成城镇布局
-function Map.generateTownLayout(state)
+function Map.generate_town_layout(state)
     state.layout = {}
     local tilesX = math.floor(state.width / state.tileSize)
     local tilesY = math.floor(state.height / state.tileSize)

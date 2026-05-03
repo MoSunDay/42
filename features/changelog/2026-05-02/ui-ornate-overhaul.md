@@ -47,8 +47,8 @@ Commit: 99b2fb0a7c35b83446570e7572de829cc3946902
 - `skill_panel.lua` — ornate 面板/按钮 + 资源化标签页/列表容器 + 选中项发光
 - `button_ui.lua` — drawButtonSimple → drawOrnateButton + assetManager
 - `equipment_ui.lua` — drawOrnatePanel 带 assetManager + 装备槽 ornate 面板
-- `login_ui.lua` — ornate 面板/按钮 + 资源化标签/输入框 + login_panel 背景
-- `character_select_ui.lua` — ornate 面板/按钮/角色卡片 + drawInput 带 assetManager
+- `login_ui.lua` — ornate 面板/按钮 + 资源化标签/输入框 + login_panel 背景 + 全屏 shimmer + goldDust 粒子 + 标题金色 + 面板 glow/shimmer + tab 切换面板高度 lerp 过渡 + 输入框聚焦发光 + tab 金边替代原始矩形
+- `character_select_ui.lua` — 26处硬编码颜色→Theme引用 + 背景 shimmer + goldDust 粒子 + 角色卡 ornate HP/MP条 + 选中卡 shimmer + 3步进度指示器（金色菱形）+ 标题金色 + 菱形分隔符
 
 ### 非UI模块升级
 - `chat_system.lua` — 语音气泡从原始矩形升级为 drawOrnatePanel + 金色尾巴线条

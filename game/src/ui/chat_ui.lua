@@ -18,7 +18,7 @@ function ChatUI.create(assetManager)
     state.inputHeight = 40
     state.inputY = state.y + state.chatHeight + 5
     state.colors = Theme.colors.chat
-    state.font = assetManager:getFont("default")
+    state.font = assetManager:get_font("default")
     state.isVisible = true
     state.scrollOffset = 0
     state.manuallyScrolled = false
@@ -30,17 +30,17 @@ function ChatUI.toggle(state)
     state.isVisible = not state.isVisible
 end
 
-function ChatUI.setVisible(state, visible)
+function ChatUI.set_visible(state, visible)
     state.isVisible = visible
 end
 
 function ChatUI.draw(state, chatSystem)
     if not state.isVisible then return end
-    ChatUI.drawChatArea(state, chatSystem)
-    ChatUI.drawInputArea(state, chatSystem)
+    ChatUI.draw_chat_area(state, chatSystem)
+    ChatUI.draw_input_area(state, chatSystem)
 end
 
-function ChatUI.drawChatArea(state, chatSystem)
+function ChatUI.draw_chat_area(state, chatSystem)
     Components.drawOrnatePanel(state.x, state.y, state.width, state.chatHeight, state.assetManager, {
         title = "Chat",
         corners = true,
@@ -51,7 +51,7 @@ function ChatUI.drawChatArea(state, chatSystem)
 
     love.graphics.setFont(state.font)
     
-    local allMessages = chatSystem:getMessages()
+    local allMessages = chatSystem:get_messages()
     local lineHeight = 16
     local contentHeight = #allMessages * lineHeight
     local viewHeight = state.chatHeight - 35
@@ -94,20 +94,20 @@ function ChatUI.drawChatArea(state, chatSystem)
     love.graphics.setColor(1, 1, 1)
 end
 
-function ChatUI.drawInputArea(state, chatSystem)
-    local isActive = chatSystem:isInputting()
+function ChatUI.draw_input_area(state, chatSystem)
+    local is_active = chatSystem:isInputting()
     
-    Components.drawInput(state.x, state.inputY, state.width, state.inputHeight, isActive, state.assetManager)
+    Components.drawInput(state.x, state.inputY, state.width, state.inputHeight, is_active, state.assetManager)
     
-    if isActive then
-        Theme.drawGoldBorder(state.x, state.inputY, state.width, state.inputHeight, 1)
+    if is_active then
+        Theme.draw_gold_border(state.x, state.inputY, state.width, state.inputHeight, 1)
     end
 
     love.graphics.setFont(state.font)
     love.graphics.setColor(state.colors.text)
     
     local displayText = chatSystem:getInputText()
-    if isActive then
+    if is_active then
         if math.floor(love.timer.getTime() * 2) % 2 == 0 then
             displayText = displayText .. "|"
         end
@@ -121,14 +121,14 @@ function ChatUI.drawInputArea(state, chatSystem)
     love.graphics.print(displayText, state.x + 10, state.inputY + 12)
 end
 
-function ChatUI.isMouseOver(state, x, y)
+function ChatUI.is_mouse_over(state, x, y)
     if not state.isVisible then return false end
     return x >= state.x and x <= state.x + state.width and
            y >= state.y and y <= state.inputY + state.inputHeight
 end
 
 function ChatUI.mousescroll(state, x, y)
-    if ChatUI.isMouseOver(state, love.mouse.getX(), love.mouse.getY()) then
+    if ChatUI.is_mouse_over(state, love.mouse.getX(), love.mouse.getY()) then
         state.scrollOffset = state.scrollOffset + y * 20
         state.scrollOffset = math.max(0, state.scrollOffset)
     end

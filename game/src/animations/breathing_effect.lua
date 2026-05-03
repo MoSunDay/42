@@ -12,7 +12,7 @@ function BreathingEffect.update(state, dt)
     state.time = state.time + dt
 end
 
-function BreathingEffect.getScale(state)
+function BreathingEffect.get_scale(state)
     local breathCycle = math.sin(state.time * math.pi * 2 / state.breathSpeed)
     return 1.0 + breathCycle * state.breathAmount
 end
@@ -21,11 +21,11 @@ function BreathingEffect.reset(state)
     state.time = 0
 end
 
-function BreathingEffect.setSpeed(state, speed)
+function BreathingEffect.set_speed(state, speed)
     state.breathSpeed = speed
 end
 
-function BreathingEffect.setAmount(state, amount)
+function BreathingEffect.set_amount(state, amount)
     state.breathAmount = amount
 end
 

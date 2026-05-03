@@ -49,7 +49,7 @@ function Player.create(x, y, assetManager)
     state.collisionRadius = 16
 
     state.assetManager = assetManager
-    state.sprite = assetManager:getImage("player")
+    state.sprite = assetManager:get_image("player")
 
     state.collisionSystem = nil
 
@@ -92,16 +92,16 @@ function Player.create(x, y, assetManager)
     state.spriteAnimator = nil
     state.useSpriteAnimator = false
 
-    Player.initSpriteAnimator(state)
+    Player.init_sprite_animator(state)
 
     return state
 end
 
-function Player.initSpriteAnimator(state)
+function Player.init_sprite_animator(state)
     if not state.assetManager then return end
 
-    if state.assetManager:hasCharacterSprite(state.appearanceId) then
-        state.spriteAnimator = SpriteAnimator.new({
+    if state.assetManager:has_character_sprite(state.appearanceId) then
+        state.spriteAnimator = SpriteAnimator.create({
             frameWidth = 48,
             frameHeight = 48,
             frameDuration = 0.12
@@ -118,36 +118,36 @@ function Player.initSpriteAnimator(state)
     end
 end
 
-function Player.setAnimationManager(state, animManager)
+function Player.set_animation_manager(state, animManager)
     state.animationManager = animManager
     if animManager then
-        AnimationManager.createAnimationSet(state.animationManager, state.animationId)
+        AnimationManager.create_animation_set(state.animationManager, state.animationId)
     end
 end
 
-function Player.setAppearance(state, character)
-    state.appearance = AppearanceSystem.createAppearance(character)
+function Player.set_appearance(state, character)
+    state.appearance = AppearanceSystem.create_appearance(character)
     if character and character.appearanceId then
         state.appearanceId = character.appearanceId
-        Player.initSpriteAnimator(state)
+        Player.init_sprite_animator(state)
     end
 end
 
-function Player.setAppearanceId(state, appearanceId)
+function Player.set_appearance_id(state, appearanceId)
     state.appearanceId = appearanceId
-    Player.initSpriteAnimator(state)
+    Player.init_sprite_animator(state)
 end
 
-function Player.setMapBounds(state, width, height)
+function Player.set_map_bounds(state, width, height)
     state.mapWidth = width
     state.mapHeight = height
 end
 
-function Player.setCollisionSystem(state, collisionSystem)
+function Player.set_collision_system(state, collisionSystem)
     state.collisionSystem = collisionSystem
 end
 
-function Player.moveTo(state, x, y)
+function Player.move_to(state, x, y)
     if state.collisionSystem then
         x, y = CollisionSystem.getClosestWalkable(state.collisionSystem, x, y, state.x, state.y, state.collisionRadius)
     end
@@ -196,7 +196,7 @@ function Player.update(state, dt)
     end
 
     if state.animationManager then
-        AnimationManager.updateEntity(state.animationManager, state.animationId, dt, state.isMoving)
+        AnimationManager.update_entity(state.animationManager, state.animationId, dt, state.isMoving)
     end
 
     if not state.isMoving then
@@ -227,11 +227,11 @@ function Player.update(state, dt)
     local newY = state.y + dirY * moveDistance
 
     if state.collisionSystem then
-        local canMove, validX, validY = CollisionSystem.canMove(state.collisionSystem,
+        local can_move, validX, validY = CollisionSystem.can_move(state.collisionSystem,
             state.x, state.y, newX, newY, state.collisionRadius
         )
 
-        if canMove then
+        if can_move then
             state.x = validX
             state.y = validY
         else
@@ -259,7 +259,7 @@ function Player.draw(state)
 
     local offsetX, offsetY, rotation, scaleX, scaleY = 0, 0, 0, 1, 1
     if state.animationManager then
-        offsetX, offsetY, rotation, scaleX, scaleY = AnimationManager.getTransform(state.animationManager, state.animationId)
+        offsetX, offsetY, rotation, scaleX, scaleY = AnimationManager.get_transform(state.animationManager, state.animationId)
     end
 
     if state.useSpriteAnimator and state.spriteAnimator then
@@ -267,7 +267,7 @@ function Player.draw(state)
         state.spriteAnimator:setDirection(spriteDir)
         state.spriteAnimator:draw(state.x, state.y, 2, offsetX, offsetY)
     elseif state.appearance then
-        AppearanceSystem.drawSprite(state.x, state.y, 32, state.appearance, offsetX, offsetY, scaleX, scaleY)
+        AppearanceSystem.draw_sprite(state.x, state.y, 32, state.appearance, offsetX, offsetY, scaleX, scaleY)
     elseif state.sprite then
         love.graphics.push()
         love.graphics.translate(state.x + offsetX, state.y + offsetY)
@@ -297,48 +297,48 @@ function Player.draw(state)
     love.graphics.setColor(1, 1, 1)
 end
 
-function Player.takeDamage(state, damage)
-    return CombatUtils.takeDamageMutating(state, damage)
+function Player.take_damage(state, damage)
+    return CombatUtils.take_damageMutating(state, damage)
 end
 
 function Player.heal(state, amount)
     CombatUtils.healMutating(state, amount)
 end
 
-function Player.isAlive(state)
+function Player.is_alive(state)
     return state.hp > 0
 end
 
-function Player.getHPPercent(state)
+function Player.get_hp_percent(state)
     return state.hp / state.maxHp
 end
 
-function Player.calculateDamage(state)
-    return CombatUtils.calculateDamageMutating(state)
+function Player.calculate_damage(state)
+    return CombatUtils.calculate_damageMutating(state)
 end
 
-function Player.setEquipmentSystem(state, equipSystem)
+function Player.set_equipment_system(state, equipSystem)
     state.equipmentSystem = equipSystem
-    Player.updateStatsWithEquipment(state)
+    Player.update_stats_with_equipment(state)
 end
 
-function Player.setInventorySystem(state, invSystem)
+function Player.set_inventory_system(state, invSystem)
     state.inventorySystem = invSystem
 end
 
-function Player.updateStatsWithEquipment(state)
+function Player.update_stats_with_equipment(state)
     if not state.equipmentSystem then
         return
     end
 
-    local equipStats = EquipmentSystem.getTotalStats(state.equipmentSystem)
+    local equipStats = EquipmentSystem.get_total_stats(state.equipmentSystem)
     state.attack = state.baseAttack + equipStats.attack
     state.defense = state.baseDefense + equipStats.defense
     state.battleSpeed = 6 + equipStats.speed
     state.crit = state.baseCrit + equipStats.crit
     state.eva = state.baseEva + equipStats.eva
 
-    state.defPercent = EquipmentSystem.getDefensePercent(state.equipmentSystem)
+    state.defPercent = EquipmentSystem.get_defense_percent(state.equipmentSystem)
 
     local oldMaxHp = state.maxHp
     state.maxHp = state.baseHp + (equipStats.hp or 0)
@@ -347,8 +347,8 @@ function Player.updateStatsWithEquipment(state)
     end
 end
 
-function Player.checkEvade(state)
-    return CombatUtils.checkEvade(state)
+function Player.check_evade(state)
+    return CombatUtils.check_evade(state)
 end
 
 return Player

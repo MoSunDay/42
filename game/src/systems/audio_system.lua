@@ -51,12 +51,12 @@ function AudioSystem.create()
     state.sfxVolume = 0.7
     state.loadedFiles = { sfx = {}, bgm = {} }
 
-    AudioSystem.loadSoundFiles(state)
+    AudioSystem.load_sound_files(state)
 
     return state
 end
 
-function AudioSystem.loadSoundFiles(state)
+function AudioSystem.load_sound_files(state)
     local loadedCount = 0
 
     for category, sounds in pairs(SFX_PATHS) do
@@ -75,16 +75,14 @@ function AudioSystem.loadSoundFiles(state)
         end
     end
 
-    AudioSystem.generateFallbackSounds(state)
+    AudioSystem.generate_fallback_sounds(state)
 
     if loadedCount > 0 then
-        print("  - Loaded " .. loadedCount .. " sound files")
     else
-        print("  - No sound files found, using procedural sounds")
     end
 end
 
-function AudioSystem.generateFallbackSounds(state)
+function AudioSystem.generate_fallback_sounds(state)
     local defaults = {
         attack = {0.1, 440},
         hit = {0.08, 220},
@@ -107,13 +105,13 @@ function AudioSystem.generateFallbackSounds(state)
 
     for name, params in pairs(defaults) do
         if not state.sfx[name] then
-            state.sfx[name] = AudioSystem.createBeep(state, params[1], params[2])
+            state.sfx[name] = AudioSystem.create_beep(state, params[1], params[2])
         end
     end
 end
 
 -- Create a simple beep sound
-function AudioSystem.createBeep(state, duration, frequency)
+function AudioSystem.create_beep(state, duration, frequency)
     local sampleRate = 44100
     local samples = math.floor(sampleRate * duration)
     local soundData = love.sound.newSoundData(samples, sampleRate, 16, 1)
@@ -129,7 +127,7 @@ function AudioSystem.createBeep(state, duration, frequency)
     return love.audio.newSource(soundData, "static")
 end
 
-function AudioSystem.playBGM(state, mode)
+function AudioSystem.play_bgm(state, mode)
     if state.currentTheme == mode and state.bgm and state.bgm:isPlaying() then
         return
     end
@@ -153,7 +151,7 @@ function AudioSystem.playBGM(state, mode)
     end
 
     if not state.bgm then
-        state.bgm = AudioSystem.generateProceduralBGM(state, mode)
+        state.bgm = AudioSystem.generate_procedural_bgm(state, mode)
     end
 
     if state.bgm then
@@ -164,18 +162,18 @@ function AudioSystem.playBGM(state, mode)
     end
 end
 
-function AudioSystem.generateProceduralBGM(state, mode)
+function AudioSystem.generate_procedural_bgm(state, mode)
     if mode == "battle" then
-        return EnhancedAudio.generateBattleBGM(8.0)
+        return EnhancedAudio.generate_battle_bgm(8.0)
     elseif mode == "spring" or mode == "summer" or mode == "autumn" or mode == "winter" then
-        return EnhancedAudio.generateSeasonalBGM(mode, 8.0)
+        return EnhancedAudio.generate_seasonal_bgm(mode, 8.0)
     else
-        return EnhancedAudio.generateBGM("exploration", 8.0)
+        return EnhancedAudio.generate_bgm("exploration", 8.0)
     end
 end
 
 -- Create a harmony melody (chords)
-function AudioSystem.createHarmonyMelody(state, chords, noteDuration)
+function AudioSystem.create_harmony_melody(state, chords, noteDuration)
     local sampleRate = 44100
     local totalDuration = #chords * noteDuration
     local samples = math.floor(sampleRate * totalDuration)
@@ -224,7 +222,7 @@ function AudioSystem.createHarmonyMelody(state, chords, noteDuration)
 end
 
 -- Play sound effect
-function AudioSystem.playSFX(state, name)
+function AudioSystem.play_sfx(state, name)
     if state.sfx[name] then
         local sfx = state.sfx[name]:clone()
         sfx:setVolume(state.sfxVolume)
@@ -233,14 +231,14 @@ function AudioSystem.playSFX(state, name)
 end
 
 -- Stop background music
-function AudioSystem.stopBGM(state)
+function AudioSystem.stop_bgm(state)
     if state.bgm then
         state.bgm:stop()
     end
 end
 
 -- Set music volume
-function AudioSystem.setMusicVolume(state, volume)
+function AudioSystem.set_music_volume(state, volume)
     state.bgmVolume = math.max(0, math.min(1, volume))
     if state.bgm then
         state.bgm:setVolume(state.bgmVolume)
@@ -248,7 +246,7 @@ function AudioSystem.setMusicVolume(state, volume)
 end
 
 -- Set SFX volume
-function AudioSystem.setSFXVolume(state, volume)
+function AudioSystem.set_sfx_volume(state, volume)
     state.sfxVolume = math.max(0, math.min(1, volume))
 end
 

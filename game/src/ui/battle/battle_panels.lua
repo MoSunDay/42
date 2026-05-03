@@ -5,26 +5,26 @@ local BattleLog = require("src.systems.battle.battle_log")
 
 local BattlePanels = {}
 
-function BattlePanels.drawHPBar(colors, entity, x, y, width, height, assetManager)
-    local hpPercent = CombatUtils.getHPPercent(entity)
+function BattlePanels.draw_hp_bar(colors, entity, x, y, width, height, assetManager)
+    local hpPercent = CombatUtils.get_hp_percent(entity)
     Components.drawOrnateHPBar(x, y, width, height, hpPercent, nil, assetManager)
 end
 
-function BattlePanels.drawPlayerPanel(colors, player, x, y, assetManager)
+function BattlePanels.draw_player_panel(colors, player, x, y, assetManager)
     Components.drawOrnatePanel(x, y, 300, 160, assetManager, {
         title = "Player",
         corners = true,
         glow = true,
         shimmer = false,
-        font = assetManager:getFont("default")
+        font = assetManager:get_font("default")
     })
 
-    local font = assetManager:getFont("default")
+    local font = assetManager:get_font("default")
     love.graphics.setFont(font)
 
     love.graphics.print("HP: " .. player.hp .. " / " .. player.maxHp, x + 10, y + 35)
     
-    BattlePanels.drawHPBar(colors, player, x + 10, y + 55, 280, 15, assetManager)
+    BattlePanels.draw_hp_bar(colors, player, x + 10, y + 55, 280, 15, assetManager)
     
     love.graphics.setColor(Theme.colors.text)
     love.graphics.print("ATK: " .. player.attack, x + 10, y + 80)
@@ -44,25 +44,25 @@ function BattlePanels.drawPlayerPanel(colors, player, x, y, assetManager)
     end
 end
 
-function BattlePanels.drawBattleLog(colors, battleSystem, x, y, assetManager)
+function BattlePanels.draw_battle_log(colors, battleSystem, x, y, assetManager)
     local battleLog = battleSystem.battleLog
-    local messages = BattleLog.getMessages(battleLog)
+    local messages = BattleLog.get_messages(battleLog)
 
     Components.drawOrnatePanel(x, y, 400, 120, assetManager, {
         title = "Battle Log",
         corners = true,
         glow = false,
-        font = assetManager:getFont("default")
+        font = assetManager:get_font("default")
     })
 
     local lineHeight = 20
     local viewHeight = 80
     local contentHeight = #messages * lineHeight
 
-    local scrollOffset = BattleLog.getScrollOffset(battleLog)
+    local scrollOffset = BattleLog.get_scroll_offset(battleLog)
     local maxScroll = math.max(0, contentHeight - viewHeight)
     scrollOffset = math.max(0, math.min(scrollOffset, maxScroll))
-    BattleLog.setScrollOffset(battleLog, scrollOffset)
+    BattleLog.set_scroll_offset(battleLog, scrollOffset)
 
     love.graphics.setScissor(x + 10, y + 30, 380, viewHeight)
 

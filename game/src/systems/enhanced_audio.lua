@@ -35,7 +35,7 @@ local PROGRESSIONS = {
 }
 
 -- Generate enhanced BGM
-function EnhancedAudio.generateBGM(theme, duration)
+function EnhancedAudio.generate_bgm(theme, duration)
     local sampleRate = 44100
     local samples = math.floor(sampleRate * duration)
     local soundData = love.sound.newSoundData(samples, sampleRate, 16, 2)  -- Stereo
@@ -122,7 +122,7 @@ function EnhancedAudio.generateBGM(theme, duration)
 end
 
 -- Generate battle music (more intense)
-function EnhancedAudio.generateBattleBGM(duration)
+function EnhancedAudio.generate_battle_bgm(duration)
     local sampleRate = 44100
     local samples = math.floor(sampleRate * duration)
     local soundData = love.sound.newSoundData(samples, sampleRate, 16, 2)
@@ -175,17 +175,17 @@ function EnhancedAudio.generateBattleBGM(duration)
 end
 
 -- Generate seasonal music
-function EnhancedAudio.generateSeasonalBGM(season, duration)
+function EnhancedAudio.generate_seasonal_bgm(season, duration)
     if season == "spring" then
-        return EnhancedAudio.generateBGM("spring", duration)
+        return EnhancedAudio.generate_bgm("spring", duration)
     elseif season == "summer" then
-        return EnhancedAudio.generateBGM("summer", duration)
+        return EnhancedAudio.generate_bgm("summer", duration)
     elseif season == "autumn" then
-        return EnhancedAudio.generateBGM("autumn", duration)
+        return EnhancedAudio.generate_bgm("autumn", duration)
     elseif season == "winter" then
-        return EnhancedAudio.generateBGM("winter", duration)
+        return EnhancedAudio.generate_bgm("winter", duration)
     else
-        return EnhancedAudio.generateBGM("exploration", duration)
+        return EnhancedAudio.generate_bgm("exploration", duration)
     end
 end
 

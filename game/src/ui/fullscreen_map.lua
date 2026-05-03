@@ -28,8 +28,8 @@ function FullscreenMap.create(assetManager)
     
     state.navigationTarget = nil
     
-    state.font = assetManager:getFont("default")
-    state.fontLarge = assetManager:getFont("large")
+    state.font = assetManager:get_font("default")
+    state.fontLarge = assetManager:get_font("large")
     
     return state
 end
@@ -50,7 +50,7 @@ function FullscreenMap.close(state)
     state.navigationTarget = nil
 end
 
-function FullscreenMap.isMapOpen(state)
+function FullscreenMap.is_map_open(state)
     return state.isOpen
 end
 
@@ -99,7 +99,7 @@ function FullscreenMap.draw(state, playerX, playerY, map)
 
     love.graphics.setFont(state.font)
 
-    FullscreenMap.drawMapContent(state, playerX, playerY, map)
+    FullscreenMap.draw_map_content(state, playerX, playerY, map)
 
     love.graphics.setColor(Theme.colors.textDim)
     love.graphics.printf("Click on map to navigate | Press TAB or ESC to close",
@@ -107,7 +107,7 @@ function FullscreenMap.draw(state, playerX, playerY, map)
                         state.panelWidth, "center")
 end
 
-function FullscreenMap.drawMapContent(state, playerX, playerY, map)
+function FullscreenMap.draw_map_content(state, playerX, playerY, map)
     MapRenderer.render(map, state.mapRenderX, state.mapRenderY,
                       state.mapRenderWidth, state.mapRenderHeight,
                       playerX, playerY, {
@@ -147,11 +147,11 @@ function FullscreenMap.drawMapContent(state, playerX, playerY, map)
     end
 end
 
-function FullscreenMap.getNavigationTarget(state)
+function FullscreenMap.get_navigation_target(state)
     return state.navigationTarget
 end
 
-function FullscreenMap.clearNavigationTarget(state)
+function FullscreenMap.clear_navigation_target(state)
     state.navigationTarget = nil
 end
 

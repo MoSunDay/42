@@ -26,7 +26,7 @@ local function getSlotIcon(slotType)
     return SLOT_ICONS[slotType] or "?"
 end
 
-local function getItemColor(item)
+local function get_itemColor(item)
     if not item then return Theme.colors.inventory.slot end
     if item.type == ItemDatabase.TYPE.CONSUMABLE then
         return Theme.colors.inventory.consumable
@@ -37,5 +37,5 @@ end
 return {
     getSlotColor = getSlotColor,
     getSlotIcon = getSlotIcon,
-    getItemColor = getItemColor,
+    get_itemColor = get_itemColor,
 }

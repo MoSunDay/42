@@ -10,7 +10,7 @@ print()
 
 -- Test 1: Create enemy
 print("1. Creating enemy...")
-local slime = Enemy.new("slime")
+local slime = Enemy.create("slime")
 print("   Created: " .. slime.name)
 print("   HP: " .. slime.hp .. "/" .. slime.maxHp)
 print("   Attack: " .. slime.attack)
@@ -18,9 +18,9 @@ print("   Defense: " .. slime.defense)
 print("   ✓ Enemy created")
 print()
 
--- Test 2: Check isAlive method
-print("2. Testing isAlive method...")
-if slime:isAlive() then
+-- Test 2: Check is_alive method
+print("2. Testing is_alive method...")
+if slime:is_alive() then
     print("   ✓ Enemy is alive (HP: " .. slime.hp .. ")")
 else
     print("   ✗ ERROR: Enemy should be alive!")
@@ -29,10 +29,10 @@ print()
 
 -- Test 3: Take damage
 print("3. Testing damage...")
-local damage = slime:takeDamage(10)
+local damage = slime:take_damage(10)
 print("   Took " .. damage .. " damage")
 print("   HP: " .. slime.hp .. "/" .. slime.maxHp)
-if slime:isAlive() then
+if slime:is_alive() then
     print("   ✓ Enemy still alive")
 else
     print("   ✗ ERROR: Enemy should still be alive!")
@@ -41,9 +41,9 @@ print()
 
 -- Test 4: Defeat enemy
 print("4. Testing defeat...")
-slime:takeDamage(100)
+slime:take_damage(100)
 print("   HP: " .. slime.hp .. "/" .. slime.maxHp)
-if not slime:isAlive() then
+if not slime:is_alive() then
     print("   ✓ Enemy defeated correctly")
 else
     print("   ✗ ERROR: Enemy should be dead!")
@@ -54,8 +54,8 @@ print()
 print("5. Testing all enemy types...")
 local types = {"slime", "goblin", "skeleton", "orc"}
 for _, type in ipairs(types) do
-    local enemy = Enemy.new(type)
-    if enemy:isAlive() then
+    local enemy = Enemy.create(type)
+    if enemy:is_alive() then
         print("   ✓ " .. enemy.name .. " created (HP: " .. enemy.hp .. ")")
     else
         print("   ✗ ERROR: " .. type .. " should be alive!")
@@ -66,8 +66,8 @@ print()
 -- Test 6: Random enemy generation
 print("6. Testing random enemy generation...")
 for i = 1, 5 do
-    local randomType = Enemy.getRandomType()
-    local enemy = Enemy.new(randomType)
+    local randomType = Enemy.get_random_type()
+    local enemy = Enemy.create(randomType)
     print("   " .. i .. ". " .. enemy.name .. " (HP: " .. enemy.hp .. ", ATK: " .. enemy.attack .. ")")
 end
 print()

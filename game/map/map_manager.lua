@@ -21,12 +21,12 @@ MapManager.useSTI = false
 
 function MapManager.init()
     MapManager.tilesetManager = TilesetManager.create()
-    MapManager.tileAnimator = TileAnimator.new()
+    MapManager.tileAnimator = TileAnimator.create()
     MapManager.autotile = Autotile.create()
     MapManager.particleSystem = ParticleSystem.create()
 end
 
-function MapManager.loadMap(mapId, useTiled)
+function MapManager.load_map(mapId, useTiled)
     if MapManager.loadedMaps[mapId] then
         if MapManager.debugMode then
             print("[MapManager] Map '" .. mapId .. "' loaded from cache")
@@ -38,17 +38,17 @@ function MapManager.loadMap(mapId, useTiled)
     local map = nil
     
     if useTiled then
-        if MapManager.useSTI and TiledLoader.isSTIAvailable() then
-            map = MapManager.loadWithSTI(mapId)
+        if MapManager.useSTI and TiledLoader.is_sti_available() then
+            map = MapManager.load_with_sti(mapId)
         end
         
         if not map then
-            map = MapManager.loadTiledMap(mapId)
+            map = MapManager.load_tiled_map(mapId)
         end
     end
     
     if not map then
-        map = MapManager.loadLuaMap(mapId)
+        map = MapManager.load_lua_map(mapId)
     end
     
     if map then
@@ -60,7 +60,7 @@ function MapManager.loadMap(mapId, useTiled)
         end
         
         if MapManager.particleSystem and map.season then
-            ParticleSystem.setSeason(MapManager.particleSystem, map.season)
+            ParticleSystem.set_season(MapManager.particleSystem, map.season)
         end
         
         if MapManager.debugMode then
@@ -73,7 +73,7 @@ function MapManager.loadMap(mapId, useTiled)
     return nil
 end
 
-function MapManager.loadLuaMap(mapId)
+function MapManager.load_lua_map(mapId)
     local success, mapConfig = pcall(require, "map.maps." .. mapId)
     
     if not success then
@@ -86,7 +86,7 @@ function MapManager.loadLuaMap(mapId)
     return MapData.create(mapConfig)
 end
 
-function MapManager.loadTiledMap(mapId)
+function MapManager.load_tiled_map(mapId)
     local jsonPath = "map/maps/" .. mapId .. ".json"
     local tmxPath = "map/maps/" .. mapId .. ".tmx"
     local map = nil
@@ -118,7 +118,7 @@ function MapManager.loadTiledMap(mapId)
                 if layer.tiles and #layer.tiles > 0 then
                     local width = math.floor(map.width / map.tileSize)
                     local height = math.floor(map.height / map.tileSize)
-                    layer.tiles = Autotile.processMap(MapManager.autotile, layer.tiles, width, height)
+                    layer.tiles = Autotile.process_map(MapManager.autotile, layer.tiles, width, height)
                 end
             end
         end
@@ -127,12 +127,12 @@ function MapManager.loadTiledMap(mapId)
     return map
 end
 
-function MapManager.loadWithSTI(mapId)
+function MapManager.load_with_sti(mapId)
     local jsonPath = "map/maps/" .. mapId .. ".json"
     local tmxPath = "map/maps/" .. mapId .. ".tmx"
     
     if love.filesystem.getInfo(jsonPath) then
-        local map = TiledLoader.loadWithSTI(jsonPath)
+        local map = TiledLoader.load_with_sti(jsonPath)
         if map and MapManager.debugMode then
             print("[MapManager] Loaded with STI: " .. jsonPath)
         end
@@ -140,7 +140,7 @@ function MapManager.loadWithSTI(mapId)
     end
     
     if love.filesystem.getInfo(tmxPath) then
-        local map = TiledLoader.loadWithSTI(tmxPath)
+        local map = TiledLoader.load_with_sti(tmxPath)
         if map and MapManager.debugMode then
             print("[MapManager] Loaded with STI: " .. tmxPath)
         end
@@ -150,14 +150,14 @@ function MapManager.loadWithSTI(mapId)
     return nil
 end
 
-function MapManager.setUseSTI(enabled)
-    MapManager.useSTI = enabled and TiledLoader.isSTIAvailable()
+function MapManager.set_use_sti(enabled)
+    MapManager.useSTI = enabled and TiledLoader.is_sti_available()
     if MapManager.debugMode then
         print("[MapManager] STI mode: " .. tostring(MapManager.useSTI))
     end
 end
 
-function MapManager.getMinimap(mapId)
+function MapManager.get_minimap(mapId)
     local success, minimapData = pcall(require, "map.minimap." .. mapId)
     
     if not success then
@@ -167,18 +167,18 @@ function MapManager.getMinimap(mapId)
     return minimapData
 end
 
-function MapManager.getCurrentMap()
+function MapManager.get_current_map()
     return MapManager.currentMap
 end
 
-function MapManager.unloadMap(mapId)
+function MapManager.unload_map(mapId)
     MapManager.loadedMaps[mapId] = nil
     if MapManager.debugMode then
         print("[MapManager] Map '" .. mapId .. "' unloaded")
     end
 end
 
-function MapManager.clearAll()
+function MapManager.clear_all()
     MapManager.loadedMaps = {}
     MapManager.currentMap = nil
     if MapManager.debugMode then
@@ -186,7 +186,7 @@ function MapManager.clearAll()
     end
 end
 
-function MapManager.setDebugMode(enabled)
+function MapManager.set_debug_mode(enabled)
     MapManager.debugMode = enabled
 end
 
@@ -197,7 +197,7 @@ function MapManager.update(dt, camera, screenWidth)
     
     if MapManager.particleSystem and camera and MapManager.currentMap then
         ParticleSystem.update(MapManager.particleSystem, dt)
-        ParticleSystem.emitFromTop(
+        ParticleSystem.emit_from_top(
             MapManager.particleSystem,
             screenWidth or 1280,
             camera.x,
@@ -208,47 +208,47 @@ function MapManager.update(dt, camera, screenWidth)
     end
 end
 
-function MapManager.drawParticles(camera)
+function MapManager.draw_particles(camera)
     if MapManager.particleSystem then
         ParticleSystem.draw(MapManager.particleSystem, camera)
     end
 end
 
-function MapManager.getTilesetManager()
+function MapManager.get_tileset_manager()
     if not MapManager.tilesetManager then
         MapManager.tilesetManager = TilesetManager.create()
     end
     return MapManager.tilesetManager
 end
 
-function MapManager.getTileAnimator()
+function MapManager.get_tile_animator()
     if not MapManager.tileAnimator then
-        MapManager.tileAnimator = TileAnimator.new()
+        MapManager.tileAnimator = TileAnimator.create()
     end
     return MapManager.tileAnimator
 end
 
-function MapManager.getAutotile()
+function MapManager.get_autotile()
     if not MapManager.autotile then
         MapManager.autotile = Autotile.create()
     end
     return MapManager.autotile
 end
 
-function MapManager.getParticleSystem()
+function MapManager.get_particle_system()
     if not MapManager.particleSystem then
         MapManager.particleSystem = ParticleSystem.create()
     end
     return MapManager.particleSystem
 end
 
-function MapManager.setParticlesEnabled(enabled)
+function MapManager.set_particles_enabled(enabled)
     if MapManager.particleSystem then
-        ParticleSystem.setEnabled(MapManager.particleSystem, enabled)
+        ParticleSystem.set_enabled(MapManager.particleSystem, enabled)
     end
 end
 
-function MapManager.exportToTiled(mapId, outputPath, format)
+function MapManager.export_to_tiled(mapId, outputPath, format)
     local map = MapManager.loadedMaps[mapId]
     if not map then
         return false
@@ -257,23 +257,23 @@ function MapManager.exportToTiled(mapId, outputPath, format)
     format = format or "json"
     
     if format == "json" then
-        local content = TiledLoader.exportToJSON(map, outputPath)
+        local content = TiledLoader.export_to_json(map, outputPath)
         return content ~= nil
     else
-        local content = TiledLoader.exportToTMX(map, outputPath)
+        local content = TiledLoader.export_to_tmx(map, outputPath)
         return content ~= nil
     end
 end
 
-function MapManager.getSupportedFormats()
-    return TiledLoader.getSupportedFormats()
+function MapManager.get_supported_formats()
+    return TiledLoader.get_supported_formats()
 end
 
-function MapManager.isSTIAvailable()
-    return TiledLoader.isSTIAvailable()
+function MapManager.is_sti_available()
+    return TiledLoader.is_sti_available()
 end
 
-function MapManager.getMapInfo(mapId)
+function MapManager.get_map_info(mapId)
     local map = MapManager.loadedMaps[mapId] or MapManager.currentMap
     if not map then
         return nil

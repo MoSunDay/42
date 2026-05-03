@@ -81,17 +81,17 @@ print("3. Testing SFX playback...")
 audioSources = {}
 playingSources = {}
 
-audio:playSFX("attack")
+audio:play_sfx("attack")
 if #playingSources > 0 then
-    print("   ✓ playSFX('attack') works")
+    print("   ✓ play_sfx('attack') works")
 else
-    print("   ✗ playSFX failed")
+    print("   ✗ play_sfx failed")
 end
 
 playingSources = {}
-audio:playSFX("hit")
-audio:playSFX("victory")
-audio:playSFX("defeat")
+audio:play_sfx("hit")
+audio:play_sfx("victory")
+audio:play_sfx("defeat")
 print("   ✓ Multiple SFX calls work")
 print()
 
@@ -112,9 +112,9 @@ end
 print()
 
 print("5. Testing BGM playback...")
-audio:playBGM("exploration")
+audio:play_bgm("exploration")
 if audio.bgm then
-    print("   ✓ playBGM('exploration') works")
+    print("   ✓ play_bgm('exploration') works")
     print("   BGM looping: " .. tostring(audio.bgm.looping))
     print("   BGM playing: " .. tostring(audio.bgm.playing))
 else
@@ -123,14 +123,14 @@ end
 print()
 
 print("6. Testing BGM theme switching...")
-audio:playBGM("battle")
+audio:play_bgm("battle")
 if audio.currentTheme == "battle" then
     print("   ✓ BGM switched to battle")
 else
     print("   ✗ BGM switch failed")
 end
 
-audio:playBGM("spring")
+audio:play_bgm("spring")
 if audio.currentTheme == "spring" then
     print("   ✓ BGM switched to seasonal (spring)")
 else
@@ -139,14 +139,14 @@ end
 print()
 
 print("7. Testing volume controls...")
-audio:setMusicVolume(0.5)
+audio:set_music_volume(0.5)
 if audio.bgmVolume == 0.5 then
     print("   ✓ Music volume set to 0.5")
 else
     print("   ✗ Music volume failed")
 end
 
-audio:setSFXVolume(0.8)
+audio:set_sfx_volume(0.8)
 if audio.sfxVolume == 0.8 then
     print("   ✓ SFX volume set to 0.8")
 else
@@ -155,7 +155,7 @@ end
 print()
 
 print("8. Testing stop BGM...")
-audio:stopBGM()
+audio:stop_bgm()
 if not audio.bgm.playing then
     print("   ✓ BGM stopped")
 else

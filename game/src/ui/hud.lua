@@ -44,19 +44,19 @@ function HUD.create(assetManager)
     }
 
     state.hoveredButton = nil
-    state.font = assetManager:getFont("default")
-    state.fontLarge = assetManager:getFont("large")
+    state.font = assetManager:get_font("default")
+    state.fontLarge = assetManager:get_font("large")
     state.minimapHintAlpha = 0
     state.minimapHintTimer = 0
-    state.panelState = Animation.createPanelState()
-    state.pulseState = Animation.createPulseState(3)
+    state.panelState = Animation.create_panel_state()
+    state.pulseState = Animation.create_pulse_state(3)
 
     return state
 end
 
 function HUD.update(state, dt)
     MapRenderer.update(dt)
-    Animation.updatePulse(state.pulseState or {}, dt)
+    Animation.update_pulse(state.pulseState or {}, dt)
 
     if state.minimapHintTimer > 0 then
         state.minimapHintTimer = state.minimapHintTimer - dt
@@ -65,11 +65,11 @@ function HUD.update(state, dt)
 end
 
 function HUD.draw(state, playerX, playerY, map)
-    HUD.drawMinimap(state, playerX, playerY, map)
-    HUD.drawButtons(state)
+    HUD.draw_minimap(state, playerX, playerY, map)
+    HUD.draw_buttons(state)
 end
 
-function HUD.drawMinimap(state, playerX, playerY, map)
+function HUD.draw_minimap(state, playerX, playerY, map)
     local mm = state.minimap
     local borderPad = 6
 
@@ -119,19 +119,19 @@ function HUD.drawMinimap(state, playerX, playerY, map)
     love.graphics.setColor(1, 1, 1)
 end
 
-function HUD.isMouseOverMinimap(state, x, y)
+function HUD.is_mouse_over_minimap(state, x, y)
     local mm = state.minimap
     return x >= mm.x and x <= mm.x + mm.size and
            y >= mm.y and y <= mm.y + mm.size
 end
 
-function HUD.showMinimapHint(state)
+function HUD.show_minimap_hint(state)
     state.minimapHintTimer = 2.0
     state.minimapHintAlpha = 1.0
 end
 
-function HUD.drawButtons(state)
-    local mouseX, mouseY = love.mouse.getPosition()
+function HUD.draw_buttons(state)
+    local mouseX, mouseY = love.mouse.get_position()
     local totalWidth = 0
     local gap = 10
     for _, btn in ipairs(state.buttons) do
@@ -164,7 +164,7 @@ function HUD.drawButtons(state)
     love.graphics.setColor(1, 1, 1)
 end
 
-function HUD.isMouseOverButton(state, x, y)
+function HUD.is_mouse_over_button(state, x, y)
     for _, button in ipairs(state.buttons) do
         if button.x and button.y and
            x >= button.x and x <= button.x + button.width and

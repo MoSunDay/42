@@ -25,7 +25,7 @@ function RunningEffect.update(state, dt, isMoving)
     end
 end
 
-function RunningEffect.getBobOffset(state)
+function RunningEffect.get_bob_offset(state)
     if state.time <= 0 then
         return 0
     end
@@ -34,7 +34,7 @@ function RunningEffect.getBobOffset(state)
     return -cycle * state.bobAmount
 end
 
-function RunningEffect.getTilt(state)
+function RunningEffect.get_tilt(state)
     if state.time <= 0 then
         return 0
     end
@@ -43,7 +43,7 @@ function RunningEffect.getTilt(state)
     return cycle * state.tiltAmount
 end
 
-function RunningEffect.getScale(state)
+function RunningEffect.get_scale(state)
     if state.time <= 0 then
         return 1.0, 1.0
     end
@@ -60,7 +60,7 @@ function RunningEffect.reset(state)
     state.isRunning = false
 end
 
-function RunningEffect.isActive(state)
+function RunningEffect.is_active(state)
     return state.isRunning
 end
 

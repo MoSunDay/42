@@ -7,7 +7,7 @@ function BattleAnimation.create()
     }
 end
 
-function BattleAnimation.addAttackAnimation(state, fromX, fromY, toX, toY, callback)
+function BattleAnimation.add_attack_animation(state, fromX, fromY, toX, toY, callback)
     local anim = {
         type = "attack",
         fromX = fromX,
@@ -21,7 +21,7 @@ function BattleAnimation.addAttackAnimation(state, fromX, fromY, toX, toY, callb
     table.insert(state.animations, anim)
 end
 
-function BattleAnimation.addDamageNumber(state, x, y, damage, isPlayer, hitType)
+function BattleAnimation.add_damage_number(state, x, y, damage, isPlayer, hitType)
     local dmg = {
         x = x,
         y = y,
@@ -36,7 +36,7 @@ function BattleAnimation.addDamageNumber(state, x, y, damage, isPlayer, hitType)
     table.insert(state.damageNumbers, dmg)
 end
 
-function BattleAnimation.addHitFlash(state, x, y)
+function BattleAnimation.add_hit_flash(state, x, y)
     local flash = {
         type = "flash",
         x = x,
@@ -85,18 +85,18 @@ end
 function BattleAnimation.draw(state)
     for _, anim in ipairs(state.animations) do
         if anim.type == "attack" then
-            BattleAnimation.drawAttackLine(state, anim)
+            BattleAnimation.draw_attack_line(state, anim)
         elseif anim.type == "flash" then
-            BattleAnimation.drawFlash(state, anim)
+            BattleAnimation.draw_flash(state, anim)
         end
     end
 
     for _, dmg in ipairs(state.damageNumbers) do
-        BattleAnimation.drawDamageNumber(state, dmg)
+        BattleAnimation.draw_damage_number(state, dmg)
     end
 end
 
-function BattleAnimation.drawAttackLine(state, anim)
+function BattleAnimation.draw_attack_line(state, anim)
     local t = anim.progress
     t = 1 - math.pow(1 - t, 3)
 
@@ -113,7 +113,7 @@ function BattleAnimation.drawAttackLine(state, anim)
     love.graphics.setLineWidth(1)
 end
 
-function BattleAnimation.drawFlash(state, flash)
+function BattleAnimation.draw_flash(state, flash)
     love.graphics.setColor(1, 1, 1, flash.alpha * 0.8)
     love.graphics.circle("fill", flash.x, flash.y, flash.radius)
 
@@ -121,7 +121,7 @@ function BattleAnimation.drawFlash(state, flash)
     love.graphics.circle("line", flash.x, flash.y, flash.radius)
 end
 
-function BattleAnimation.drawDamageNumber(state, dmg)
+function BattleAnimation.draw_damage_number(state, dmg)
     local x = dmg.x
     local y = dmg.y + dmg.offsetY
 
@@ -152,7 +152,7 @@ function BattleAnimation.drawDamageNumber(state, dmg)
     love.graphics.print(text, x, y, 0, scale, scale)
 end
 
-function BattleAnimation.isPlaying(state)
+function BattleAnimation.is_playing(state)
     return #state.animations > 0 or #state.damageNumbers > 0
 end
 

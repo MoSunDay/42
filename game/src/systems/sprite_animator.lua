@@ -35,7 +35,7 @@ local ALL_DIRECTIONS = {
     "north", "north-east", "east", "south-east"
 }
 
-function SpriteAnimator.new(config)
+function SpriteAnimator.create(config)
     config = config or {}
     return {
         frameWidth = config.frameWidth or 48,
@@ -51,11 +51,11 @@ function SpriteAnimator.new(config)
     }
 end
 
-function SpriteAnimator.loadFromAssetManager(state, assetManager, characterId)
+function SpriteAnimator.load_from_asset_manager(state, assetManager, characterId)
     if not assetManager or not characterId then return end
     
     for _, dir in ipairs(ALL_DIRECTIONS) do
-        local rotation = assetManager:getCharacterSprite(characterId, dir)
+        local rotation = assetManager:get_character_sprite(characterId, dir)
         if rotation then
             state.rotations[dir] = rotation
         end
@@ -63,10 +63,10 @@ function SpriteAnimator.loadFromAssetManager(state, assetManager, characterId)
     
     local animNames = {"walking", "breathing-idle"}
     for _, animName in ipairs(animNames) do
-        if assetManager:hasCharacterAnimation(characterId, animName) then
+        if assetManager:has_character_animation(characterId, animName) then
             state.animations[animName] = {}
             for _, dir in ipairs(ALL_DIRECTIONS) do
-                local frames = assetManager:getCharacterAnimation(characterId, animName, dir)
+                local frames = assetManager:get_character_animation(characterId, animName, dir)
                 if frames and #frames > 0 then
                     state.animations[animName][dir] = frames
                 end
@@ -75,7 +75,7 @@ function SpriteAnimator.loadFromAssetManager(state, assetManager, characterId)
     end
 end
 
-function SpriteAnimator.loadDirectionalSprites(state, basePath, directions)
+function SpriteAnimator.load_directional_sprites(state, basePath, directions)
     directions = directions or ALL_DIRECTIONS
     
     for _, dir in ipairs(directions) do
@@ -86,7 +86,7 @@ function SpriteAnimator.loadDirectionalSprites(state, basePath, directions)
     end
 end
 
-function SpriteAnimator.loadAnimationFrames(state, basePath, animName, direction, frameCount)
+function SpriteAnimator.load_animation_frames(state, basePath, animName, direction, frameCount)
     frameCount = frameCount or 6
     state.animations[animName] = state.animations[animName] or {}
     state.animations[animName][direction] = {}
@@ -99,7 +99,7 @@ function SpriteAnimator.loadAnimationFrames(state, basePath, animName, direction
     end
 end
 
-function SpriteAnimator.setDirection(state, direction)
+function SpriteAnimator.set_direction(state, direction)
     local normalizedDir = DIRECTION_TO_INDEX[direction] and direction or nil
     if normalizedDir then
         state.currentDirection = normalizedDir
@@ -108,7 +108,7 @@ function SpriteAnimator.setDirection(state, direction)
     end
 end
 
-function SpriteAnimator.setAnimation(state, name)
+function SpriteAnimator.set_animation(state, name)
     if state.currentAnimation ~= name then
         state.currentAnimation = name
         state.currentFrame = 1
@@ -116,11 +116,11 @@ function SpriteAnimator.setAnimation(state, name)
     end
 end
 
-function SpriteAnimator.setAnimationState(state, isMoving)
+function SpriteAnimator.set_animation_state(state, isMoving)
     if isMoving then
-        SpriteAnimator.setAnimation(state, "walking")
+        SpriteAnimator.set_animation(state, "walking")
     else
-        SpriteAnimator.setAnimation(state, "breathing-idle")
+        SpriteAnimator.set_animation(state, "breathing-idle")
     end
 end
 
@@ -144,7 +144,7 @@ function SpriteAnimator.update(state, dt)
     
     state.animationTime = state.animationTime + dt
     
-    local frameCount = SpriteAnimator.getFrameCount(state)
+    local frameCount = SpriteAnimator.get_frame_count(state)
     if frameCount <= 1 then return end
     
     local currentDuration = state.frameDuration
@@ -163,7 +163,7 @@ function SpriteAnimator.update(state, dt)
     end
 end
 
-function SpriteAnimator.getFrameCount(state)
+function SpriteAnimator.get_frame_count(state)
     local anim = state.animations[state.currentAnimation]
     if anim then
         local frames = anim[state.currentDirection]
@@ -179,7 +179,7 @@ function SpriteAnimator.getFrameCount(state)
     return 1
 end
 
-function SpriteAnimator.getCurrentFrameImage(state)
+function SpriteAnimator.get_current_frame_image(state)
     local anim = state.animations[state.currentAnimation]
     if anim then
         local frames = anim[state.currentDirection]
@@ -204,7 +204,7 @@ function SpriteAnimator.draw(state, x, y, scale, offsetX, offsetY)
     offsetX = offsetX or 0
     offsetY = offsetY or 0
     
-    local image = SpriteAnimator.getCurrentFrameImage(state)
+    local image = SpriteAnimator.get_current_frame_image(state)
     if not image then return end
     
     local w = image:getWidth()
@@ -222,11 +222,11 @@ function SpriteAnimator.draw(state, x, y, scale, offsetX, offsetY)
     )
 end
 
-function SpriteAnimator.getCurrentDirection(state)
+function SpriteAnimator.get_current_direction(state)
     return state.currentDirection
 end
 
-function SpriteAnimator.getCurrentFrame(state)
+function SpriteAnimator.get_current_frame(state)
     return state.currentFrame
 end
 
@@ -234,21 +234,21 @@ function SpriteAnimator.getSize(state)
     return state.frameWidth, state.frameHeight
 end
 
-function SpriteAnimator.hasAnimation(state, animName)
+function SpriteAnimator.has_animation(state, animName)
     return state.animations[animName] ~= nil
 end
 
-function SpriteAnimator.hasDirectionForAnimation(state, animName, direction)
+function SpriteAnimator.has_direction_for_animation(state, animName, direction)
     if not state.animations[animName] then return false end
     local frames = state.animations[animName][direction]
     return frames ~= nil and #frames > 0
 end
 
-function SpriteAnimator.hasRotation(state, direction)
+function SpriteAnimator.has_rotation(state, direction)
     return state.rotations[direction] ~= nil
 end
 
-function SpriteAnimator.getAvailableDirections(state)
+function SpriteAnimator.get_available_directions(state)
     local dirs = {}
     for dir, _ in pairs(state.rotations) do
         table.insert(dirs, dir)
@@ -256,12 +256,12 @@ function SpriteAnimator.getAvailableDirections(state)
     return dirs
 end
 
-function SpriteAnimator.getClosestDirection(state, targetDir)
-    if SpriteAnimator.hasDirectionForAnimation(state, state.currentAnimation, targetDir) then
+function SpriteAnimator.get_closest_direction(state, targetDir)
+    if SpriteAnimator.has_direction_for_animation(state, state.currentAnimation, targetDir) then
         return targetDir
     end
     
-    if SpriteAnimator.hasRotation(state, targetDir) then
+    if SpriteAnimator.has_rotation(state, targetDir) then
         return targetDir
     end
     
@@ -275,7 +275,7 @@ function SpriteAnimator.getClosestDirection(state, targetDir)
     local alts = alternatives[targetDir]
     if alts then
         for _, alt in ipairs(alts) do
-            if SpriteAnimator.hasDirectionForAnimation(state, state.currentAnimation, alt) or SpriteAnimator.hasRotation(state, alt) then
+            if SpriteAnimator.has_direction_for_animation(state, state.currentAnimation, alt) or SpriteAnimator.has_rotation(state, alt) then
                 return alt
             end
         end

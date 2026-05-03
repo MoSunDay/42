@@ -105,38 +105,38 @@ function ParticleSystem.create()
     return state
 end
 
-function ParticleSystem.setSeason(state, season)
+function ParticleSystem.set_season(state, season)
     state.season = season
     state.config = SEASON_CONFIGS[season] or SEASON_CONFIGS.spring
-    ParticleSystem.clearParticles(state)
+    ParticleSystem.clear_particles(state)
 end
 
-function ParticleSystem.clearParticles(state)
+function ParticleSystem.clear_particles(state)
     state.particles = {}
     state.waterSparkles = {}
 end
 
-function ParticleSystem.setEnabled(state, enabled)
+function ParticleSystem.set_enabled(state, enabled)
     state.enabled = enabled
     if not enabled then
-        ParticleSystem.clearParticles(state)
+        ParticleSystem.clear_particles(state)
     end
 end
 
-function ParticleSystem.createParticle(state, x, y, customConfig)
+function ParticleSystem.create_particle(state, x, y, customConfig)
     local config = customConfig or state.config
 
     local particle = {
         x = x,
         y = y,
-        vx = ParticleSystem.randomRange(state, config.speed.x.min, config.speed.x.max),
-        vy = ParticleSystem.randomRange(state, config.speed.y.min, config.speed.y.max),
-        size = ParticleSystem.randomRange(state, config.size.min, config.size.max),
+        vx = ParticleSystem.random_range(state, config.speed.x.min, config.speed.x.max),
+        vy = ParticleSystem.random_range(state, config.speed.y.min, config.speed.y.max),
+        size = ParticleSystem.random_range(state, config.size.min, config.size.max),
         color = config.colors[math.random(1, #config.colors)],
-        lifetime = ParticleSystem.randomRange(state, config.lifetime.min, config.lifetime.max),
+        lifetime = ParticleSystem.random_range(state, config.lifetime.min, config.lifetime.max),
         age = 0,
         rotation = config.rotation and math.random() * math.pi * 2 or 0,
-        rotationSpeed = config.rotation and ParticleSystem.randomRange(state, config.rotationSpeed.min, config.rotationSpeed.max) or 0,
+        rotationSpeed = config.rotation and ParticleSystem.random_range(state, config.rotationSpeed.min, config.rotationSpeed.max) or 0,
         swayOffset = math.random() * math.pi * 2,
         alpha = 0,
         fadeIn = true
@@ -144,7 +144,7 @@ function ParticleSystem.createParticle(state, x, y, customConfig)
 
     if config.wobble then
         particle.wobblePhase = math.random() * math.pi * 2
-        particle.wobbleSpeed = ParticleSystem.randomRange(state, 3, 6)
+        particle.wobbleSpeed = ParticleSystem.random_range(state, 3, 6)
     end
 
     if config.sparkle then
@@ -158,7 +158,7 @@ function ParticleSystem.createParticle(state, x, y, customConfig)
     return particle
 end
 
-function ParticleSystem.randomRange(state, min, max)
+function ParticleSystem.random_range(state, min, max)
     return min + math.random() * (max - min)
 end
 
@@ -172,21 +172,21 @@ function ParticleSystem.emit(state, x, y, count, customConfig)
         if #state.particles < config.maxParticles then
             local offsetX = (customConfig and 0) or math.random(-50, 50)
             local offsetY = (customConfig and 0) or math.random(-20, 20)
-            table.insert(state.particles, ParticleSystem.createParticle(state, x + offsetX, y + offsetY, config))
+            table.insert(state.particles, ParticleSystem.create_particle(state, x + offsetX, y + offsetY, config))
         end
     end
 end
 
-function ParticleSystem.emitWaterSparkle(state, x, y, width, height)
+function ParticleSystem.emit_water_sparkle(state, x, y, width, height)
     if not state.enabled then return end
     if #state.waterSparkles >= WATER_SPARKLE_CONFIG.maxSparkles then return end
 
     local sparkle = {
         x = x + math.random() * width,
         y = y + math.random() * height,
-        size = ParticleSystem.randomRange(state, WATER_SPARKLE_CONFIG.size.min, WATER_SPARKLE_CONFIG.size.max),
+        size = ParticleSystem.random_range(state, WATER_SPARKLE_CONFIG.size.min, WATER_SPARKLE_CONFIG.size.max),
         color = WATER_SPARKLE_CONFIG.colors[math.random(1, #WATER_SPARKLE_CONFIG.colors)],
-        lifetime = ParticleSystem.randomRange(state, WATER_SPARKLE_CONFIG.lifetime.min, WATER_SPARKLE_CONFIG.lifetime.max),
+        lifetime = ParticleSystem.random_range(state, WATER_SPARKLE_CONFIG.lifetime.min, WATER_SPARKLE_CONFIG.lifetime.max),
         age = 0,
         phase = math.random() * math.pi * 2,
         alpha = 0,
@@ -196,12 +196,12 @@ function ParticleSystem.emitWaterSparkle(state, x, y, width, height)
     table.insert(state.waterSparkles, sparkle)
 end
 
-function ParticleSystem.updateWind(state, dt)
+function ParticleSystem.update_wind(state, dt)
     state.windChangeTimer = state.windChangeTimer + dt
 
     if state.windChangeTimer > 3 then
         state.windChangeTimer = 0
-        state.windTarget = ParticleSystem.randomRange(state, -20, 20)
+        state.windTarget = ParticleSystem.random_range(state, -20, 20)
     end
 
     state.wind = state.wind + (state.windTarget - state.wind) * dt * 0.5
@@ -211,13 +211,13 @@ function ParticleSystem.update(state, dt)
     if not state.enabled then return end
 
     state.time = state.time + dt
-    ParticleSystem.updateWind(state, dt)
+    ParticleSystem.update_wind(state, dt)
 
-    ParticleSystem.updateParticles(state, dt, state.particles, state.config)
-    ParticleSystem.updateParticles(state, dt, state.waterSparkles, WATER_SPARKLE_CONFIG)
+    ParticleSystem.update_particles(state, dt, state.particles, state.config)
+    ParticleSystem.update_particles(state, dt, state.waterSparkles, WATER_SPARKLE_CONFIG)
 end
 
-function ParticleSystem.updateParticles(state, dt, particleList, config)
+function ParticleSystem.update_particles(state, dt, particleList, config)
     local i = 1
     while i <= #particleList do
         local p = particleList[i]
@@ -267,7 +267,7 @@ function ParticleSystem.updateParticles(state, dt, particleList, config)
     end
 end
 
-function ParticleSystem.emitFromTop(state, screenWidth, cameraX, cameraY, mapWidth, mapHeight)
+function ParticleSystem.emit_from_top(state, screenWidth, cameraX, cameraY, mapWidth, mapHeight)
     if not state.enabled then return end
 
     local emitCount = math.floor(state.config.emitRate * 0.1)
@@ -298,18 +298,18 @@ function ParticleSystem.draw(state, camera)
     for _, p in ipairs(state.particles) do
         if p.x >= camX - 50 and p.x <= camX2 + 50 and
            p.y >= camY - 50 and p.y <= camY2 + 50 then
-            ParticleSystem.drawParticle(state, p)
+            ParticleSystem.draw_particle(state, p)
         end
     end
 
     for _, s in ipairs(state.waterSparkles) do
         if s.x >= camX and s.x <= camX2 and s.y >= camY and s.y <= camY2 then
-            ParticleSystem.drawSparkle(state, s)
+            ParticleSystem.draw_sparkle(state, s)
         end
     end
 end
 
-function ParticleSystem.drawParticle(state, p)
+function ParticleSystem.draw_particle(state, p)
     local alpha = p.alpha * p.color[4]
 
     if p.glow then
@@ -348,7 +348,7 @@ function ParticleSystem.drawParticle(state, p)
     love.graphics.setColor(1, 1, 1, 1)
 end
 
-function ParticleSystem.drawSparkle(state, s)
+function ParticleSystem.draw_sparkle(state, s)
     local alpha = s.alpha * s.color[4] * (0.5 + 0.5 * math.sin(s.phase + s.age * 10))
 
     love.graphics.setColor(s.color[1], s.color[2], s.color[3], alpha)
@@ -360,11 +360,11 @@ function ParticleSystem.drawSparkle(state, s)
     love.graphics.setColor(1, 1, 1, 1)
 end
 
-function ParticleSystem.getParticleCount(state)
+function ParticleSystem.get_particle_count(state)
     return #state.particles, #state.waterSparkles
 end
 
-function ParticleSystem.setWind(state, wind)
+function ParticleSystem.set_wind(state, wind)
     state.windTarget = wind
 end
 

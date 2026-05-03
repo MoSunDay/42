@@ -278,11 +278,11 @@ SkillDatabase.SKILLS = {
     },
 }
 
-function SkillDatabase.getSkill(skillId)
+function SkillDatabase.get_skill(skillId)
     return SkillDatabase.SKILLS[skillId]
 end
 
-function SkillDatabase.getSkillsByClass(classId)
+function SkillDatabase.get_skills_by_class(classId)
     local skills = {}
     for id, skill in pairs(SkillDatabase.SKILLS) do
         if skill.classId == classId then
@@ -292,31 +292,31 @@ function SkillDatabase.getSkillsByClass(classId)
     return skills
 end
 
-function SkillDatabase.getUpgradeCost(currentLevel)
+function SkillDatabase.get_upgrade_cost(currentLevel)
     return math.floor(SkillDatabase.UPGRADE_BASE_COST * currentLevel * (1 + SkillDatabase.UPGRADE_GROWTH_RATE * currentLevel))
 end
 
-function SkillDatabase.getUnlockCost(tier)
+function SkillDatabase.get_unlock_cost(tier)
     return SkillDatabase.TIER_UNLOCK_COST[tier] or 0
 end
 
-function SkillDatabase.getEffectMultiplier(skillLevel)
+function SkillDatabase.get_effect_multiplier(skillLevel)
     return 1 + SkillDatabase.EFFECT_BONUS_PER_LEVEL * (skillLevel - 1)
 end
 
-function SkillDatabase.getEffectiveDamage(skill, skillLevel)
+function SkillDatabase.get_effective_damage(skill, skillLevel)
     local multiplier = skill.damageMultiplier or 1.0
-    local levelBonus = SkillDatabase.getEffectMultiplier(skillLevel)
+    local levelBonus = SkillDatabase.get_effect_multiplier(skillLevel)
     return multiplier * levelBonus
 end
 
-function SkillDatabase.getEffectiveHealPercent(skill, skillLevel)
+function SkillDatabase.get_effective_heal_percent(skill, skillLevel)
     local basePercent = skill.healPercent or 0.3
-    local levelBonus = SkillDatabase.getEffectMultiplier(skillLevel)
+    local levelBonus = SkillDatabase.get_effect_multiplier(skillLevel)
     return basePercent * levelBonus
 end
 
-function SkillDatabase.getTargetCount(skill)
+function SkillDatabase.get_target_count(skill)
     if type(skill.targets) == "number" then
         return skill.targets, skill.targets
     elseif type(skill.targets) == "table" then
@@ -327,7 +327,7 @@ function SkillDatabase.getTargetCount(skill)
     return 1, 1
 end
 
-function SkillDatabase.getSkillTierName(tier)
+function SkillDatabase.get_skill_tier_name(tier)
     local names = {[1] = "初级", [2] = "中级", [3] = "高级"}
     return names[tier] or "未知"
 end

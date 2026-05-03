@@ -51,15 +51,15 @@ local APPEARANCE_PRESETS = {
     }
 }
 
-function AppearanceSystem.new()
+function AppearanceSystem.create()
     return {}
 end
 
-function AppearanceSystem.getPreset(presetId)
+function AppearanceSystem.get_preset(presetId)
     return APPEARANCE_PRESETS[presetId] or APPEARANCE_PRESETS.blue_hero
 end
 
-function AppearanceSystem.getAllPresets()
+function AppearanceSystem.get_all_presets()
     local presets = {}
     for id, preset in pairs(APPEARANCE_PRESETS) do
         table.insert(presets, {id = id, preset = preset})
@@ -67,7 +67,7 @@ function AppearanceSystem.getAllPresets()
     return presets
 end
 
-function AppearanceSystem.drawSprite(x, y, size, appearance, offsetX, offsetY, scaleX, scaleY)
+function AppearanceSystem.draw_sprite(x, y, size, appearance, offsetX, offsetY, scaleX, scaleY)
     offsetX = offsetX or 0
     offsetY = offsetY or 0
     scaleX = scaleX or 1
@@ -106,17 +106,17 @@ function AppearanceSystem.drawSprite(x, y, size, appearance, offsetX, offsetY, s
     love.graphics.pop()
 end
 
-function AppearanceSystem.drawAvatar(x, y, size, appearance)
-    AppearanceSystem.drawSprite(x, y, size, appearance, 0, 0, 1, 1)
+function AppearanceSystem.draw_avatar(x, y, size, appearance)
+    AppearanceSystem.draw_sprite(x, y, size, appearance, 0, 0, 1, 1)
 end
 
-function AppearanceSystem.createAppearance(character)
+function AppearanceSystem.create_appearance(character)
     if not character then
-        return AppearanceSystem.getPreset("blue_hero")
+        return AppearanceSystem.get_preset("blue_hero")
     end
     
     if character.appearanceId then
-        return AppearanceSystem.getPreset(character.appearanceId)
+        return AppearanceSystem.get_preset(character.appearanceId)
     end
     
     if character.avatarColor then
@@ -128,15 +128,15 @@ function AppearanceSystem.createAppearance(character)
         }
     end
     
-    return AppearanceSystem.getPreset("blue_hero")
+    return AppearanceSystem.get_preset("blue_hero")
 end
 
-function AppearanceSystem.setCharacterAppearance(character, presetId)
+function AppearanceSystem.set_character_appearance(character, presetId)
     if not character then
         return
     end
     
-    local preset = AppearanceSystem.getPreset(presetId)
+    local preset = AppearanceSystem.get_preset(presetId)
     character.appearanceId = presetId
     character.avatarColor = preset.color
     character.eyeColor = preset.eyeColor

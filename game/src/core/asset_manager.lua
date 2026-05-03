@@ -65,35 +65,31 @@ function AssetManager.create()
     return state
 end
 
-function AssetManager.loadAll(state)
-    print("Loading resources...")
+function AssetManager.load_all(state)
 
-    AssetManager.loadFonts(state)
+    AssetManager.load_fonts(state)
 
-    AssetManager.loadImages(state)
+    AssetManager.load_images(state)
 
-    AssetManager.loadSounds(state)
+    AssetManager.load_sounds(state)
 
-    print("Resource loading complete!")
 end
 
-function AssetManager.loadFonts(state)
+function AssetManager.load_fonts(state)
     state.fonts.default = love.graphics.newFont(14)
     state.fonts.large = love.graphics.newFont(20)
     state.fonts.small = love.graphics.newFont(12)
 
-    print("  - Fonts loaded")
 end
 
-function AssetManager.loadImages(state)
-    AssetManager.loadCharacterSprites(state)
-    AssetManager.loadEnemySprites(state)
-    AssetManager.loadNPCSprites(state)
-    AssetManager.loadTilesets(state)
-    AssetManager.loadMapObjects(state)
-    AssetManager.loadUIAssets(state)
-    state.images.player = AssetManager.createPlayerSprite()
-    print("  - Image loading complete")
+function AssetManager.load_images(state)
+    AssetManager.load_character_sprites(state)
+    AssetManager.load_enemy_sprites(state)
+    AssetManager.load_npc_sprites(state)
+    AssetManager.load_tilesets(state)
+    AssetManager.load_map_objects(state)
+    AssetManager.load_ui_assets(state)
+    state.images.player = AssetManager.create_player_sprite()
 end
 
 local function loadSpritesForIds(state, ids, basePath, directions, targetTable, label)
@@ -156,30 +152,28 @@ local function loadSpritesForIds(state, ids, basePath, directions, targetTable, 
                 for _ in pairs(targetTable[spriteId].animations) do
                     animCount = animCount + 1
                 end
-                print("  - Loaded " .. label .. " sprites: " .. spriteId .. " (" .. animCount .. " animations)")
             else
                 targetTable[spriteId] = nil
             end
         end
     end
     if loadedCount == 0 then
-        print("  - No " .. label .. " sprites found, using fallback")
     end
 end
 
-function AssetManager.loadCharacterSprites(state)
+function AssetManager.load_character_sprites(state)
     loadSpritesForIds(state, CHARACTER_IDS, state.paths.characters, DIRECTIONS_8, state.characterSprites, "character")
 end
 
-function AssetManager.loadEnemySprites(state)
+function AssetManager.load_enemy_sprites(state)
     loadSpritesForIds(state, ENEMY_IDS, state.paths.enemies, DIRECTIONS_4, state.enemySprites, "enemy")
 end
 
-function AssetManager.loadNPCSprites(state)
+function AssetManager.load_npc_sprites(state)
     loadSpritesForIds(state, NPC_IDS, state.paths.npcs, DIRECTIONS_4, state.npcSprites, "NPC")
 end
 
-function AssetManager.loadMapObjects(state)
+function AssetManager.load_map_objects(state)
     local objectCategories = {"trees", "buildings", "props"}
     local loadedCount = 0
 
@@ -193,18 +187,16 @@ function AssetManager.loadMapObjects(state)
                     local objectPath = categoryPath .. "/" .. filename
                     state.mapObjects[objectName] = love.graphics.newImage(objectPath)
                     loadedCount = loadedCount + 1
-                    print("  - Loaded map object: " .. objectName)
                 end
             end
         end
     end
 
     if loadedCount == 0 then
-        print("  - No map objects found")
     end
 end
 
-function AssetManager.loadTilesets(state)
+function AssetManager.load_tilesets(state)
     local tilesetFiles = {"grass_road.png", "grass_forest.png", "sand_ocean.png", "snow_ice.png"}
 
     for _, filename in ipairs(tilesetFiles) do
@@ -212,7 +204,6 @@ function AssetManager.loadTilesets(state)
         if love.filesystem.getInfo(path) then
             local name = filename:gsub("%.png$", "")
             state.images["tileset_" .. name] = love.graphics.newImage(path)
-            print("  - Loaded tileset: " .. name)
         end
     end
 
@@ -221,15 +212,12 @@ function AssetManager.loadTilesets(state)
 
     if love.filesystem.getInfo(townPath) then
         state.images.tileset = love.graphics.newImage(townPath)
-        print("  - Loaded town tileset: " .. townPath)
     elseif love.filesystem.getInfo(tilePath) then
         state.images.tileset = love.graphics.newImage(tilePath)
-        print("  - Loaded tileset: " .. tilePath)
     end
 end
 
-function AssetManager.loadUIAssets(state)
-    print("  - Loading UI assets...")
+function AssetManager.load_ui_assets(state)
 
     local uiCategories = {
         {name = "panels", path = "panels/"},
@@ -264,10 +252,9 @@ function AssetManager.loadUIAssets(state)
     for catName, cat in pairs(state.uiAssets) do
         for _ in pairs(cat) do count = count + 1 end
     end
-    print("  - Loaded " .. count .. " UI assets")
 end
 
-function AssetManager.loadSounds(state)
+function AssetManager.load_sounds(state)
     local loadedCount = 0
 
     local soundCategories = {
@@ -297,10 +284,9 @@ function AssetManager.loadSounds(state)
         end
     end
 
-    print("  - Sounds loaded: " .. loadedCount .. " files")
 end
 
-function AssetManager.createPlayerSprite()
+function AssetManager.create_player_sprite()
     local size = 32
     local canvas = love.graphics.newCanvas(size, size)
 
@@ -324,18 +310,18 @@ function AssetManager.createPlayerSprite()
     return canvas
 end
 
-function AssetManager.getImage(state, name)
+function AssetManager.get_image(state, name)
     return state.images[name]
 end
 
-function AssetManager.getCharacterSprite(state, charId, direction)
+function AssetManager.get_character_sprite(state, charId, direction)
     if state.characterSprites[charId] and state.characterSprites[charId].rotations then
         return state.characterSprites[charId].rotations[direction]
     end
     return nil
 end
 
-function AssetManager.getCharacterAnimation(state, charId, animName, direction, frameIndex)
+function AssetManager.get_character_animation(state, charId, animName, direction, frameIndex)
     if state.characterSprites[charId] and
        state.characterSprites[charId].animations and
        state.characterSprites[charId].animations[animName] and
@@ -349,19 +335,19 @@ function AssetManager.getCharacterAnimation(state, charId, animName, direction, 
     return nil
 end
 
-function AssetManager.hasCharacterSprite(state, charId)
+function AssetManager.has_character_sprite(state, charId)
     return state.characterSprites[charId] ~= nil and
            state.characterSprites[charId].rotations ~= nil
 end
 
-function AssetManager.hasCharacterAnimation(state, charId, animName)
+function AssetManager.has_character_animation(state, charId, animName)
     return state.characterSprites[charId] ~= nil and
            state.characterSprites[charId].animations ~= nil and
            state.characterSprites[charId].animations[animName] ~= nil
 end
 
-function AssetManager.getAnimationFrameCount(state, charId, animName, direction)
-    if AssetManager.hasCharacterAnimation(state, charId, animName) then
+function AssetManager.get_animation_frame_count(state, charId, animName, direction)
+    if AssetManager.has_character_animation(state, charId, animName) then
         local anim = state.characterSprites[charId].animations[animName]
         if anim[direction] then
             return #anim[direction]
@@ -370,7 +356,7 @@ function AssetManager.getAnimationFrameCount(state, charId, animName, direction)
     return 0
 end
 
-function AssetManager.getAvailableDirections(state, charId)
+function AssetManager.get_available_directions(state, charId)
     local dirs = {}
     local sprite = state.characterSprites[charId]
     if sprite and sprite.rotations then
@@ -381,15 +367,15 @@ function AssetManager.getAvailableDirections(state, charId)
     return dirs
 end
 
-function AssetManager.getFont(state, name)
+function AssetManager.get_font(state, name)
     return state.fonts[name] or state.fonts.default
 end
 
-function AssetManager.getSound(state, name)
+function AssetManager.get_sound(state, name)
     return state.sounds[name]
 end
 
-function AssetManager.getEnemySprite(state, enemyId, direction)
+function AssetManager.get_enemy_sprite(state, enemyId, direction)
     direction = direction or "south"
     if state.enemySprites[enemyId] and state.enemySprites[enemyId].rotations then
         return state.enemySprites[enemyId].rotations[direction]
@@ -397,7 +383,7 @@ function AssetManager.getEnemySprite(state, enemyId, direction)
     return nil
 end
 
-function AssetManager.getEnemyAnimation(state, enemyId, animName, direction, frameIndex)
+function AssetManager.get_enemy_animation(state, enemyId, animName, direction, frameIndex)
     direction = direction or "south"
     if state.enemySprites[enemyId] and
        state.enemySprites[enemyId].animations and
@@ -412,20 +398,20 @@ function AssetManager.getEnemyAnimation(state, enemyId, animName, direction, fra
     return nil
 end
 
-function AssetManager.hasEnemySprite(state, enemyId)
+function AssetManager.has_enemy_sprite(state, enemyId)
     return state.enemySprites[enemyId] ~= nil and
            next(state.enemySprites[enemyId].rotations) ~= nil
 end
 
-function AssetManager.hasEnemyAnimation(state, enemyId, animName)
+function AssetManager.has_enemy_animation(state, enemyId, animName)
     return state.enemySprites[enemyId] ~= nil and
            state.enemySprites[enemyId].animations ~= nil and
            state.enemySprites[enemyId].animations[animName] ~= nil
 end
 
-function AssetManager.getEnemyAnimationFrameCount(state, enemyId, animName, direction)
+function AssetManager.get_enemy_animation_frame_count(state, enemyId, animName, direction)
     direction = direction or "south"
-    if AssetManager.hasEnemyAnimation(state, enemyId, animName) then
+    if AssetManager.has_enemy_animation(state, enemyId, animName) then
         local anim = state.enemySprites[enemyId].animations[animName]
         if anim[direction] then
             return #anim[direction]
@@ -434,7 +420,7 @@ function AssetManager.getEnemyAnimationFrameCount(state, enemyId, animName, dire
     return 0
 end
 
-function AssetManager.getNPCSprite(state, npcId, direction)
+function AssetManager.get_npc_sprite(state, npcId, direction)
     direction = direction or "south"
     if state.npcSprites[npcId] and state.npcSprites[npcId].rotations then
         return state.npcSprites[npcId].rotations[direction]
@@ -442,64 +428,64 @@ function AssetManager.getNPCSprite(state, npcId, direction)
     return nil
 end
 
-function AssetManager.hasNPCSprite(state, npcId)
+function AssetManager.has_npc_sprite(state, npcId)
     return state.npcSprites[npcId] ~= nil and
            next(state.npcSprites[npcId].rotations) ~= nil
 end
 
-function AssetManager.getMapObject(state, objectName)
+function AssetManager.get_map_object(state, objectName)
     return state.mapObjects[objectName]
 end
 
-function AssetManager.hasMapObject(state, objectName)
+function AssetManager.has_map_object(state, objectName)
     return state.mapObjects[objectName] ~= nil
 end
 
-function AssetManager.getUIAsset(state, category, name)
+function AssetManager.get_ui_asset(state, category, name)
     if state.uiAssets[category] then
         return state.uiAssets[category][name]
     end
     return nil
 end
 
-function AssetManager.getUIPanel(state, name)
-    return AssetManager.getUIAsset(state, "panels", name)
+function AssetManager.get_ui_panel(state, name)
+    return AssetManager.get_ui_asset(state, "panels", name)
 end
 
-function AssetManager.getUIButton(state, name)
-    return AssetManager.getUIAsset(state, "buttons", name)
+function AssetManager.get_ui_button(state, name)
+    return AssetManager.get_ui_asset(state, "buttons", name)
 end
 
-function AssetManager.getUIIcon(state, name)
-    return AssetManager.getUIAsset(state, "icons", name)
+function AssetManager.get_ui_icon(state, name)
+    return AssetManager.get_ui_asset(state, "icons", name)
 end
 
-function AssetManager.getUIBar(state, name)
-    return AssetManager.getUIAsset(state, "bars", name)
+function AssetManager.get_ui_bar(state, name)
+    return AssetManager.get_ui_asset(state, "bars", name)
 end
 
-function AssetManager.getUISlot(state, name)
-    return AssetManager.getUIAsset(state, "slots", name)
+function AssetManager.get_ui_slot(state, name)
+    return AssetManager.get_ui_asset(state, "slots", name)
 end
 
-function AssetManager.getBattleBackground(state, name)
-    return AssetManager.getUIAsset(state, "battleBg", name)
+function AssetManager.get_battle_background(state, name)
+    return AssetManager.get_ui_asset(state, "battleBg", name)
 end
 
-function AssetManager.getDialogAsset(state, name)
-    return AssetManager.getUIAsset(state, "dialog", name)
+function AssetManager.get_dialog_asset(state, name)
+    return AssetManager.get_ui_asset(state, "dialog", name)
 end
 
-function AssetManager.getLoadingAsset(state, name)
-    return AssetManager.getUIAsset(state, "loading", name)
+function AssetManager.get_loading_asset(state, name)
+    return AssetManager.get_ui_asset(state, "loading", name)
 end
 
-function AssetManager.getClassIcon(state, name)
-    return AssetManager.getUIAsset(state, "classes", name)
+function AssetManager.get_class_icon(state, name)
+    return AssetManager.get_ui_asset(state, "classes", name)
 end
 
-function AssetManager.getEffect(state, name)
-    return AssetManager.getUIAsset(state, "effects", name)
+function AssetManager.get_effect(state, name)
+    return AssetManager.get_ui_asset(state, "effects", name)
 end
 
 return AssetManager

@@ -15,18 +15,18 @@ AccountManager.accounts = {}
 -- Initialize account system
 function AccountManager.init()
     -- Load accounts from file
-    AccountManager.loadAccounts()
+    AccountManager.load_accounts()
     
     -- Create default accounts if none exist
     if next(AccountManager.accounts) == nil then
-        AccountManager.createDefaultAccounts()
+        AccountManager.create_default_accounts()
     end
     
     print("Account system initialized")
 end
 
 -- Create default test accounts
-function AccountManager.createDefaultAccounts()
+function AccountManager.create_default_accounts()
     -- Account 1: test/123 (with multiple characters)
     local char1 = CharacterData.create({
         username = "test",
@@ -139,7 +139,7 @@ function AccountManager.login(username, password)
 end
 
 -- Select character (called after login)
-function AccountManager.selectCharacter(character)
+function AccountManager.select_character(character)
     AccountManager.currentCharacter = character
     return character
 end
@@ -147,7 +147,7 @@ end
 -- Logout
 function AccountManager.logout()
     if AccountManager.isLoggedIn then
-        AccountManager.saveCharacter()
+        AccountManager.save_character()
     end
     
     AccountManager.currentCharacter = nil
@@ -157,17 +157,17 @@ function AccountManager.logout()
 end
 
 -- Get current character
-function AccountManager.getCurrentCharacter()
+function AccountManager.get_current_character()
     return AccountManager.currentCharacter
 end
 
 -- Check if logged in
-function AccountManager.isUserLoggedIn()
+function AccountManager.is_user_logged_in()
     return AccountManager.isLoggedIn
 end
 
 -- Save current character data
-function AccountManager.saveCharacter()
+function AccountManager.save_character()
     if not AccountManager.isLoggedIn or not AccountManager.currentCharacter then
         return false
     end
@@ -189,14 +189,14 @@ function AccountManager.saveCharacter()
 end
 
 -- Load accounts from file (placeholder - will implement file I/O later)
-function AccountManager.loadAccounts()
+function AccountManager.load_accounts()
     -- TODO: Load from file
     -- For now, accounts will be created in memory
     print("Loading accounts from memory...")
 end
 
 -- Save accounts to file (placeholder)
-function AccountManager.saveAccounts()
+function AccountManager.save_accounts()
     -- TODO: Save to file
     print("Saving accounts to memory...")
 end
@@ -226,7 +226,7 @@ function AccountManager.register(username, password, characterName)
 end
 
 -- Get account by username
-function AccountManager.getAccount(username)
+function AccountManager.get_account(username)
     return AccountManager.accounts[username]
 end
 

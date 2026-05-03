@@ -13,7 +13,7 @@ pcall(function()
     stiAvailable = true
 end)
 
-local function parseXML(xml)
+local function parse_xml(xml)
     local result = {}
     local stack = {{children = result}}
 
@@ -39,7 +39,7 @@ local function parseXML(xml)
     return result
 end
 
-local function decodeCSV(data)
+local function decode_csv(data)
     local tiles = {}
     for tileId in data:gmatch("([^,]+)") do
         tileId = tonumber(tileId:match("^%s*(.-)%s*$"))
@@ -50,7 +50,7 @@ local function decodeCSV(data)
     return tiles
 end
 
-local function decodeBase64(data)
+local function decode_base64(data)
     local decoded = {}
     local mapping = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
     local revMapping = {}
@@ -81,7 +81,7 @@ local function decodeBase64(data)
     return decoded
 end
 
-local function decompressGZIP(data)
+local function decompress_gzip(data)
     local dataStr = ""
     for _, b in ipairs(data) do
         dataStr = dataStr .. string.char(b)
@@ -101,16 +101,16 @@ local function decompressGZIP(data)
     return decoded
 end
 
-local function decodeLayerData(encoding, compression, data, width, height)
+local function decode_layer_data(encoding, compression, data, width, height)
     local tiles = {}
 
     if encoding == "csv" then
-        tiles = decodeCSV(data)
+        tiles = decode_csv(data)
     elseif encoding == "base64" then
-        local decoded = decodeBase64(data)
+        local decoded = decode_base64(data)
 
         if compression == "gzip" or compression == "zlib" then
-            decoded = decompressGZIP(decoded)
+            decoded = decompress_gzip(decoded)
         end
 
         for i = 1, #decoded, 4 do
@@ -130,7 +130,7 @@ local function decodeLayerData(encoding, compression, data, width, height)
     return tiles
 end
 
-local function getLayerData(layer, width, height)
+local function get_layer_data(layer, width, height)
     if layer.data and #layer.data > 0 then
         return layer.data
     end
@@ -139,7 +139,7 @@ local function getLayerData(layer, width, height)
     local compression = layer.compression
     local rawData = layer.rawData or ""
 
-    return decodeLayerData(encoding, compression, rawData, width, height)
+    return decode_layer_data(encoding, compression, rawData, width, height)
 end
 
 function TiledLoader.load(filepath)
@@ -153,13 +153,13 @@ function TiledLoader.load(filepath)
     local isJson = filepath:match("%.json$") ~= nil
 
     if isJson then
-        return TiledLoader.loadJSON(filepath)
+        return TiledLoader.load_json(filepath)
     else
-        return TiledLoader.loadTMX(filepath)
+        return TiledLoader.load_tmx(filepath)
     end
 end
 
-function TiledLoader.loadWithSTI(filepath)
+function TiledLoader.load_with_sti(filepath)
     if not stiAvailable then
         print("Warning: STI library not available, falling back to built-in loader")
         return TiledLoader.load(filepath)
@@ -179,10 +179,10 @@ function TiledLoader.loadWithSTI(filepath)
         return TiledLoader.load(filepath)
     end
 
-    return TiledLoader.convertSTIToMapData(stiMap)
+    return TiledLoader.convert_sti_to_map_data(stiMap)
 end
 
-function TiledLoader.convertSTIToMapData(stiMap)
+function TiledLoader.convert_sti_to_map_data(stiMap)
     local MapData = require("map.map_data")
 
     local mapInfo = {
@@ -232,7 +232,7 @@ function TiledLoader.convertSTIToMapData(stiMap)
             }
         elseif layer.type == "objectgroup" and layer.objects then
             for _, obj in ipairs(layer.objects) do
-                TiledLoader.processTiledObject(obj, layer.name, mapInfo)
+                TiledLoader.process_tiled_object(obj, layer.name, mapInfo)
             end
         end
     end
@@ -248,14 +248,14 @@ function TiledLoader.convertSTIToMapData(stiMap)
     return map
 end
 
-function TiledLoader.loadTMX(filepath)
+function TiledLoader.load_tmx(filepath)
     local content, size = love.filesystem.read(filepath)
     if not content then
         print("Warning: Failed to read Tiled map file: " .. filepath)
         return nil
     end
 
-    local map = TiledLoader.parseTMX(content)
+    local map = TiledLoader.parse_tmx(content)
     if not map then
         print("Warning: Failed to parse Tiled map: " .. filepath)
         return nil
@@ -264,7 +264,7 @@ function TiledLoader.loadTMX(filepath)
     return map
 end
 
-function TiledLoader.loadJSON(filepath)
+function TiledLoader.load_json(filepath)
     local content, size = love.filesystem.read(filepath)
     if not content then
         print("Warning: Failed to read Tiled JSON file: " .. filepath)
@@ -277,10 +277,10 @@ function TiledLoader.loadJSON(filepath)
         return nil
     end
 
-    return TiledLoader.parseJSON(jsonData)
+    return TiledLoader.parse_json(jsonData)
 end
 
-function TiledLoader.parseJSON(data)
+function TiledLoader.parse_json(data)
     local MapData = require("map.map_data")
 
     local mapInfo = {
@@ -339,7 +339,7 @@ function TiledLoader.parseJSON(data)
                 local tiles = {}
                 if layer.data then
                     if layer.encoding == "base64" then
-                        tiles = TiledLoader.decodeBase64Layer(layer.data, layer.compression, tilesX, tilesY)
+                        tiles = TiledLoader.decode_base64_layer(layer.data, layer.compression, tilesX, tilesY)
                     elseif layer.encoding == "csv" then
                         tiles = layer.data
                     else
@@ -356,7 +356,7 @@ function TiledLoader.parseJSON(data)
                 }
             elseif layer.type == "objectgroup" and layer.objects then
                 for _, obj in ipairs(layer.objects) do
-                    TiledLoader.processTiledObject(obj, layer.name, mapInfo)
+                    TiledLoader.process_tiled_object(obj, layer.name, mapInfo)
                 end
             end
         end
@@ -369,7 +369,7 @@ function TiledLoader.parseJSON(data)
     return MapData.create(mapInfo)
 end
 
-function TiledLoader.decodeBase64Layer(data, compression, width, height)
+function TiledLoader.decode_base64_layer(data, compression, width, height)
     local decoded = TiledLoader.decodeBase64(data)
     local tiles = {}
 
@@ -381,7 +381,7 @@ function TiledLoader.decodeBase64Layer(data, compression, width, height)
     return tiles
 end
 
-function TiledLoader.processTiledObject(obj, layerName, mapInfo)
+function TiledLoader.process_tiled_object(obj, layerName, mapInfo)
     local objType = obj.type or "generic"
     local objX = obj.x or 0
     local objY = obj.y or 0
@@ -451,7 +451,7 @@ function TiledLoader.processTiledObject(obj, layerName, mapInfo)
     end
 end
 
-function TiledLoader.parseTMX(content)
+function TiledLoader.parse_tmx(content)
     local MapData = require("map.map_data")
 
     local mapInfo = {
@@ -526,7 +526,7 @@ function TiledLoader.parseTMX(content)
 
         local tiles = {}
         if encoding then
-            tiles = decodeLayerData(encoding, compression, rawData or "", layerWidth, layerHeight)
+            tiles = decode_layer_data(encoding, compression, rawData or "", layerWidth, layerHeight)
         end
 
         mapInfo.layers[layerName] = {
@@ -614,7 +614,7 @@ function TiledLoader.parseTMX(content)
     return MapData.create(mapInfo)
 end
 
-function TiledLoader.loadTileset(filepath)
+function TiledLoader.load_tileset(filepath)
     if not love.filesystem.getInfo(filepath) then
         print("Warning: Tileset file not found: " .. filepath)
         return nil
@@ -660,7 +660,7 @@ function TiledLoader.loadTileset(filepath)
     return tileset
 end
 
-function TiledLoader.createObjectLayer(name, objects)
+function TiledLoader.create_object_layer(name, objects)
     return {
         name = name,
         type = "objectgroup",
@@ -670,7 +670,7 @@ function TiledLoader.createObjectLayer(name, objects)
     }
 end
 
-function TiledLoader.exportToTMX(map, filepath)
+function TiledLoader.export_to_tmx(map, filepath)
     local tmx = {}
 
     table.insert(tmx, '<?xml version="1.0" encoding="UTF-8"?>')
@@ -717,7 +717,7 @@ function TiledLoader.exportToTMX(map, filepath)
     return content
 end
 
-function TiledLoader.exportToJSON(map, filepath)
+function TiledLoader.export_to_json(map, filepath)
     local tilesX = math.floor(map.width / map.tileSize)
     local tilesY = math.floor(map.height / map.tileSize)
 
@@ -773,11 +773,11 @@ function TiledLoader.exportToJSON(map, filepath)
     return content
 end
 
-function TiledLoader.isSTIAvailable()
+function TiledLoader.is_sti_available()
     return stiAvailable
 end
 
-function TiledLoader.getSupportedFormats()
+function TiledLoader.get_supported_formats()
     return {
         {ext = ".tmx", desc = "Tiled XML format"},
         {ext = ".json", desc = "Tiled JSON format (recommended)"},

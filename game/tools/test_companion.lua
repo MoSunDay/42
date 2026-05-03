@@ -27,7 +27,7 @@ end
 print()
 
 print("3. Creating CompanionSystem instance...")
-local system = CompanionSystem.new()
+local system = CompanionSystem.create()
 print("   ✓ Instance created")
 print("   Companion count: " .. system:getCompanionCount())
 print()
@@ -58,7 +58,7 @@ end
 print()
 
 print("6. Testing party management...")
-system = CompanionSystem.new()
+system = CompanionSystem.create()
 
 for i = 1, 5 do
     local types = {"warrior", "mage", "assassin", "guardian", "berserker"}
@@ -100,7 +100,7 @@ end
 print()
 
 print("9. Testing companion leveling...")
-system = CompanionSystem.new()
+system = CompanionSystem.create()
 local c = system:createCompanion("warrior")
 system:addCompanion("warrior")
 
@@ -123,7 +123,7 @@ end
 print()
 
 print("10. Testing battle party formation...")
-system = CompanionSystem.new()
+system = CompanionSystem.create()
 system:addCompanion("warrior")
 system:addCompanion("mage")
 system:addCompanion("guardian")
@@ -138,7 +138,7 @@ end
 print()
 
 print("11. Testing companion stats calculation...")
-system = CompanionSystem.new()
+system = CompanionSystem.create()
 local warrior = system:createCompanion("warrior")
 local assassin = system:createCompanion("assassin")
 
@@ -155,7 +155,7 @@ end
 print()
 
 print("12. Testing serialization...")
-system = CompanionSystem.new()
+system = CompanionSystem.create()
 system:addCompanion("warrior")
 system:addCompanion("mage")
 
@@ -163,7 +163,7 @@ local data = system:serialize()
 if data then
     print("   Serialized data length: " .. #tostring(data))
     
-    local newSystem = CompanionSystem.new()
+    local newSystem = CompanionSystem.create()
     newSystem:deserialize(data)
     
     if newSystem:getCompanionCount() == system:getCompanionCount() then

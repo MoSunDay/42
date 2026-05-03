@@ -14,7 +14,7 @@ local ACTION_GEMS = {
 }
 
 function BattleMenu.draw(battleUI, battleSystem, x, y)
-    local state = BattleSystem.getState(battleSystem)
+    local state = BattleSystem.get_state(battleSystem)
     if state ~= "player" then return end
     
     battleUI.menuX = x
@@ -26,10 +26,10 @@ function BattleMenu.draw(battleUI, battleSystem, x, y)
         corners = true,
         glow = false,
         shimmer = false,
-        font = battleUI.assetManager:getFont("default")
+        font = battleUI.assetManager:get_font("default")
     })
     
-    local font = battleUI.assetManager:getFont("default")
+    local font = battleUI.assetManager:get_font("default")
     
     for i, action in ipairs(battleUI.actions) do
         local btnY = y + 30 + (i - 1) * 30
@@ -38,14 +38,14 @@ function BattleMenu.draw(battleUI, battleSystem, x, y)
         
         Components.drawOrnateButton(
             x + 5, btnY, 190, 25,
-            action.key == "auto" and (BattleSystem.isAutoBattle(battleSystem) and "Cancel Auto" or "Auto Battle") or action.name,
+            action.key == "auto" and (BattleSystem.is_auto_battle(battleSystem) and "Cancel Auto" or "Auto Battle") or action.name,
             isSelected and "pressed" or "normal",
             battleUI.assetManager,
             font,
             { gemColor = gemColor }
         )
 
-        if action.key == "auto" and BattleSystem.isAutoBattle(battleSystem) then
+        if action.key == "auto" and BattleSystem.is_auto_battle(battleSystem) then
             love.graphics.setFont(font)
             love.graphics.setColor(Theme.colors.warning)
             love.graphics.print("Auto Battle", x + 15, btnY + 5)
@@ -56,7 +56,7 @@ end
 function BattleMenu.mousepressed(battleUI, x, y, button, battleSystem)
     if button ~= 1 then return nil end
     
-    local state = BattleSystem.getState(battleSystem)
+    local state = BattleSystem.get_state(battleSystem)
     if state ~= "player" then return nil end
     
     if x >= battleUI.menuX and x <= battleUI.menuX + battleUI.menuWidth and
@@ -74,12 +74,12 @@ function BattleMenu.mousepressed(battleUI, x, y, button, battleSystem)
     return nil
 end
 
-function BattleMenu.drawTimer(battleSystem, x, y, assetManager)
-    local state = BattleSystem.getState(battleSystem)
+function BattleMenu.draw_timer(battleSystem, x, y, assetManager)
+    local state = BattleSystem.get_state(battleSystem)
     if state ~= "player" then return end
     
-    local turnTimer = BattleSystem.getTurnTimer(battleSystem)
-    local maxTime = BattleSystem.getMaxTurnTime(battleSystem)
+    local turnTimer = BattleSystem.get_turn_timer(battleSystem)
+    local maxTime = BattleSystem.get_max_turn_time(battleSystem)
     if not turnTimer or not maxTime then return end
     
     Components.drawOrnatePanel(x, y, 200, 40, assetManager, { corners = false, glow = false })

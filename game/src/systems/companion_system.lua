@@ -59,7 +59,7 @@ local COMPANION_TEMPLATES = {
     }
 }
 
-function CompanionSystem.new()
+function CompanionSystem.create()
     return {
         companions = {},
         activeParty = {},
@@ -133,14 +133,14 @@ function CompanionSystem.recruit(state, templateId, itemDatabase)
     
     if itemDatabase and template.defaultEquipment then
         for slot, itemId in pairs(template.defaultEquipment) do
-            local item = itemDatabase.getItem(itemId)
+            local item = itemDatabase.get_item(itemId)
             if item then
                 companion.equipment[slot] = item
             end
         end
     end
     
-    CompanionSystem.updateCompanionStats(state, companion)
+    CompanionSystem.update_companion_stats(state, companion)
     table.insert(state.companions, companion)
     
     return true, companion
@@ -150,7 +150,7 @@ function CompanionSystem.dismiss(state, companionId)
     for i, companion in ipairs(state.companions) do
         if companion.id == companionId then
             if companion.inParty then
-                CompanionSystem.removeFromParty(state, companionId)
+                CompanionSystem.remove_from_party(state, companionId)
             end
             table.remove(state.companions, i)
             return true
@@ -159,7 +159,7 @@ function CompanionSystem.dismiss(state, companionId)
     return false
 end
 
-function CompanionSystem.addToParty(state, companionId)
+function CompanionSystem.add_to_party(state, companionId)
     if #state.activeParty >= CompanionSystem.MAX_PARTY_SIZE - 1 then
         return false, "队伍已满"
     end
@@ -176,7 +176,7 @@ function CompanionSystem.addToParty(state, companionId)
     return false, "伙伴未找到或已在队伍中"
 end
 
-function CompanionSystem.removeFromParty(state, companionId)
+function CompanionSystem.remove_from_party(state, companionId)
     for i, companion in ipairs(state.activeParty) do
         if companion.id == companionId then
             companion.inParty = false
@@ -192,23 +192,23 @@ function CompanionSystem.removeFromParty(state, companionId)
     return false
 end
 
-function CompanionSystem.getParty(state)
+function CompanionSystem.get_party(state)
     return state.activeParty
 end
 
-function CompanionSystem.getPartySize(state)
+function CompanionSystem.get_party_size(state)
     return #state.activeParty
 end
 
-function CompanionSystem.getTotalPartySize(state)
+function CompanionSystem.get_total_party_size(state)
     return #state.activeParty + 1
 end
 
-function CompanionSystem.getAllCompanions(state)
+function CompanionSystem.get_all_companions(state)
     return state.companions
 end
 
-function CompanionSystem.getCompanion(state, companionId)
+function CompanionSystem.get_companion(state, companionId)
     for _, companion in ipairs(state.companions) do
         if companion.id == companionId then
             return companion
@@ -217,7 +217,7 @@ function CompanionSystem.getCompanion(state, companionId)
     return nil
 end
 
-function CompanionSystem.updateCompanionStats(state, companion)
+function CompanionSystem.update_companion_stats(state, companion)
     if not companion then return end
     
     local equipStats = {
@@ -251,7 +251,7 @@ function CompanionSystem.updateCompanionStats(state, companion)
     for slot, level in pairs(companion.enhanceLevels) do
         if level > 0 then
             local crystalType = crystalTypeMap[slot]
-            local bonus = SpiritCrystalSystem.getEnhancementBonus(crystalType, level)
+            local bonus = SpiritCrystalSystem.get_enhancement_bonus(crystalType, level)
             local stat = SpiritCrystalSystem.STATS_MAP[crystalType]
             if stat then
                 enhanceBonus[stat] = enhanceBonus[stat] + bonus
@@ -266,7 +266,7 @@ function CompanionSystem.updateCompanionStats(state, companion)
     companion.eva = companion.baseEva + equipStats.eva + enhanceBonus.eva
     
     local totalDef = companion.defense + enhanceBonus.defense
-    companion.defPercent = CombatUtils.calcDefPercent(totalDef)
+    companion.defPercent = CombatUtils.calc_def_percent(totalDef)
     
     local newMaxHp = companion.baseHp + equipStats.hp + enhanceBonus.hp
     if newMaxHp ~= companion.maxHp then
@@ -276,75 +276,66 @@ function CompanionSystem.updateCompanionStats(state, companion)
     end
 end
 
-function CompanionSystem.equipItem(state, companionId, slot, item)
-    local companion = CompanionSystem.getCompanion(state, companionId)
+function CompanionSystem.equip_item(state, companionId, slot, item)
+    local companion = CompanionSystem.get_companion(state, companionId)
     if not companion then return false, "伙伴未找到" end
     
     local oldItem = companion.equipment[slot]
     companion.equipment[slot] = item
-    CompanionSystem.updateCompanionStats(state, companion)
+    CompanionSystem.update_companion_stats(state, companion)
     return true, oldItem
 end
 
-function CompanionSystem.unequipItem(state, companionId, slot)
-    local companion = CompanionSystem.getCompanion(state, companionId)
+function CompanionSystem.unequip_item(state, companionId, slot)
+    local companion = CompanionSystem.get_companion(state, companionId)
     if not companion then return false, "伙伴未找到" end
     
     local item = companion.equipment[slot]
     companion.equipment[slot] = nil
-    CompanionSystem.updateCompanionStats(state, companion)
-    return true, item
-end
-
-function CompanionSystem.setEnhanceLevel(state, companionId, slot, level)
-    local companion = CompanionSystem.getCompanion(state, companionId)
-    if not companion then return false end
-    
-    companion.enhanceLevels[slot] = level
-    CompanionSystem.updateCompanionStats(state, companion)
+    CompanionSystem.update_companion_stats(state, companion)
     return true
 end
 
-function CompanionSystem.takeDamage(state, companion, damage)
+function CompanionSystem.take_damage(state, companion, damage)
     if not companion then return 0 end
-    return CombatUtils.takeDamageMutating(companion, damage)
+    return CombatUtils.take_damage_mutating(companion, damage)
 end
 
 function CompanionSystem.heal(state, companion, amount)
     if not companion then return end
-    CombatUtils.healMutating(companion, amount)
+    CombatUtils.heal_mutating(companion, amount)
 end
 
-function CompanionSystem.calculateDamage(state, companion)
+function CompanionSystem.calculate_damage(state, companion)
     if not companion then return 0, false end
-    return CombatUtils.calculateDamageMutating(companion)
+    return CombatUtils.calculate_damage_mutating(companion)
 end
 
-function CompanionSystem.checkEvade(state, companion)
+function CompanionSystem.check_evade(state, companion)
     if not companion then return false end
-    return CombatUtils.checkEvade(companion)
+    return CombatUtils.check_evade(companion)
 end
 
-function CompanionSystem.isAlive(state, companion)
+function CompanionSystem.is_alive(state, companion)
     return companion and companion.hp > 0
 end
 
-function CompanionSystem.getHPPercent(state, companion)
+function CompanionSystem.get_hp_percent(state, companion)
     if not companion or companion.maxHp <= 0 then return 0 end
     return companion.hp / companion.maxHp
 end
 
-function CompanionSystem.reviveAll(state)
+function CompanionSystem.revive_all(state)
     for _, companion in ipairs(state.companions) do
         companion.hp = companion.maxHp
         companion.isDefending = false
     end
 end
 
-function CompanionSystem.getAlivePartyMembers(state)
+function CompanionSystem.get_alive_party_members(state)
     local alive = {}
     for _, companion in ipairs(state.activeParty) do
-        if CompanionSystem.isAlive(state, companion) then
+        if CompanionSystem.is_alive(state, companion) then
             table.insert(alive, companion)
         end
     end
@@ -408,7 +399,7 @@ function CompanionSystem.deserialize(state, data, itemDatabase)
             
             if companionData.equipment and itemDatabase then
                 for slot, itemId in pairs(companionData.equipment) do
-                    local item = itemDatabase.getItem(itemId)
+                    local item = itemDatabase.get_item(itemId)
                     if item then
                         companion.equipment[slot] = item
                     end
@@ -428,8 +419,8 @@ function CompanionSystem.deserialize(state, data, itemDatabase)
     end
 end
 
-function CompanionSystem.getCompanionEquipmentInfo(state, companionId)
-    local companion = CompanionSystem.getCompanion(state, companionId)
+function CompanionSystem.get_companion_equipment_info(state, companionId)
+    local companion = CompanionSystem.get_companion(state, companionId)
     if not companion then return nil end
     
     local info = {}
@@ -447,7 +438,7 @@ function CompanionSystem.getCompanionEquipmentInfo(state, companionId)
     return info
 end
 
-function CompanionSystem.getEquipmentSlots()
+function CompanionSystem.get_equipment_slots()
     return {"weapon", "hat", "clothes", "shoes", "necklace"}
 end
 

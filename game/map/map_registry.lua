@@ -113,11 +113,11 @@ for i, map in ipairs(MAPS) do
     mapIndex[map.id] = i
 end
 
-function MapRegistry.getAll()
+function MapRegistry.get_all()
     return MAPS
 end
 
-function MapRegistry.getById(id)
+function MapRegistry.get_by_id(id)
     local idx = mapIndex[id]
     if idx then
         return MAPS[idx]
@@ -125,11 +125,11 @@ function MapRegistry.getById(id)
     return nil
 end
 
-function MapRegistry.getByIndex(idx)
+function MapRegistry.get_by_index(idx)
     return MAPS[idx]
 end
 
-function MapRegistry.getByLevel(level)
+function MapRegistry.get_by_level(level)
     local result = {}
     for _, map in ipairs(MAPS) do
         if level >= map.level.min and level <= map.level.max then
@@ -139,7 +139,7 @@ function MapRegistry.getByLevel(level)
     return result
 end
 
-function MapRegistry.getByTheme(theme)
+function MapRegistry.get_by_theme(theme)
     local result = {}
     for _, map in ipairs(MAPS) do
         if map.theme == theme then
@@ -149,7 +149,7 @@ function MapRegistry.getByTheme(theme)
     return result
 end
 
-function MapRegistry.getUnlocked()
+function MapRegistry.get_unlocked()
     local result = {}
     for _, map in ipairs(MAPS) do
         if map.unlocked then
@@ -159,11 +159,11 @@ function MapRegistry.getUnlocked()
     return result
 end
 
-function MapRegistry.getMapCount()
+function MapRegistry.get_map_count()
     return #MAPS
 end
 
-function MapRegistry.getAdjacentMaps(mapId)
+function MapRegistry.get_adjacent_maps(mapId)
     local idx = mapIndex[mapId]
     if not idx then return {} end
     

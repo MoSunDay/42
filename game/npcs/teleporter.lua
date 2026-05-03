@@ -46,15 +46,15 @@ function Teleporter.create(x, y)
     return state
 end
 
-function Teleporter.getDialogue(state)
+function Teleporter.get_dialogue(state)
     local dialogues = DIALOGUES.greeting
     state.dialogueIndex = (state.dialogueIndex % #dialogues) + 1
     state.currentDialogue = dialogues[state.dialogueIndex]
     return state.currentDialogue
 end
 
-function Teleporter.getDestinations(state, currentMapId, playerLevel)
-    local allMaps = MapRegistry.getAll()
+function Teleporter.get_destinations(state, currentMapId, playerLevel)
+    local allMaps = MapRegistry.get_all()
     local destinations = {}
 
     for i, map in ipairs(allMaps) do
@@ -74,8 +74,8 @@ function Teleporter.getDestinations(state, currentMapId, playerLevel)
     return destinations
 end
 
-function Teleporter.canTeleportTo(state, destMapId, playerLevel)
-    local map = MapRegistry.getById(destMapId)
+function Teleporter.can_teleport_to(state, destMapId, playerLevel)
+    local map = MapRegistry.get_by_id(destMapId)
     if not map then
         return false, "Unknown destination"
     end
@@ -87,19 +87,19 @@ function Teleporter.canTeleportTo(state, destMapId, playerLevel)
     return true
 end
 
-function Teleporter.getTeleportMessage(state, destMapId)
-    local map = MapRegistry.getById(destMapId)
+function Teleporter.get_teleport_message(state, destMapId)
+    local map = MapRegistry.get_by_id(destMapId)
     if map then
         return string.format("Opening portal to %s...", map.name)
     end
     return "Opening portal..."
 end
 
-function Teleporter.getFarewell()
+function Teleporter.get_farewell()
     return DIALOGUES.farewell[math.random(#DIALOGUES.farewell)]
 end
 
-function Teleporter.formatMapList(destinations, currentIndex)
+function Teleporter.format_map_list(destinations, currentIndex)
     local lines = {}
     table.insert(lines, "=== Available Destinations ===")
     table.insert(lines, "")

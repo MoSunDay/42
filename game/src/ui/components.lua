@@ -47,10 +47,10 @@ function Components.draw9Slice(img, x, y, w, h, cornerSize)
     return true
 end
 
-function Components.drawSlot(x, y, size, state, assetManager)
+function Components.draw_slot(x, y, size, state, assetManager)
     state = state or "normal"
     local slotName = "slot_" .. state
-    local slot = assetManager and assetManager:getUISlot(slotName)
+    local slot = assetManager and assetManager:get_ui_slot(slotName)
     
     if slot then
         local scale = size / slot:getWidth()
@@ -72,7 +72,7 @@ end
 function Components.drawHPBar(x, y, w, h, percent, assetManager)
     percent = math.max(0, math.min(1, percent))
     
-    local bgBar = assetManager and assetManager:getUIBar("hp_bar_bg")
+    local bgBar = assetManager and assetManager:get_ui_bar("hp_bar_bg")
     if bgBar then
         local scaleX = w / bgBar:getWidth()
         local scaleY = h / bgBar:getHeight()
@@ -84,7 +84,7 @@ function Components.drawHPBar(x, y, w, h, percent, assetManager)
     
     local fillColor = Theme.getHpColor(percent)
     local fillName = percent > 0.6 and "hp_bar_high" or (percent > 0.3 and "hp_bar_medium" or "hp_bar_low")
-    local fillBar = assetManager and assetManager:getUIBar(fillName)
+    local fillBar = assetManager and assetManager:get_ui_bar(fillName)
     
     if fillBar then
         local fillW = w * percent
@@ -106,7 +106,7 @@ end
 function Components.drawMPBar(x, y, w, h, percent, assetManager)
     percent = math.max(0, math.min(1, percent))
     
-    local bgBar = assetManager and assetManager:getUIBar("mp_bar_bg")
+    local bgBar = assetManager and assetManager:get_ui_bar("mp_bar_bg")
     if bgBar then
         local scaleX = w / bgBar:getWidth()
         local scaleY = h / bgBar:getHeight()
@@ -116,7 +116,7 @@ function Components.drawMPBar(x, y, w, h, percent, assetManager)
         love.graphics.rectangle("fill", x, y, w, h, 3, 3)
     end
     
-    local fillBar = assetManager and assetManager:getUIBar("mp_bar_fill")
+    local fillBar = assetManager and assetManager:get_ui_bar("mp_bar_fill")
     if fillBar then
         local fillW = w * percent
         local scaleX = w / fillBar:getWidth()
@@ -134,17 +134,17 @@ function Components.drawMPBar(x, y, w, h, percent, assetManager)
     love.graphics.rectangle("line", x, y, w, h, 3, 3)
 end
 
-function Components.drawInput(x, y, w, h, isActive, assetManager)
-    local inputName = isActive and "input_field_active" or "input_field"
-    local input = assetManager and assetManager:getUIAsset("input", inputName)
+function Components.drawInput(x, y, w, h, is_active, assetManager)
+    local inputName = is_active and "input_field_active" or "input_field"
+    local input = assetManager and assetManager:get_ui_asset("input", inputName)
     
     if input and Components.draw9Slice(input, x, y, w, h, 6) then
         return true
     end
     
-    love.graphics.setColor(isActive and Theme.colors.input.backgroundActive or Theme.colors.input.background)
+    love.graphics.setColor(is_active and Theme.colors.input.backgroundActive or Theme.colors.input.background)
     love.graphics.rectangle("fill", x, y, w, h, 5, 5)
-    love.graphics.setColor(isActive and Theme.colors.input.borderActive or Theme.colors.input.border)
+    love.graphics.setColor(is_active and Theme.colors.input.borderActive or Theme.colors.input.border)
     love.graphics.setLineWidth(2)
     love.graphics.rectangle("line", x, y, w, h, 5, 5)
     love.graphics.setLineWidth(1)
@@ -152,15 +152,15 @@ function Components.drawInput(x, y, w, h, isActive, assetManager)
     return false
 end
 
-function Components.drawTab(x, y, w, h, text, isActive, assetManager, font)
-    local tabName = isActive and "tab_active" or "tab_inactive"
-    local tab = assetManager and assetManager:getUIAsset("tabs", tabName)
+function Components.drawTab(x, y, w, h, text, is_active, assetManager, font)
+    local tabName = is_active and "tab_active" or "tab_inactive"
+    local tab = assetManager and assetManager:get_ui_asset("tabs", tabName)
     
     if tab then
         local scale = w / tab:getWidth()
         love.graphics.draw(tab, x, y, 0, scale, h / tab:getHeight())
     else
-        love.graphics.setColor(isActive and Theme.colors.tab.active or Theme.colors.tab.inactive)
+        love.graphics.setColor(is_active and Theme.colors.tab.active or Theme.colors.tab.inactive)
         love.graphics.rectangle("fill", x, y, w, h, 5, 5)
     end
     
@@ -173,7 +173,7 @@ function Components.drawTab(x, y, w, h, text, isActive, assetManager, font)
 end
 
 function Components.drawDialog(x, y, w, h, assetManager)
-    local dialog = assetManager and assetManager:getDialogAsset("dialog_panel")
+    local dialog = assetManager and assetManager:get_dialog_asset("dialog_panel")
     
     if dialog and Components.draw9Slice(dialog, x, y, w, h) then
         return true
@@ -190,7 +190,7 @@ function Components.drawDialog(x, y, w, h, assetManager)
 end
 
 function Components.drawTooltip(x, y, w, h, assetManager)
-    local tooltip = assetManager and assetManager:getDialogAsset("tooltip_bg")
+    local tooltip = assetManager and assetManager:get_dialog_asset("tooltip_bg")
     
     if tooltip and Components.draw9Slice(tooltip, x, y, w, h, 8) then
         return true
@@ -211,9 +211,9 @@ function Components.drawOverlay(w, h, alpha)
     love.graphics.rectangle("fill", 0, 0, w, h)
 end
 
-function Components.drawBorder(x, y, w, h, radius, isActive)
+function Components.drawBorder(x, y, w, h, radius, is_active)
     radius = radius or 10
-    love.graphics.setColor(isActive and Theme.colors.borderBright or Theme.colors.border)
+    love.graphics.setColor(is_active and Theme.colors.borderBright or Theme.colors.border)
     love.graphics.setLineWidth(2)
     love.graphics.rectangle("line", x, y, w, h, radius, radius)
     love.graphics.setLineWidth(1)
@@ -227,9 +227,9 @@ function Components.drawOrnatePanel(x, y, w, h, assetManager, options)
     local showShimmer = options.shimmer
 
     local style = options.style or "small_panel"
-    local panel = assetManager and assetManager:getUIPanel(style)
+    local panel = assetManager and assetManager:get_ui_panel(style)
     if not panel and style ~= "small_panel" then
-        panel = assetManager and assetManager:getUIPanel("small_panel")
+        panel = assetManager and assetManager:get_ui_panel("small_panel")
     end
 
     if panel and Components.draw9Slice(panel, x, y, w, h) then
@@ -267,7 +267,7 @@ function Components.drawOrnatePanel(x, y, w, h, assetManager, options)
     end
 
     if showTitle then
-        local font = options.font or love.graphics.getFont()
+        local font = options.font or love.graphics.get_font()
         local titleW = font:getWidth(showTitle) + 30
         local titleX = x + (w - titleW) / 2
         local titleY = y - 8
@@ -292,7 +292,7 @@ function Components.drawOrnateButton(x, y, w, h, text, state, assetManager, font
     local isDisabled = state == "disabled"
 
     local btnName = "button_" .. state
-    local btn = assetManager and assetManager:getUIButton(btnName)
+    local btn = assetManager and assetManager:get_ui_button(btnName)
     local usedAsset = false
 
     if btn then
@@ -332,18 +332,18 @@ function Components.drawOrnateButton(x, y, w, h, text, state, assetManager, font
     end
 
     if text then
-        love.graphics.setFont(font or love.graphics.getFont())
+        love.graphics.setFont(font or love.graphics.get_font())
         local textOffsetX = options.gemColor and 15 or 0
         love.graphics.setColor(isDisabled and Theme.colors.textDim or Theme.colors.text)
-        local tw = (font or love.graphics.getFont()):getWidth(text)
-        love.graphics.print(text, x + textOffsetX + (w - textOffsetX - tw) / 2, y + (h - (font or love.graphics.getFont()):getHeight()) / 2)
+        local tw = (font or love.graphics.get_font()):getWidth(text)
+        love.graphics.print(text, x + textOffsetX + (w - textOffsetX - tw) / 2, y + (h - (font or love.graphics.get_font()):getHeight()) / 2)
     end
 end
 
 function Components.drawOrnateHPBar(x, y, w, h, percent, level, assetManager)
     percent = math.max(0, math.min(1, percent))
 
-    local bgBar = assetManager and assetManager:getUIBar("hp_bar_bg")
+    local bgBar = assetManager and assetManager:get_ui_bar("hp_bar_bg")
     if bgBar then
         local scaleX = w / bgBar:getWidth()
         local scaleY = h / bgBar:getHeight()
@@ -356,7 +356,7 @@ function Components.drawOrnateHPBar(x, y, w, h, percent, level, assetManager)
     local fillW = w * percent
     if fillW > 0 then
         local fillName = percent > 0.6 and "hp_bar_high" or (percent > 0.3 and "hp_bar_medium" or "hp_bar_low")
-        local fillBar = assetManager and assetManager:getUIBar(fillName)
+        local fillBar = assetManager and assetManager:get_ui_bar(fillName)
 
         if fillBar then
             local scaleX = w / fillBar:getWidth()
@@ -389,7 +389,7 @@ function Components.drawOrnateHPBar(x, y, w, h, percent, level, assetManager)
 
     Theme.drawGoldBorder(x, y, w, h, 1)
 
-    local font = love.graphics.getFont()
+    local font = love.graphics.get_font()
     love.graphics.setFont(font)
     love.graphics.setColor(Theme.colors.text)
     local hpText = string.format("%d%%", math.floor(percent * 100))
@@ -399,7 +399,7 @@ end
 function Components.drawOrnateMPBar(x, y, w, h, percent, assetManager)
     percent = math.max(0, math.min(1, percent))
 
-    local bgBar = assetManager and assetManager:getUIBar("mp_bar_bg")
+    local bgBar = assetManager and assetManager:get_ui_bar("mp_bar_bg")
     if bgBar then
         local scaleX = w / bgBar:getWidth()
         local scaleY = h / bgBar:getHeight()
@@ -411,7 +411,7 @@ function Components.drawOrnateMPBar(x, y, w, h, percent, assetManager)
 
     local fillW = w * percent
     if fillW > 0 then
-        local fillBar = assetManager and assetManager:getUIBar("mp_bar_fill")
+        local fillBar = assetManager and assetManager:get_ui_bar("mp_bar_fill")
         if fillBar then
             local scaleX = w / fillBar:getWidth()
             local scaleY = h / fillBar:getHeight()
@@ -427,7 +427,7 @@ function Components.drawOrnateMPBar(x, y, w, h, percent, assetManager)
 
     Theme.drawGoldBorder(x, y, w, h, 1)
 
-    local font = love.graphics.getFont()
+    local font = love.graphics.get_font()
     love.graphics.setColor(Theme.colors.text)
     local mpText = string.format("%d%%", math.floor(percent * 100))
     love.graphics.printf(mpText, x, y + (h - font:getHeight()) / 2, w, "center")
@@ -436,7 +436,7 @@ end
 function Components.drawXPBar(x, y, w, h, percent, assetManager)
     percent = math.max(0, math.min(1, percent))
 
-    local bgBar = assetManager and assetManager:getUIBar("exp_bar_bg")
+    local bgBar = assetManager and assetManager:get_ui_bar("exp_bar_bg")
     if bgBar then
         local scaleX = w / bgBar:getWidth()
         local scaleY = h / bgBar:getHeight()
@@ -448,7 +448,7 @@ function Components.drawXPBar(x, y, w, h, percent, assetManager)
 
     local fillW = w * percent
     if fillW > 0 then
-        local fillBar = assetManager and assetManager:getUIBar("exp_bar_fill")
+        local fillBar = assetManager and assetManager:get_ui_bar("exp_bar_fill")
         if fillBar then
             local scaleX = w / fillBar:getWidth()
             local scaleY = h / fillBar:getHeight()

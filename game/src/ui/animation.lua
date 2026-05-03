@@ -84,11 +84,11 @@ function Animation.update(dt)
     end
 end
 
-function Animation.cancelAll()
+function Animation.cancel_all()
     Animation.tweens = {}
 end
 
-function Animation.createPanelState()
+function Animation.create_panel_state()
     return {
         alpha = 0,
         scaleX = 0.9,
@@ -98,8 +98,8 @@ function Animation.createPanelState()
     }
 end
 
-function Animation.animatePanelIn(state, onComplete)
-    Animation.cancelByTarget(state)
+function Animation.animate_panel_in(state, onComplete)
+    Animation.cancel_by_target(state)
     state.alpha = 0
     state.scaleX = 0.9
     state.scaleY = 0.9
@@ -109,12 +109,12 @@ function Animation.animatePanelIn(state, onComplete)
     Animation.tween(state, { glowAlpha = 0 }, 0.4, "easeIn")
 end
 
-function Animation.animatePanelOut(state, onComplete)
-    Animation.cancelByTarget(state)
+function Animation.animate_panel_out(state, onComplete)
+    Animation.cancel_by_target(state)
     Animation.tween(state, { alpha = 0, scaleX = 0.95, scaleY = 0.95, offsetY = 5 }, 0.2, "easeIn", onComplete)
 end
 
-function Animation.cancelByTarget(target)
+function Animation.cancel_by_target(target)
     local i = 1
     while i <= #Animation.tweens do
         if Animation.tweens[i].target == target then
@@ -125,7 +125,7 @@ function Animation.cancelByTarget(target)
     end
 end
 
-function Animation.createPulseState(speed)
+function Animation.create_pulse_state(speed)
     return {
         time = 0,
         speed = speed or 3,
@@ -133,12 +133,12 @@ function Animation.createPulseState(speed)
     }
 end
 
-function Animation.updatePulse(state, dt)
+function Animation.update_pulse(state, dt)
     state.time = state.time + dt * state.speed
     state.value = (math.sin(state.time) + 1) / 2
 end
 
-function Animation.createDelayedCall(delay, callback)
+function Animation.create_delayed_call(delay, callback)
     local state = { elapsed = 0, delay = delay, callback = callback, active = true }
     Animation.tween(state, { elapsed = delay }, delay, "linear", function()
         if callback then callback() end

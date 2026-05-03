@@ -48,23 +48,23 @@ function EquipmentUI.draw(state, equipmentSystem, x, y, width, height)
     local slotHeight = 80
     local slotIndex = 1
     
-    EquipmentUI.drawEquipmentSlot(state, equipmentSystem, EquipmentSlots.WEAPON, "Weapon", 
+    EquipmentUI.draw_equipment_slot(state, equipmentSystem, EquipmentSlots.WEAPON, "Weapon", 
         x + 20, slotY, width - 40, slotHeight, slotIndex == state.selectedSlot)
     slotY = slotY + slotHeight + 10
     slotIndex = slotIndex + 1
     
-    EquipmentUI.drawEquipmentSlot(state, equipmentSystem, EquipmentSlots.ARMOR, "Armor", 
+    EquipmentUI.draw_equipment_slot(state, equipmentSystem, EquipmentSlots.ARMOR, "Armor", 
         x + 20, slotY, width - 40, slotHeight, slotIndex == state.selectedSlot)
     slotY = slotY + slotHeight + 10
     slotIndex = slotIndex + 1
     
-    EquipmentUI.drawEquipmentSlot(state, equipmentSystem, EquipmentSlots.NECKLACE, "Necklace", 
+    EquipmentUI.draw_equipment_slot(state, equipmentSystem, EquipmentSlots.NECKLACE, "Necklace", 
         x + 20, slotY, width - 40, slotHeight, slotIndex == state.selectedSlot)
     
-    EquipmentUI.drawTotalStats(state, equipmentSystem, x + 20, y + height - 100, width - 40)
+    EquipmentUI.draw_total_stats(state, equipmentSystem, x + 20, y + height - 100, width - 40)
 end
 
-function EquipmentUI.drawEquipmentSlot(state, equipmentSystem, slot, slotName, x, y, width, height, isSelected)
+function EquipmentUI.draw_equipment_slot(state, equipmentSystem, slot, slotName, x, y, width, height, isSelected)
     Components.drawOrnatePanel(x, y, width, height, state.assetManager, {
         corners = false,
         glow = isSelected,
@@ -97,8 +97,8 @@ function EquipmentUI.drawEquipmentSlot(state, equipmentSystem, slot, slotName, x
     end
 end
 
-function EquipmentUI.drawTotalStats(state, equipmentSystem, x, y, width)
-    local stats = EquipmentSystem.getTotalStats(equipmentSystem)
+function EquipmentUI.draw_total_stats(state, equipmentSystem, x, y, width)
+    local stats = EquipmentSystem.get_total_stats(equipmentSystem)
     
     Components.drawOrnatePanel(x, y, width, 80, state.assetManager, {corners=false, glow=false})
     
@@ -115,15 +115,15 @@ function EquipmentUI.drawTotalStats(state, equipmentSystem, x, y, width)
     love.graphics.print("SPD: " .. (stats.speed >= 0 and "+" or "") .. stats.speed, x + 230, y + 35)
 end
 
-function EquipmentUI.navigateUp(state)
+function EquipmentUI.navigate_up(state)
     state.selectedSlot = math.max(1, state.selectedSlot - 1)
 end
 
-function EquipmentUI.navigateDown(state)
+function EquipmentUI.navigate_down(state)
     state.selectedSlot = math.min(3, state.selectedSlot + 1)
 end
 
-function EquipmentUI.isVisible(state)
+function EquipmentUI.is_visible(state)
     return state.visible
 end
 

@@ -67,9 +67,17 @@ Theme.colors = {
         turnPlayer = {0.200, 0.800, 1.000},
         turnEnemy = {1.000, 0.302, 0.302},
         victory = {0.200, 1.000, 0.302},
-        defeat = {0.800, 0.200, 0.200}
+        defeat = {0.800, 0.200, 0.200},
+        escaped = {0.900, 0.900, 0.200}
     },
-    
+
+    stat = {
+        speed = {0.800, 1.000, 0.300},
+        hp = {0.300, 1.000, 0.300},
+        crit = {1.000, 0.800, 0.200},
+        evasion = {0.500, 0.800, 1.000},
+    },
+
     equipment = {
         weapon = {1.000, 0.502, 0.302},
         hat = {0.800, 0.600, 0.400},
@@ -223,7 +231,7 @@ Theme.palette = {
     magic4 = "#f39c12"
 }
 
-function Theme.hexToRgb(hex)
+function Theme.hex_to_rgb(hex)
     hex = hex:gsub("#", "")
     return {
         tonumber(hex:sub(1, 2), 16) / 255,
@@ -236,7 +244,7 @@ function Theme.rgba(r, g, b, a)
     return {r, g, b, a or 1}
 end
 
-function Theme.getHpColor(percent)
+function Theme.get_hp_color(percent)
     if percent > 0.6 then
         return Theme.colors.hp.high
     elseif percent > 0.3 then
@@ -246,19 +254,19 @@ function Theme.getHpColor(percent)
     end
 end
 
-function Theme.applyAlpha(color, alpha)
+function Theme.apply_alpha(color, alpha)
     return {color[1], color[2], color[3], alpha}
 end
 
-function Theme.setColor(color)
+function Theme.set_color(color)
     love.graphics.setColor(color[1], color[2], color[3], color[4] or 1)
 end
 
-function Theme.getPanelColor()
+function Theme.get_panel_color()
     return Theme.colors.panel
 end
 
-function Theme.getButtonColor(isHovered, isPressed, isDisabled)
+function Theme.get_button_color(isHovered, isPressed, isDisabled)
     if isDisabled then
         return Theme.colors.buttonDisabled
     elseif isPressed then
@@ -270,8 +278,8 @@ function Theme.getButtonColor(isHovered, isPressed, isDisabled)
     end
 end
 
-function Theme.getBorderColor(isActive)
-    if isActive then
+function Theme.get_border_color(is_active)
+    if is_active then
         return Theme.colors.borderBright
     else
         return Theme.colors.border
@@ -309,11 +317,11 @@ function Theme.update(dt)
     Theme._animTime = Theme._animTime + dt
 end
 
-function Theme.getAnimTime()
+function Theme.get_anim_time()
     return Theme._animTime
 end
 
-function Theme.drawGoldBorder(x, y, w, h, thickness)
+function Theme.draw_gold_border(x, y, w, h, thickness)
     thickness = thickness or 2
     local g = Theme.gold
     love.graphics.setLineWidth(thickness)
@@ -327,7 +335,7 @@ function Theme.drawGoldBorder(x, y, w, h, thickness)
     love.graphics.setLineWidth(1)
 end
 
-function Theme.drawCornerOrnaments(x, y, w, h, size)
+function Theme.draw_corner_ornaments(x, y, w, h, size)
     size = size or 10
     local g = Theme.gold
     love.graphics.setColor(g.bright)
@@ -346,7 +354,7 @@ function Theme.drawCornerOrnaments(x, y, w, h, size)
     love.graphics.circle("fill", x + w, y + h, 2)
 end
 
-function Theme.drawGlow(x, y, w, h, color, intensity)
+function Theme.draw_glow(x, y, w, h, color, intensity)
     color = color or Theme.colors.border
     intensity = intensity or 0.3
     local pulse = 0.8 + 0.2 * math.sin(Theme._animTime * 2)
@@ -359,7 +367,7 @@ function Theme.drawGlow(x, y, w, h, color, intensity)
     love.graphics.rectangle("line", x - 4, y - 4, w + 8, h + 8, 10)
 end
 
-function Theme.drawGradient(x, y, w, h, colorTop, colorBottom, steps)
+function Theme.draw_gradient(x, y, w, h, colorTop, colorBottom, steps)
     steps = steps or 8
     local stepH = h / steps
     for i = 0, steps - 1 do
@@ -373,21 +381,21 @@ function Theme.drawGradient(x, y, w, h, colorTop, colorBottom, steps)
     end
 end
 
-function Theme.drawParchmentPanel(x, y, w, h, borderThickness)
+function Theme.draw_parchment_panel(x, y, w, h, borderThickness)
     borderThickness = borderThickness or 2
     local p = Theme.parchment
 
-    Theme.drawGradient(x, y, w, h, p.light, p.mid, 6)
+    Theme.draw_gradient(x, y, w, h, p.light, p.mid, 6)
 
     love.graphics.setColor(p.dark)
     love.graphics.setLineWidth(borderThickness)
     love.graphics.rectangle("line", x, y, w, h, 4)
     love.graphics.setLineWidth(1)
 
-    Theme.drawCornerOrnaments(x + 2, y + 2, w - 4, h - 4, 8)
+    Theme.draw_corner_ornaments(x + 2, y + 2, w - 4, h - 4, 8)
 end
 
-function Theme.drawGemIcon(x, y, size, gemColor)
+function Theme.draw_gem_icon(x, y, size, gemColor)
     if not gemColor or not gemColor[1] then return end
     love.graphics.setColor(gemColor[1] * 0.3, gemColor[2] * 0.3, gemColor[3] * 0.3, 0.5)
     love.graphics.circle("fill", x + 1, y + 1, size)
@@ -403,7 +411,7 @@ function Theme.drawGemIcon(x, y, size, gemColor)
     love.graphics.circle("line", x, y, size)
 end
 
-function Theme.drawOrnamentalLine(x1, y1, x2, y2, color)
+function Theme.draw_ornamental_line(x1, y1, x2, y2, color)
     color = color or Theme.gold.normal
     love.graphics.setColor(color)
     love.graphics.setLineWidth(2)
@@ -416,7 +424,7 @@ function Theme.drawOrnamentalLine(x1, y1, x2, y2, color)
     love.graphics.setLineWidth(1)
 end
 
-function Theme.drawShimmer(x, y, w, h, speed)
+function Theme.draw_shimmer(x, y, w, h, speed)
     speed = speed or 1
     local t = Theme._animTime * speed
     local shimmerX = x + ((math.sin(t) + 1) / 2) * w
@@ -427,7 +435,7 @@ function Theme.drawShimmer(x, y, w, h, speed)
     love.graphics.rectangle("fill", shimmerX - 40, y, 80, h)
 end
 
-function Theme.drawDiamondSeparator(cx, y, width)
+function Theme.draw_diamond_separator(cx, y, width)
     width = width or 80
     local g = Theme.gold
 

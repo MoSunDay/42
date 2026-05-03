@@ -3,7 +3,7 @@ local Theme = require("src.ui.theme")
 
 local ChatSystem = {}
 
-function ChatSystem.new()
+function ChatSystem.create()
     return {
         messages = {},
         maxMessages = 1000,
@@ -14,7 +14,7 @@ function ChatSystem.new()
     }
 end
 
-function ChatSystem.addMessage(state, sender, text, color)
+function ChatSystem.add_message(state, sender, text, color)
     local message = {
         sender = sender,
         text = text,
@@ -31,7 +31,7 @@ function ChatSystem.addMessage(state, sender, text, color)
     return message
 end
 
-function ChatSystem.addSpeechBubble(state, owner, text, duration, color)
+function ChatSystem.add_speech_bubble(state, owner, text, duration, color)
     local bubble = {
         owner = owner,
         text = text,
@@ -48,26 +48,25 @@ function ChatSystem.addSpeechBubble(state, owner, text, duration, color)
         table.remove(state.speechBubbles)
     end
 
-    ChatSystem.updateBubbleOffsets(state)
+    ChatSystem.update_bubble_offsets(state)
 
     return bubble
 end
 
-function ChatSystem.updateBubbleOffsets(state)
+function ChatSystem.update_bubble_offsets(state)
     local bubbleHeight = 40
     for i, bubble in ipairs(state.speechBubbles) do
         bubble.offsetY = -(i - 1) * bubbleHeight
     end
 end
 
-function ChatSystem.sendMessage(state, sender, text, owner, color)
-    ChatSystem.addMessage(state, sender, text, color)
+function ChatSystem.send_message(state, sender, text, owner, color)
+    ChatSystem.add_message(state, sender, text, color)
 
     if owner then
-        ChatSystem.addSpeechBubble(state, owner, text, 3.0, color)
+        ChatSystem.add_speech_bubble(state, owner, text, 3.0, color)
     end
 
-    print("[Chat] " .. sender .. ": " .. text)
 end
 
 function ChatSystem.update(state, dt)
@@ -81,18 +80,18 @@ function ChatSystem.update(state, dt)
 
         if bubble.timer >= bubble.duration then
             table.remove(state.speechBubbles, i)
-            ChatSystem.updateBubbleOffsets(state)
+            ChatSystem.update_bubble_offsets(state)
         end
     end
 end
 
-function ChatSystem.drawSpeechBubbles(state)
+function ChatSystem.draw_speech_bubbles(state)
     for _, bubble in ipairs(state.speechBubbles) do
-        ChatSystem.drawSpeechBubble(bubble)
+        ChatSystem.draw_speech_bubble(bubble)
     end
 end
 
-function ChatSystem.drawSpeechBubble(bubble)
+function ChatSystem.draw_speech_bubble(bubble)
     if not bubble.owner then
         return
     end
@@ -103,7 +102,7 @@ function ChatSystem.drawSpeechBubble(bubble)
     local text = bubble.text
     local maxWidth = 200
 
-    local font = love.graphics.getFont()
+    local font = love.graphics.get_font()
     local _, wrappedText = font:getWrap(text, maxWidth)
     local textHeight = #wrappedText * font:getHeight()
     local textWidth = 0
@@ -148,7 +147,7 @@ function ChatSystem.drawSpeechBubble(bubble)
     love.graphics.setColor(1, 1, 1)
 end
 
-function ChatSystem.getRecentMessages(state, count)
+function ChatSystem.get_recent_messages(state, count)
     count = count or 10
     local recent = {}
     for i = 1, math.min(count, #state.messages) do
@@ -157,7 +156,7 @@ function ChatSystem.getRecentMessages(state, count)
     return recent
 end
 
-function ChatSystem.getMessages(state)
+function ChatSystem.get_messages(state)
     return state.messages
 end
 
@@ -166,35 +165,35 @@ function ChatSystem.clear(state)
     state.speechBubbles = {}
 end
 
-function ChatSystem.startInput(state)
+function ChatSystem.start_input(state)
     state.isInputActive = true
     state.inputText = ""
 end
 
-function ChatSystem.endInput(state)
+function ChatSystem.end_input(state)
     state.isInputActive = false
     local text = state.inputText
     state.inputText = ""
     return text
 end
 
-function ChatSystem.isInputting(state)
+function ChatSystem.is_inputting(state)
     return state.isInputActive
 end
 
-function ChatSystem.addInputChar(state, char)
+function ChatSystem.add_input_char(state, char)
     if state.isInputActive then
         state.inputText = state.inputText .. char
     end
 end
 
-function ChatSystem.removeInputChar(state)
+function ChatSystem.remove_input_char(state)
     if state.isInputActive and #state.inputText > 0 then
         state.inputText = state.inputText:sub(1, -2)
     end
 end
 
-function ChatSystem.getInputText(state)
+function ChatSystem.get_input_text(state)
     return state.inputText
 end
 
