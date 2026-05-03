@@ -16,6 +16,11 @@ local CharacterSelectUI = require("account.character_select_ui")
 local SpiritCrystalSystem = require("src.systems.spirit_crystal_system")
 local CompanionSystem = require("src.systems.companion_system")
 local SkillPanel = require("src.ui.skill_panel")
+local NPCManager = require("npcs.npc_manager")
+local DialogUI = require("src.ui.dialog_ui")
+local ShopUI = require("src.ui.shop_ui")
+local RewardUI = require("src.ui.battle.reward_ui")
+local DeathScreen = require("src.ui.death_screen")
 
 local GameState = {}
 
@@ -26,7 +31,7 @@ local GAME_MODE = {
     BATTLE = "battle"
 }
 
-local USE_NETWORK = true
+local USE_NETWORK = false
 local SERVER_HOST = "127.0.0.1"
 local SERVER_PORT = 9000
 
@@ -40,27 +45,32 @@ function GameState.create(assetManager)
     state.network = NetworkManager.create()
 
     if USE_NETWORK then
-        state.network:connect(SERVER_HOST, SERVER_PORT)
+        NetworkManager.connect(state.network, SERVER_HOST, SERVER_PORT)
     end
 
     state.loginUI = LoginUI.create(assetManager)
-    state.loginUI:setNetwork(state.network)
-    state.loginUI:onLogin(function(characters, username)
+    LoginUI.set_network(state.loginUI, state.network)
+    LoginUI.on_login(state.loginUI, function(characters, username)
         state.currentUsername = username
         state.mode = GAME_MODE.CHARACTER_SELECT
-        state.characterSelectUI:setCharacters(characters)
-        state.characterSelectUI:setNetwork(state.network)
+        CharacterSelectUI.set_characters(state.characterSelectUI, characters)
+        CharacterSelectUI.set_network(state.characterSelectUI, state.network)
     end)
 
     state.characterSelectUI = CharacterSelectUI.create(assetManager)
-    state.characterSelectUI:onCharacterSelected(function(character)
-        state.network:set_character(character)
+    CharacterSelectUI.on_character_selected(state.characterSelectUI, function(character)
+        NetworkManager.set_character(state.network, character)
         GameState.initialize_world(state, character)
     end)
 
     state.currentUsername = nil
 
     state.skillPanel = SkillPanel.create(assetManager)
+    state.dialogUI = DialogUI.create(assetManager)
+    state.shopUI = ShopUI.create(assetManager)
+    state.rewardUI = RewardUI.create(assetManager)
+    state.deathScreen = DeathScreen.create(assetManager)
+    state.npcManager = NPCManager.create()
 
     state.map = nil
     state.player = nil
@@ -68,10 +78,11 @@ function GameState.create(assetManager)
     state.encounterZones = nil
     state.audioSystem = nil
     state.battleSystem = nil
+    state.pendingBattleResult = nil
 
     state.time = 0
 
-    return state
+    return setmetatable(state, { __index = GameState })
 end
 
 function GameState.initialize_world(state, character)
@@ -90,6 +101,9 @@ function GameState.initialize_world(state, character)
 
     local AnimationManager = require("src.animations.animation_manager")
     state.animationManager = AnimationManager.create()
+
+    NPCManager.set_animation_manager(state.npcManager, state.animationManager)
+    NPCManager.set_asset_manager(state.npcManager, state.assetManager)
 
     state.player = Player.create(character.x, character.y, state.assetManager)
     Player.set_animation_manager(state.player, state.animationManager)
@@ -178,6 +192,43 @@ function GameState.initialize_world(state, character)
 
     state.camera = Camera.create()
 
+    if state.map and state.map.npcs then
+        for _, npcDef in ipairs(state.map.npcs) do
+            local npcType = npcDef.id or npcDef.type or "town_guard"
+            local NPCDatabase = require("npcs.npc_database")
+            local template = NPCDatabase.get_npc_data(npcType)
+            if not template and npcDef.type then
+                template = NPCDatabase.get_npc_data(npcDef.type)
+            end
+            if template then
+                NPCManager.spawn_npc(state.npcManager, npcType, npcDef.x, npcDef.y)
+            else
+                local npc = {
+                    id = state.npcManager.nextId,
+                    type = npcType,
+                    x = npcDef.x,
+                    y = npcDef.y,
+                    npcType = npcDef.type or "friendly",
+                    name = npcDef.name or "NPC",
+                    description = "",
+                    color = {0.5, 0.5, 0.5},
+                    size = 20,
+                    canTalk = true,
+                    canTrade = false,
+                    dialogue = npcDef.dialogue or "...",
+                    is_alive = true,
+                    isChasing = false,
+                    targetX = npcDef.x,
+                    targetY = npcDef.y,
+                    animationId = "npc_" .. state.npcManager.nextId,
+                }
+                state.npcManager.npcs[state.npcManager.nextId] = npc
+                state.npcManager.nextId = state.npcManager.nextId + 1
+            end
+        end
+        print("Spawned " .. #(state.map.npcs) .. " NPCs from map data")
+    end
+
     state.encounterZones = {}
     GameState.generate_encounter_zones(state, 20)
 
@@ -216,9 +267,18 @@ function GameState.update(state, dt)
         state.loginUI:update(dt)
     elseif state.mode == GAME_MODE.CHARACTER_SELECT then
     elseif state.mode == GAME_MODE.EXPLORATION then
-        Player.update(state.player, dt)
+        DialogUI.update(state.dialogUI, dt)
+        ShopUI.update(state.shopUI, dt)
+
+        if not DialogUI.is_open(state.dialogUI) and not ShopUI.is_open(state.shopUI) then
+            Player.update(state.player, dt)
+        end
 
         Camera.follow(state.camera, state.player.x, state.player.y, dt)
+
+        if state.npcManager then
+            NPCManager.update(state.npcManager, dt, state.player.x, state.player.y)
+        end
 
         for _, zone in ipairs(state.encounterZones) do
             EncounterZone.update(zone, dt)
@@ -231,6 +291,9 @@ function GameState.update(state, dt)
         if state.skillPanel then
             SkillPanel.update(state.skillPanel, dt)
         end
+
+        RewardUI.update(state.rewardUI, dt)
+        DeathScreen.update(state.deathScreen, dt)
 
         if state.encounterSafeTimer and state.encounterSafeTimer > 0 then
             state.encounterSafeTimer = state.encounterSafeTimer - dt
@@ -304,27 +367,49 @@ function GameState.end_battle(state)
     local battleState = BattleSystem.getState(state.battleSystem)
 
     if battleState == "victory" then
-        local rewards = BattleSystem.end_battle(state.battleSystem, "victory")
-        if rewards then
-            if rewards.crystals and state.spiritCrystalSystem then
-                for _, crystal in ipairs(rewards.crystals) do
-                    SpiritCrystalSystem.add_crystal(state.spiritCrystalSystem, crystal.type, crystal.tier, 1)
-                    print(string.format("Obtained: %s", crystal.name))
-                end
-            end
-        end
+        state.pendingBattleResult = "victory"
+        state.pendingRewards = BattleSystem.end_battle(state.battleSystem, "victory")
+        RewardUI.show(state.rewardUI, state.pendingRewards)
         AudioSystem.play_sfx(state.audioSystem, "victory")
+        state.mode = GAME_MODE.EXPLORATION
+        state.encounterSafeTimer = 999
+        return
     elseif battleState == "defeat" then
-        print("Player defeated!")
-        state.player.hp = state.player.maxHp
-        state.player.x = 1000
-        state.player.y = 1000
+        state.pendingBattleResult = "defeat"
+        DeathScreen.show(state.deathScreen)
         AudioSystem.play_sfx(state.audioSystem, "defeat")
+        state.mode = GAME_MODE.EXPLORATION
+        state.encounterSafeTimer = 999
+        return
     end
 
     GameState.sync_player_to_character(state)
 
     state.mode = GAME_MODE.EXPLORATION
+    state.encounterSafeTimer = 2.0
+    AudioSystem.play_bgm(state.audioSystem, "exploration")
+end
+
+function GameState.confirm_battle_result(state)
+    if state.pendingBattleResult == "victory" then
+        if state.pendingRewards then
+            if state.pendingRewards.crystals and state.spiritCrystalSystem then
+                for _, crystal in ipairs(state.pendingRewards.crystals) do
+                    SpiritCrystalSystem.add_crystal(state.spiritCrystalSystem, crystal.type, crystal.tier, 1)
+                end
+            end
+        end
+        RewardUI.hide(state.rewardUI)
+    elseif state.pendingBattleResult == "defeat" then
+        state.player.hp = state.player.maxHp
+        state.player.x = 1000
+        state.player.y = 1000
+        DeathScreen.hide(state.deathScreen)
+    end
+
+    state.pendingBattleResult = nil
+    state.pendingRewards = nil
+    GameState.sync_player_to_character(state)
     state.encounterSafeTimer = 2.0
     AudioSystem.play_bgm(state.audioSystem, "exploration")
 end
@@ -452,6 +537,66 @@ function GameState.get_skill_panel(state)
     return state.skillPanel
 end
 
+function GameState.get_dialog_ui(state)
+    return state.dialogUI
+end
+
+function GameState.get_shop_ui(state)
+    return state.shopUI
+end
+
+function GameState.get_reward_ui(state)
+    return state.rewardUI
+end
+
+function GameState.get_death_screen(state)
+    return state.deathScreen
+end
+
+function GameState.get_npc_manager(state)
+    return state.npcManager
+end
+
+function GameState.interact_nearby_npc(state)
+    if not state.npcManager or not state.player then return false end
+    local npcs = NPCManager.get_npcs_in_range(state.npcManager, state.player.x, state.player.y, 80)
+    if #npcs == 0 then return false end
+
+    table.sort(npcs, function(a, b)
+        local da = math.sqrt((a.x - state.player.x)^2 + (a.y - state.player.y)^2)
+        local db = math.sqrt((b.x - state.player.x)^2 + (b.y - state.player.y)^2)
+        return da < db
+    end)
+
+    local npc = npcs[1]
+    if npc.canTrade and npc.shop and #npc.shop > 0 then
+        ShopUI.open(state.shopUI, npc, state.spiritCrystalSystem)
+    elseif npc.canTalk or npc.dialogue then
+        DialogUI.open(state.dialogUI, npc)
+    end
+    return true
+end
+
 GameState.MODE = GAME_MODE
+
+GameState.getMode = GameState.get_mode
+GameState.getBattleSystem = GameState.get_battle_system
+GameState.getAudioSystem = GameState.get_audio_system
+GameState.getPartySystem = GameState.get_party_system
+GameState.getChatSystem = GameState.get_chat_system
+GameState.getPlayerPosition = GameState.get_player_position
+GameState.movePlayerTo = GameState.move_player_to
+GameState.getLoginUI = GameState.get_login_ui
+GameState.getCharacterSelectUI = GameState.get_character_select_ui
+GameState.getSkillPanel = GameState.get_skill_panel
+GameState.getDialogUI = GameState.get_dialog_ui
+GameState.getShopUI = GameState.get_shop_ui
+GameState.getRewardUI = GameState.get_reward_ui
+GameState.getDeathScreen = GameState.get_death_screen
+GameState.getNpcManager = GameState.get_npc_manager
+GameState.sendChatMessage = GameState.send_chat_message
+GameState.interactNearbyNPC = GameState.interact_nearby_npc
+GameState.endBattle = GameState.end_battle
+GameState.confirmBattleResult = GameState.confirm_battle_result
 
 return GameState

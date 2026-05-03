@@ -35,20 +35,19 @@ function AvatarRenderer.draw_character_panel(x, y, width, height, character, fon
     
     -- Character name
     love.graphics.setFont(font)
-    love.graphics.setColor(1, 1, 1)
+    love.graphics.setColor(Theme.colors.text)
     love.graphics.print(character.characterName, avatarX + avatarSize + 15, y + 10)
     
-    -- Stats
     local statsY = y + 70
     local lineHeight = 20
     
-    love.graphics.setColor(0.9, 0.3, 0.3)
+    love.graphics.setColor(Theme.colors.hp.high)
     love.graphics.print("HP: " .. character.hp .. "/" .. character.maxHp, x + 10, statsY)
     
-    love.graphics.setColor(1, 0.5, 0.3)
+    love.graphics.setColor(Theme.colors.equipment.weapon)
     love.graphics.print("ATK: " .. character.attack, x + 10, statsY + lineHeight)
     
-    love.graphics.setColor(0.5, 0.7, 1)
+    love.graphics.setColor(Theme.colors.equipment.clothes)
     love.graphics.print("DEF: " .. character.defense, x + 10, statsY + lineHeight * 2)
 end
 
@@ -58,7 +57,7 @@ function AvatarRenderer.draw_hp_bar(x, y, width, height, current, max, assetMana
     Components.drawOrnateHPBar(x, y, width, height, hpPercent, nil, assetManager)
     
     -- Text
-    love.graphics.setColor(1, 1, 1)
+    love.graphics.setColor(Theme.colors.text)
     love.graphics.printf(current .. "/" .. max, x, y + 2, width, "center")
 end
 

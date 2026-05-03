@@ -4,14 +4,14 @@ local Theme = require("src.ui.theme")
 local ChatSystem = {}
 
 function ChatSystem.create()
-    return {
+    return setmetatable({
         messages = {},
         maxMessages = 1000,
         speechBubbles = {},
         maxBubbles = 5,
         inputText = "",
         isInputActive = false,
-    }
+    }, { __index = ChatSystem })
 end
 
 function ChatSystem.add_message(state, sender, text, color)
@@ -196,5 +196,8 @@ end
 function ChatSystem.get_input_text(state)
     return state.inputText
 end
+
+ChatSystem.addMessage = ChatSystem.add_message
+ChatSystem.sendMessage = ChatSystem.send_message
 
 return ChatSystem

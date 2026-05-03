@@ -6,10 +6,17 @@ local SkillDatabase = require("src.data.skill_database")
 local CombatUtils = require("src.systems.combat_utils")
 local AudioSystem = require("src.systems.audio_system")
 local BattleAnimation = require("src.systems.battle.battle_animation")
-local BattleSystem = require("src.systems.battle.battle_system")
 local BattleLog = require("src.systems.battle.battle_log")
 local Enemy = require("src.entities.enemy")
 local Player = require("src.entities.player")
+
+local BattleSystem = nil
+local function get_battle_system()
+    if not BattleSystem then
+        BattleSystem = require("src.systems.battle.battle_system")
+    end
+    return BattleSystem
+end
 
 local BattleExecutor = {}
 
@@ -29,7 +36,7 @@ function BattleExecutor.execute_player_attack(battleSystem, target, targetIndex)
     BattleAnimation.add_attack_animation(battleSystem.animation, playerX, playerY, targetX, targetY, function()
         if CombatUtils.check_evade(target) then
             BattleAnimation.add_damage_number(battleSystem.animation, targetX, targetY - 30, 0, false, "miss")
-            BattleSystem.add_log(battleSystem, target.name .. " evaded your attack!")
+            get_battle_system().add_log(battleSystem, target.name .. " evaded your attack!")
             return
         end
         
@@ -45,17 +52,17 @@ function BattleExecutor.execute_player_attack(battleSystem, target, targetIndex)
         end
         
         local critText = isCrit and " CRITICAL!" or ""
-        BattleSystem.add_log(battleSystem, "You attack " .. target.name .. " for " .. actualDamage .. " damage!" .. critText)
+        get_battle_system().add_log(battleSystem, "You attack " .. target.name .. " for " .. actualDamage .. " damage!" .. critText)
         
         if not CombatUtils.is_alive(target) then
-            BattleSystem.add_log(battleSystem, target.name .. " defeated!")
+            get_battle_system().add_log(battleSystem, target.name .. " defeated!")
         end
     end)
 end
 
 function BattleExecutor.execute_player_defend(battleSystem)
     battleSystem.player.isDefending = true
-    BattleSystem.add_log(battleSystem, "You take a defensive stance! (+25% DEF)")
+    get_battle_system().add_log(battleSystem, "You take a defensive stance! (+25% DEF)")
 end
 
 function BattleExecutor.execute_player_escape(battleSystem, battleState)
@@ -63,11 +70,11 @@ function BattleExecutor.execute_player_escape(battleSystem, battleState)
     escapeChance = math.min(0.8, escapeChance)
     
     if math.random() < escapeChance then
-        BattleSystem.add_log(battleSystem, "You escaped successfully!")
-        BattleSystem.end_battle(battleSystem, battleState.ESCAPED)
+        get_battle_system().add_log(battleSystem, "You escaped successfully!")
+        get_battle_system().end_battle(battleSystem, battleState.ESCAPED)
         return true
     else
-        BattleSystem.add_log(battleSystem, "Failed to escape!")
+        get_battle_system().add_log(battleSystem, "Failed to escape!")
         return false
     end
 end
@@ -88,7 +95,7 @@ function BattleExecutor.execute_enemy_attack(battleSystem, enemy, enemyIndex)
     BattleAnimation.add_attack_animation(battleSystem.animation, enemyX, enemyY, playerX, playerY, function()
         if Player.check_evade(battleSystem.player) then
             BattleAnimation.add_damage_number(battleSystem.animation, playerX, playerY - 30, 0, true, "miss")
-            BattleSystem.add_log(battleSystem, "You evaded " .. enemy.name .. "'s attack!")
+            get_battle_system().add_log(battleSystem, "You evaded " .. enemy.name .. "'s attack!")
             return
         end
         
@@ -104,17 +111,17 @@ function BattleExecutor.execute_enemy_attack(battleSystem, enemy, enemyIndex)
         end
         
         local critText = isCrit and " CRITICAL!" or ""
-        BattleSystem.add_log(battleSystem, enemy.name .. " attacks you for " .. actualDamage .. " damage!" .. critText)
+        get_battle_system().add_log(battleSystem, enemy.name .. " attacks you for " .. actualDamage .. " damage!" .. critText)
         
         if not Player.is_alive(battleSystem.player) then
-            BattleSystem.add_log(battleSystem, "You have been defeated!")
+            get_battle_system().add_log(battleSystem, "You have been defeated!")
         end
     end)
 end
 
 function BattleExecutor.execute_enemy_defend(battleSystem, enemy)
     enemy.isDefending = true
-    BattleSystem.add_log(battleSystem, enemy.name .. " takes a defensive stance!")
+    get_battle_system().add_log(battleSystem, enemy.name .. " takes a defensive stance!")
 end
 
 function BattleExecutor.execute_player_skill(battleSystem, skillId, targets, targetIndices)
@@ -122,13 +129,13 @@ function BattleExecutor.execute_player_skill(battleSystem, skillId, targets, tar
     local canUse, result = SkillSystem.can_use_skill(player, skillId)
     
     if not canUse then
-        BattleSystem.add_log(battleSystem, result)
+        get_battle_system().add_log(battleSystem, result)
         return false
     end
     
     local success, skillResult = SkillSystem.use_skill(player, skillId)
     if not success then
-        BattleSystem.add_log(battleSystem, skillResult)
+        get_battle_system().add_log(battleSystem, skillResult)
         return false
     end
     
@@ -164,7 +171,7 @@ function BattleExecutor.execute_damage_skill(battleSystem, skillData, skillLevel
     local totalDamage = 0
     local targetCount = #targets
     
-    BattleSystem.add_log(battleSystem, string.format("%s Lv.%d!", skillData.name, skillLevel))
+    get_battle_system().add_log(battleSystem, string.format("%s Lv.%d!", skillData.name, skillLevel))
     
     for i, target in ipairs(targets) do
         local targetIndex = targetIndices[i]
@@ -174,7 +181,7 @@ function BattleExecutor.execute_damage_skill(battleSystem, skillData, skillLevel
         BattleAnimation.add_attack_animation(battleSystem.animation, playerX, playerY, targetX, targetY, function()
             if CombatUtils.check_evade(target) then
                 BattleAnimation.add_damage_number(battleSystem.animation, targetX, targetY - 30, 0, false, "miss")
-                BattleSystem.add_log(battleSystem, target.name .. " evaded!")
+                get_battle_system().add_log(battleSystem, target.name .. " evaded!")
                 return
             end
             
@@ -199,11 +206,11 @@ function BattleExecutor.execute_damage_skill(battleSystem, skillData, skillLevel
             end
             
             local critText = isCrit and " CRITICAL!" or ""
-            BattleSystem.add_log(battleSystem, string.format("%s takes %d damage!%s", target.name, actualDamage, critText))
+            get_battle_system().add_log(battleSystem, string.format("%s takes %d damage!%s", target.name, actualDamage, critText))
             
             if skillData.defBreak then
                 target.defense = target.defense * (1 - skillData.defBreak)
-                BattleSystem.add_log(battleSystem, target.name .. "'s defense reduced!")
+                get_battle_system().add_log(battleSystem, target.name .. "'s defense reduced!")
             end
             
             if skillData.debuff then
@@ -213,12 +220,12 @@ function BattleExecutor.execute_damage_skill(battleSystem, skillData, skillLevel
                     value = skillData.debuff.speedPercent or 0,
                     duration = skillData.debuff.duration or 2
                 })
-                BattleSystem.add_log(battleSystem, target.name .. " is slowed!")
+                get_battle_system().add_log(battleSystem, target.name .. " is slowed!")
             end
             
             if skillData.stunChance and math.random() < skillData.stunChance then
                 target.stunned = true
-                BattleSystem.add_log(battleSystem, target.name .. " is stunned!")
+                get_battle_system().add_log(battleSystem, target.name .. " is stunned!")
             end
             
             if skillData.dot then
@@ -227,11 +234,11 @@ function BattleExecutor.execute_damage_skill(battleSystem, skillData, skillLevel
                     damage = skillData.dot.damage,
                     duration = skillData.dot.duration
                 }
-                BattleSystem.add_log(battleSystem, target.name .. " is burning!")
+                get_battle_system().add_log(battleSystem, target.name .. " is burning!")
             end
             
             if not CombatUtils.is_alive(target) then
-                BattleSystem.add_log(battleSystem, target.name .. " defeated!")
+                get_battle_system().add_log(battleSystem, target.name .. " defeated!")
             end
         end)
     end
@@ -246,10 +253,10 @@ function BattleExecutor.execute_damage_skill(battleSystem, skillData, skillLevel
         })
         
         if buff.speedPercent and buff.speedPercent > 0 then
-            BattleSystem.add_log(battleSystem, string.format("Your speed increased by %d%%!", buff.speedPercent * 100))
+            get_battle_system().add_log(battleSystem, string.format("Your speed increased by %d%%!", buff.speedPercent * 100))
         end
         if buff.defensePercent and buff.defensePercent > 0 then
-            BattleSystem.add_log(battleSystem, string.format("Your defense increased by %d%%!", buff.defensePercent * 100))
+            get_battle_system().add_log(battleSystem, string.format("Your defense increased by %d%%!", buff.defensePercent * 100))
         end
     end
     
@@ -265,10 +272,10 @@ function BattleExecutor.execute_heal_skill(battleSystem, skillData, skillLevel)
     
     if skillData.cleanse and player.debuffs then
         player.debuffs = {}
-        BattleSystem.add_log(battleSystem, "All debuffs cleansed!")
+        get_battle_system().add_log(battleSystem, "All debuffs cleansed!")
     end
     
-    BattleSystem.add_log(battleSystem, string.format("%s Lv.%d! Healed %d HP!", skillData.name, skillLevel, healAmount))
+    get_battle_system().add_log(battleSystem, string.format("%s Lv.%d! Healed %d HP!", skillData.name, skillLevel, healAmount))
     
     if battleSystem.audioSystem then
         AudioSystem.play_sfx(battleSystem.audioSystem, "skill")
@@ -279,7 +286,7 @@ end
 
 function BattleExecutor.execute_seal_skill(battleSystem, skillData, skillLevel, targets, targetIndices)
     if not targets or #targets == 0 then
-        BattleSystem.add_log(battleSystem, "No target for seal!")
+        get_battle_system().add_log(battleSystem, "No target for seal!")
         return false
     end
     
@@ -299,7 +306,7 @@ function BattleExecutor.execute_seal_skill(battleSystem, skillData, skillLevel, 
         confusion = "confused"
     }
     
-    BattleSystem.add_log(battleSystem, string.format("%s Lv.%d! %s is %s for %d turns!", 
+    get_battle_system().add_log(battleSystem, string.format("%s Lv.%d! %s is %s for %d turns!", 
         skillData.name, skillLevel, target.name, sealName[sealType] or "sealed", duration))
     
     if battleSystem.audioSystem then

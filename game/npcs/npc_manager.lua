@@ -51,7 +51,7 @@ function NPCManager.get_sprite_for_npc(state, npcType)
 end
 
 function NPCManager.spawn_npc(state, npcType, x, y)
-    local template = NPCDatabase.getNPCData(npcType)
+    local template = NPCDatabase.get_npc_data(npcType)
     if not template then
         print("Warning: Unknown NPC type: " .. tostring(npcType))
         return nil

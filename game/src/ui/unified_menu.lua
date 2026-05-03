@@ -266,18 +266,18 @@ function UnifiedMenu.draw_total_stats(state, equipmentSystem, x, y, width)
     love.graphics.setColor(state.colors.clothes)
     love.graphics.print("DEF: +" .. stats.defense .. " (" .. defPercent .. "%)", statX + 100, statY)
     
-    love.graphics.setColor(0.8, 1.0, 0.3)
+    love.graphics.setColor(Theme.colors.stat.speed)
     love.graphics.print("SPD: " .. (stats.speed >= 0 and "+" or "") .. stats.speed, statX + 240, statY)
     
     statY = statY + 22
     
-    love.graphics.setColor(0.3, 1.0, 0.3)
+    love.graphics.setColor(Theme.colors.stat.hp)
     love.graphics.print("HP: +" .. stats.hp, statX, statY)
     
-    love.graphics.setColor(1.0, 0.8, 0.2)
+    love.graphics.setColor(Theme.colors.stat.crit)
     love.graphics.print("CRIT: +" .. stats.crit .. "%", statX + 100, statY)
     
-    love.graphics.setColor(0.5, 0.8, 1.0)
+    love.graphics.setColor(Theme.colors.stat.evasion)
     love.graphics.print("EVA: +" .. stats.eva .. "%", statX + 220, statY)
 end
 

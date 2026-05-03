@@ -1,4 +1,4 @@
-Commit: 99b2fb0a7c35b83446570e7572de829cc3946902
+Commit: aaa6785
 
 # UI 系统 - 奇幻华丽风格
 
@@ -13,6 +13,12 @@ Commit: 99b2fb0a7c35b83446570e7572de829cc3946902
 - `src/ui/particles.lua` — 粒子系统（预设：goldDust, fire, heal, frost, magic, sparkle, damage, levelUp）
 - `src/ui/components.lua` — 组件库（9-slice + ornate 变体），所有组件均支持 assetManager 资源加载 + 代码回退
 - `src/ui/slot_utils.lua` — 共享装备槽位颜色/图标映射（纯函数：getSlotColor, getSlotIcon, getItemColor）
+
+### 交互 UI
+- `src/ui/dialog_ui.lua` — NPC 对话面板（分页、头像圆、淡入动画，F键触发）
+- `src/ui/shop_ui.lua` — 商店购买界面（商品列表、详情面板、灵晶余额、买入确认）
+- `src/ui/battle/reward_ui.lua` — 战斗胜利奖励（灵晶逐个揭示动画 + 金色粒子）
+- `src/ui/death_screen.lua` — 死亡覆盖层（淡入 "YOU DIED" + 复活按钮）
 
 ## 资源消费架构
 
@@ -68,6 +74,31 @@ Animation.update(dt) → Theme.update(dt) → Particles.update(dt) → BattleBac
 - `NPCManager` — 通过 `setAssetManager()` 使用 NPC 精灵（类型映射表 `NPC_SPRITE_MAP`）
 - `BattleUI.drawPlayer` — 使用角色精灵（基于 `appearanceId`），回退为圆形
 - `BattleUI.drawEnemy` — 已有精灵支持
+
+## 视觉一致性规范
+
+所有 UI 模块必须使用 Theme 颜色引用，禁止硬编码 RGB 值：
+- 属性颜色: `Theme.colors.stat.{speed,hp,crit,evasion}`
+- 战斗状态: `Theme.colors.battle.{turnPlayer,turnEnemy,victory,defeat,escaped}`
+- 文本层级: `Theme.colors.text` / `Theme.colors.textDim`
+- 金色系: `Theme.gold.{bright,normal,dark}`
+- 反馈色: `Theme.colors.{success,warning,error,info}`
+- 魔法值: `Theme.colors.mp`
+
+## NPC 交互集成
+
+NPC 系统通过 `game_state.lua` 集成到游戏循环：
+- `NPCManager` 在 `initialize_world` 中从地图数据生成 NPC
+- `render_system` 在 camera 变换下绘制可见 NPC（视口裁剪）
+- `input_system` 的 F 键触发 `interact_nearby_npc`，按距离排序后：
+  - 商人 NPC (canTrade + shop) → `ShopUI.open`
+  - 可对话 NPC (canTalk/dialogue) → `DialogUI.open`
+- 战斗胜利/失败通过 `pendingBattleResult` 机制延迟结算，先展示 RewardUI / DeathScreen
+
+## 素材工具
+- `src/tools/placeholder_assets.lua` — LÖVE 原生占位符生成器（角色/NPC/头像/UI 元素）
+- `docs/PIXELLAB_GENERATION_MANIFEST.md` — Pixellab API 批量生成清单（~156 张素材的 prompt 和规格）
+- 运行: `love game --generate-assets`
 
 ## 依赖
 - `src/ui/theme.lua` ← 所有 UI 模块

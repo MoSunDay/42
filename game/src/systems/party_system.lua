@@ -3,11 +3,11 @@ local PartySystem = {}
 local MAX_PARTY_SIZE = 5
 
 function PartySystem.create()
-    return {
+    return setmetatable({
         members = {},
         leaderIndex = 1,
         partyName = "Party",
-    }
+    }, { __index = PartySystem })
 end
 
 function PartySystem.add_member(state, memberData)
@@ -115,5 +115,8 @@ function PartySystem.create_member_data(id, name, hp, maxHp, avatarColor)
         isOnline = true
     }
 end
+
+PartySystem.addMember = PartySystem.add_member
+PartySystem.setPartyName = PartySystem.set_party_name
 
 return PartySystem

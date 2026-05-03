@@ -60,10 +60,10 @@ local COMPANION_TEMPLATES = {
 }
 
 function CompanionSystem.create()
-    return {
+    return setmetatable({
         companions = {},
         activeParty = {},
-    }
+    }, { __index = CompanionSystem })
 end
 
 local function createCompanion(template, index)
@@ -444,5 +444,7 @@ end
 
 CompanionSystem.TEMPLATES = COMPANION_TEMPLATES
 CompanionSystem.BASE_STATS = BASE_STATS
+
+CompanionSystem.getPartySize = CompanionSystem.get_party_size
 
 return CompanionSystem

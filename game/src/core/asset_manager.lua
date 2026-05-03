@@ -48,7 +48,10 @@ function AssetManager.create()
         dialog = {},
         loading = {},
         classes = {},
-        effects = {}
+        effects = {},
+        input = {},
+        minimap = {},
+        portraits = { large = {}, small = {} }
     }
 
     state.paths = {
@@ -62,7 +65,11 @@ function AssetManager.create()
         ui = "assets/images/ui/"
     }
 
-    return state
+    return setmetatable(state, {
+        __index = function(_, key)
+            return AssetManager[key]
+        end
+    })
 end
 
 function AssetManager.load_all(state)
@@ -231,7 +238,9 @@ function AssetManager.load_ui_assets(state)
         {name = "dialog", path = "dialog/"},
         {name = "loading", path = "loading/"},
         {name = "classes", path = "classes/"},
-        {name = "effects", path = "effects/"}
+        {name = "effects", path = "effects/"},
+        {name = "input", path = "input/"},
+        {name = "minimap", path = "minimap/"}
     }
 
     for _, category in ipairs(uiCategories) do
@@ -250,7 +259,29 @@ function AssetManager.load_ui_assets(state)
 
     local count = 0
     for catName, cat in pairs(state.uiAssets) do
-        for _ in pairs(cat) do count = count + 1 end
+        if type(cat) == "table" then
+            for _ in pairs(cat) do count = count + 1 end
+        end
+    end
+
+    AssetManager.load_portraits(state)
+end
+
+function AssetManager.load_portraits(state)
+    local portraitBase = state.paths.images .. "portraits/"
+    local sizes = { large = "large/", small = "small/" }
+
+    for sizeName, sizePath in pairs(sizes) do
+        local sizeDir = portraitBase .. sizePath
+        if love.filesystem.getInfo(sizeDir) then
+            local files = love.filesystem.getDirectoryItems(sizeDir)
+            for _, filename in ipairs(files) do
+                if filename:match("%.png$") then
+                    local portraitName = filename:gsub("%.png$", "")
+                    state.uiAssets.portraits[sizeName][portraitName] = love.graphics.newImage(sizeDir .. filename)
+                end
+            end
+        end
     end
 end
 
@@ -486,6 +517,22 @@ end
 
 function AssetManager.get_effect(state, name)
     return AssetManager.get_ui_asset(state, "effects", name)
+end
+
+function AssetManager.get_portrait(state, name, size)
+    size = size or "large"
+    if state.uiAssets.portraits and state.uiAssets.portraits[size] then
+        return state.uiAssets.portraits[size][name]
+    end
+    return nil
+end
+
+function AssetManager.get_input_asset(state, name)
+    return AssetManager.get_ui_asset(state, "input", name)
+end
+
+function AssetManager.get_minimap_asset(state, name)
+    return AssetManager.get_ui_asset(state, "minimap", name)
 end
 
 return AssetManager
