@@ -67,3 +67,6 @@ pip-delete-this-directory.txt
 
 # User data
 server/data/accounts.json
+
+# Config with credentials
+game/default_accounts.json

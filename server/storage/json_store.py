@@ -82,9 +82,11 @@ def init(data_dir: str):
 def _get_default_accounts() -> Dict[str, Dict[str, Any]]:
     accounts = deepcopy(DEFAULT_ACCOUNTS)
     now = datetime.now().isoformat()
-    accounts["test"]["password_hash"] = hash_password("123")
+    test_pass = os.environ.get("GAME_TEST_PASSWORD", "changeme")
+    admin_pass = os.environ.get("GAME_ADMIN_PASSWORD", "changeme")
+    accounts["test"]["password_hash"] = hash_password(test_pass)
     accounts["test"]["created_at"] = now
-    accounts["admin"]["password_hash"] = hash_password("admin")
+    accounts["admin"]["password_hash"] = hash_password(admin_pass)
     accounts["admin"]["created_at"] = now
     return accounts
 
