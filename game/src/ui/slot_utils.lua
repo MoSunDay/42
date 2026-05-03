@@ -10,6 +10,14 @@ local SLOT_COLORS = {
 }
 
 local SLOT_ICONS = {
+    [ItemDatabase.SLOTS.WEAPON] = "weapon",
+    [ItemDatabase.SLOTS.HAT] = "hat",
+    [ItemDatabase.SLOTS.CLOTHES] = "clothes",
+    [ItemDatabase.SLOTS.SHOES] = "shoes",
+    [ItemDatabase.SLOTS.NECKLACE] = "necklace",
+}
+
+local SLOT_FALLBACK = {
     [ItemDatabase.SLOTS.WEAPON] = "W",
     [ItemDatabase.SLOTS.HAT] = "H",
     [ItemDatabase.SLOTS.CLOTHES] = "C",
@@ -21,9 +29,25 @@ local function getSlotColor(slotType)
     return SLOT_COLORS[slotType] or Theme.colors.text
 end
 
+local function getSlotIconName(slotType)
+    if not slotType then return nil end
+    return SLOT_ICONS[slotType]
+end
+
 local function getSlotIcon(slotType)
     if not slotType then return "?" end
-    return SLOT_ICONS[slotType] or "?"
+    return SLOT_FALLBACK[slotType] or "?"
+end
+
+local function get_itemIconName(item)
+    if not item then return nil end
+    if item.type == ItemDatabase.TYPE.CONSUMABLE then
+        if item.effect == "heal" or item.effect == "full_heal" then
+            return "hp_potion"
+        end
+        return "item"
+    end
+    return SLOT_ICONS[item.slot]
 end
 
 local function get_itemColor(item)
@@ -37,5 +61,7 @@ end
 return {
     getSlotColor = getSlotColor,
     getSlotIcon = getSlotIcon,
+    getSlotIconName = getSlotIconName,
     get_itemColor = get_itemColor,
+    get_itemIconName = get_itemIconName,
 }

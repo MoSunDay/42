@@ -87,7 +87,7 @@ function BattleSystem.end_battle(state, result)
         local allCrystals = {}
 
         for _, enemy in ipairs(state.enemies) do
-            local preferredType = SpiritCrystalSystem.getPreferredCrystalType(enemy)
+            local preferredType = SpiritCrystalSystem.get_preferred_crystal_type(enemy)
             local drops = SpiritCrystalSystem.generateDrop(enemy.tier, preferredType)
             for _, drop in ipairs(drops) do
                 table.insert(allCrystals, drop)
@@ -214,7 +214,7 @@ function BattleSystem.execute_player_action(state)
             if #targets > 0 then
                 BattleExecutor.execute_player_skill(state, state.selectedSkill, targets, indices)
             else
-                local skillData = require("src.data.skill_database").getSkill(state.selectedSkill)
+                local skillData = require("src.data.skill_database").get_skill(state.selectedSkill)
                 if skillData and (skillData.targets == "self" or skillData.targets == "all_allies") then
                     BattleExecutor.execute_player_skill(state, state.selectedSkill, {}, {})
                 else
@@ -274,6 +274,8 @@ function BattleSystem.next_turn(state)
         enemy.isDefending = false
     end
 
+    BattleSystem.process_status_effects(state)
+
     if state.state == BATTLE_STATE.EXECUTING then
         if BattleSystem.check_victory(state) then
             BattleSystem.end_battle(state, BATTLE_STATE.VICTORY)
@@ -294,6 +296,89 @@ function BattleSystem.next_turn(state)
         if not Player.is_alive(state.player) then
             BattleSystem.end_battle(state, BATTLE_STATE.DEFEAT)
             return
+        end
+    end
+end
+
+function BattleSystem.process_status_effects(state)
+    local player = state.player
+
+    if player.skillDot then
+        local dot = player.skillDot
+        local dotDamage = math.floor(dot.damage or 0)
+        if dotDamage > 0 then
+            player.hp = math.max(0, player.hp - dotDamage)
+            BattleSystem.add_log(state, string.format("You take %d damage from %s!", dotDamage, dot.type or "dot"))
+        end
+        dot.duration = dot.duration - 1
+        if dot.duration <= 0 then
+            player.skillDot = nil
+        end
+    end
+
+    for _, enemy in ipairs(state.enemies) do
+        if Enemy.is_alive(enemy) then
+            if enemy.skillDot then
+                local dot = enemy.skillDot
+                local dotDamage = math.floor(dot.damage or 0)
+                if dotDamage > 0 then
+                    enemy.hp = math.max(0, enemy.hp - dotDamage)
+                    BattleSystem.add_log(state, string.format("%s takes %d damage from %s!", enemy.name, dotDamage, dot.type or "dot"))
+                end
+                dot.duration = dot.duration - 1
+                if dot.duration <= 0 then
+                    enemy.skillDot = nil
+                end
+            end
+
+            if enemy.skillDebuff then
+                for i = #enemy.skillDebuff, 1, -1 do
+                    local debuff = enemy.skillDebuff[i]
+                    debuff.duration = debuff.duration - 1
+                    if debuff.duration <= 0 then
+                        table.remove(enemy.skillDebuff, i)
+                    end
+                end
+                if #enemy.skillDebuff == 0 then
+                    enemy.skillDebuff = nil
+                end
+            end
+
+            if enemy.stunned then
+                enemy.stunned = false
+                BattleSystem.add_log(state, enemy.name .. " recovers from stun!")
+            end
+
+            if enemy.sealed then
+                for sealType, sealData in pairs(enemy.sealed) do
+                    sealData.duration = sealData.duration - 1
+                    if sealData.duration <= 0 then
+                        enemy.sealed[sealType] = nil
+                        BattleSystem.add_log(state, enemy.name .. " breaks free from seal!")
+                    end
+                end
+                local hasSeals = false
+                for _ in pairs(enemy.sealed) do
+                    hasSeals = true
+                    break
+                end
+                if not hasSeals then
+                    enemy.sealed = nil
+                end
+            end
+        end
+    end
+
+    if player.skillBuffs then
+        for i = #player.skillBuffs, 1, -1 do
+            local buff = player.skillBuffs[i]
+            buff.duration = buff.duration - 1
+            if buff.duration <= 0 then
+                table.remove(player.skillBuffs, i)
+            end
+        end
+        if #player.skillBuffs == 0 then
+            player.skillBuffs = nil
         end
     end
 end
@@ -376,7 +461,7 @@ function BattleSystem.get_available_skills(state)
     if not state.player or not state.player.skills then
         return {}
     end
-    return SkillSystem.getAvailableSkills(state.player)
+    return SkillSystem.get_available_skills(state.player)
 end
 
 function BattleSystem.select_skill(state, skillId)

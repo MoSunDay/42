@@ -138,7 +138,7 @@ function EquipmentSystem.can_enhance(state, slot)
         return false, "灵晶系统未初始化"
     end
 
-    return SpiritCrystalSystem.can_enhance(state.spiritCrystalSystem, crystalType, currentLevel)
+    return SpiritCrystalSystem.can_enhance(state.spiritCrystalSystem, currentLevel)
 end
 
 function EquipmentSystem.enhance(state, slot)
@@ -150,7 +150,7 @@ function EquipmentSystem.enhance(state, slot)
     local crystalType = SLOT_CRYSTAL_MAP[slot]
     local currentLevel = state.enhanceLevels[slot]
 
-    local success, msg = SpiritCrystalSystem.enhance(state.spiritCrystalSystem, crystalType, currentLevel)
+    local success, msg = SpiritCrystalSystem.enhance(state.spiritCrystalSystem, currentLevel)
     if success then
         state.enhanceLevels[slot] = currentLevel + 1
         local bonus = EquipmentSystem.get_enhancement_bonus(state, slot)

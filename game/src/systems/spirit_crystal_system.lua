@@ -226,4 +226,6 @@ function SpiritCrystalSystem.deserialize(state, data)
     end
 end
 
+SpiritCrystalSystem.generateDrop = SpiritCrystalSystem.generate_drop
+
 return SpiritCrystalSystem

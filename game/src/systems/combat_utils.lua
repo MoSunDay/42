@@ -84,4 +84,8 @@ function CombatUtils.calculate_damage_mutating(self)
     return damage, isCrit
 end
 
+CombatUtils.take_damageMutating = CombatUtils.take_damage_mutating
+CombatUtils.healMutating = CombatUtils.heal_mutating
+CombatUtils.calculate_damageMutating = CombatUtils.calculate_damage_mutating
+
 return CombatUtils

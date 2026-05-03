@@ -33,7 +33,7 @@ love = {
 }
 
 -- Add path
-package.path = package.path .. ";../src/?.lua;../src/core/?.lua;../src/entities/?.lua"
+package.path = package.path .. ";../?.lua;../src/?.lua;../src/core/?.lua;../src/entities/?.lua"
 
 -- Load modules
 local AssetManager = require("core.asset_manager")

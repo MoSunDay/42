@@ -212,7 +212,7 @@ function SkillSystem.get_skill_info(player, skillId)
         name = skillData.name,
         description = skillData.description,
         tier = skillData.tier,
-        tierName = SkillDatabase.get_skillTierName(skillData.tier),
+        tierName = SkillDatabase.get_skill_tier_name(skillData.tier),
         type = skillData.type,
         mpCost = skillData.mpCost,
         unlocked = isUnlocked,

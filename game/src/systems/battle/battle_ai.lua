@@ -32,6 +32,14 @@ function BattleAI.auto_player_action(battleSystem)
 end
 
 function BattleAI.enemy_action(enemy, player)
+    if enemy.stunned then
+        return "defend"
+    end
+
+    if enemy.sealed then
+        return "defend"
+    end
+
     if math.random() < 0.8 then
         return "attack"
     else

@@ -56,7 +56,7 @@ love = {
     },
 }
 
-package.path = package.path .. ";../map/?.lua;../src/?.lua"
+package.path = package.path .. ";../?.lua;../map/?.lua;../src/?.lua;../lib/?.lua"
 
 print("1. Testing TiledLoader module loading...")
 local success, TiledLoader = pcall(require, "tiled_loader")

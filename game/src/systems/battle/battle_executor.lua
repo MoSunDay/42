@@ -115,6 +115,7 @@ function BattleExecutor.execute_enemy_attack(battleSystem, enemy, enemyIndex)
         
         if not Player.is_alive(battleSystem.player) then
             get_battle_system().add_log(battleSystem, "You have been defeated!")
+            get_battle_system().end_battle(battleSystem, get_battle_system().STATE.DEFEAT)
         end
     end)
 end

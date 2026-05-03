@@ -265,7 +265,7 @@ function CompanionSystem.update_companion_stats(state, companion)
     companion.crit = companion.baseCrit + equipStats.crit + enhanceBonus.crit
     companion.eva = companion.baseEva + equipStats.eva + enhanceBonus.eva
     
-    local totalDef = companion.defense + enhanceBonus.defense
+    local totalDef = companion.defense
     companion.defPercent = CombatUtils.calc_def_percent(totalDef)
     
     local newMaxHp = companion.baseHp + equipStats.hp + enhanceBonus.hp

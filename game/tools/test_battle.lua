@@ -1,7 +1,7 @@
 -- test_battle.lua - Test battle system
 -- Run: cd game/tools && lua test_battle.lua
 
-package.path = package.path .. ";../src/?.lua;../src/entities/?.lua;../src/systems/?.lua"
+package.path = package.path .. ";../?.lua;../src/?.lua;../src/entities/?.lua;../src/systems/?.lua"
 
 local Enemy = require("enemy")
 

@@ -31,6 +31,15 @@
 | `list-styles` | 列出可用美术风格 | 查看支持的画风选项 |
 | `list-presets` | 列出预设配置 | 查看尺寸、调色板预设 |
 
+## 批量生成脚本
+
+UI 素材批量生成使用 `game/tools/generate_all_ui.py`，基于 Pixellab API v2。
+
+- `pixellab_client.py`: API 客户端（异步任务提交+轮询+下载）
+- `generate_all_ui.py`: 108 个 UI 素材的完整 manifest，分 5 个 phase
+
+脚本自动跳过已存在的文件。`--replace` 参数会备份旧文件为 `.bak` 后重新生成。
+
 ## 使用流程
 
 1. **确定素材规格**: 参考 "Art Asset Specifications" 选择合适的尺寸和帧数
