@@ -213,58 +213,58 @@ icon("x", "X mark icon, red on dark background", "red")
 # ============================================================
 btn(
     "button_normal",
-    "dark navy blue button normal state, gold thin border, pixel art game button",
+    "empty blank button, plain dark navy blue rectangle with thin gold border, no symbols no text no decoration inside, solid fill, pixel art game UI",
     palette="dark navy blue and gold",
 )
 btn(
     "button_hover",
-    "dark navy blue button hover state, bright gold border glow, pixel art game button",
+    "empty blank button hover state, plain dark navy blue rectangle with bright gold glowing border, no symbols no text no decoration inside, pixel art game UI",
     palette="navy blue and bright gold",
 )
 btn(
     "button_pressed",
-    "dark navy blue button pressed state, pressed inset gold border, pixel art game button",
+    "empty blank button pressed state, plain dark navy blue rectangle with inset darker gold border, no symbols no text no decoration inside, pixel art game UI",
     palette="navy blue and gold",
 )
 btn(
     "button_disabled",
-    "dark grey button disabled state, dim grey border, pixel art game button",
+    "empty blank disabled button, plain dark grey rectangle with dim grey border, no symbols no text no decoration inside, pixel art game UI",
     palette="dark grey",
 )
 btn(
     "button_accent_normal",
-    "teal cyan accent button normal state, white border, pixel art game button",
+    "empty blank accent button, plain teal cyan rectangle with thin white border, no symbols no text no decoration inside, pixel art game UI",
     palette="teal cyan and white",
 )
 btn(
     "button_accent_hover",
-    "teal cyan accent button hover state, bright white glow border, pixel art game button",
+    "empty blank accent button hover, plain teal cyan rectangle with bright white glowing border, no symbols no text no decoration inside, pixel art game UI",
     palette="teal cyan and bright white",
 )
 btn(
     "button_small_normal",
-    "small dark navy button normal state, gold border, pixel art",
+    "small empty blank button, plain dark navy square with gold border, no symbols no text, pixel art",
     w=32,
     h=32,
     palette="navy blue and gold",
 )
 btn(
     "button_small_hover",
-    "small dark navy button hover state, gold glow border, pixel art",
+    "small empty blank button hover, plain dark navy square with bright gold glow border, no symbols no text, pixel art",
     w=32,
     h=32,
     palette="navy blue and gold",
 )
 btn(
     "button_small_pressed",
-    "small dark navy button pressed state, inset border, pixel art",
+    "small empty blank button pressed, plain dark navy square with inset border, no symbols no text, pixel art",
     w=32,
     h=32,
     palette="navy blue and gold",
 )
 btn(
     "button_small_disabled",
-    "small grey button disabled state, dim border, pixel art",
+    "small empty blank disabled button, plain dark grey square with dim border, no symbols no text, pixel art",
     w=32,
     h=32,
     palette="dark grey",
@@ -626,7 +626,7 @@ all_assets.append(
     AssetJob(
         category="character_select",
         filename="char_slot_bg",
-        prompt="pixel art character selection card slot, dark navy panel with gold thin border, transparent background",
+        prompt="empty blank character card slot frame, dark navy panel with thin gold border, completely empty inside, no text no symbols no character, transparent background, pixel art",
         width=180,
         height=240,
         no_background=True,
@@ -637,7 +637,7 @@ all_assets.append(
     AssetJob(
         category="character_select",
         filename="char_slot_selected",
-        prompt="pixel art selected character card slot, glowing blue border, ornate gold corners, transparent background",
+        prompt="empty blank selected character card slot frame, glowing blue border, gold corner accents, completely empty inside, no text no symbols no character, transparent background, pixel art",
         width=180,
         height=240,
         no_background=True,
@@ -683,13 +683,83 @@ effect(
     "gold and red",
 )
 
+# ============================================================
+# Phase 5: Battle Backgrounds (6 assets, large)
+# ============================================================
+all_assets.append(
+    AssetJob(
+        category="battle_bg",
+        filename="forest",
+        prompt="pixel art RPG battle background, enchanted forest scene, tall ancient trees, lush green canopy, dappled sunlight, mystical fog, fantasy atmosphere",
+        width=688,
+        height=384,
+        no_background=False,
+        color_palette="dark green and brown",
+    )
+)
+all_assets.append(
+    AssetJob(
+        category="battle_bg",
+        filename="desert",
+        prompt="pixel art RPG battle background, vast desert scene, sand dunes, hot sun glare, distant pyramids, heat haze, fantasy atmosphere",
+        width=688,
+        height=384,
+        no_background=False,
+        color_palette="sandy yellow and orange",
+    )
+)
+all_assets.append(
+    AssetJob(
+        category="battle_bg",
+        filename="dungeon",
+        prompt="pixel art RPG battle background, dark dungeon cavern, stone brick walls, torchlight, cobwebs, ominous shadows, fantasy atmosphere",
+        width=688,
+        height=384,
+        no_background=False,
+        color_palette="dark grey and purple",
+    )
+)
+all_assets.append(
+    AssetJob(
+        category="battle_bg",
+        filename="sky",
+        prompt="pixel art RPG battle background, sky floating islands scene, clouds, mountain peaks, sunset colors, wind, fantasy atmosphere",
+        width=688,
+        height=384,
+        no_background=False,
+        color_palette="blue and orange sunset",
+    )
+)
+all_assets.append(
+    AssetJob(
+        category="battle_bg",
+        filename="volcanic",
+        prompt="pixel art RPG battle background, volcanic lava field, molten lava rivers, smoke, ash, red glow, dark sky, fantasy atmosphere",
+        width=688,
+        height=384,
+        no_background=False,
+        color_palette="red orange and black",
+    )
+)
+all_assets.append(
+    AssetJob(
+        category="battle_bg",
+        filename="boss",
+        prompt="pixel art RPG battle background, dark throne room, evil lair, purple crystals, dark magic aura, ominous pillars, fantasy boss arena",
+        width=688,
+        height=384,
+        no_background=False,
+        color_palette="dark purple and red",
+    )
+)
+
 
 _replace = False
 
 
 def print_usage():
     print(
-        f"Usage: {sys.argv[0]} [--replace] [all|phase0|...|phase4|list|status|restore]"
+        f"Usage: {sys.argv[0]} [--replace] [all|phase0|...|phase5|list|status|restore]"
     )
     print(f"  --replace  - Backup existing assets and regenerate")
     print(f"  all        - Generate all phases")
@@ -698,6 +768,7 @@ def print_usage():
     print(f"  phase2     - Panels + Borders + Input (13 assets)")
     print(f"  phase3     - Dialog + Chat + Menu + Loading + Minimap (12 assets)")
     print(f"  phase4     - Login + CharSelect + Classes + Effects (20 assets)")
+    print(f"  phase5     - Battle Backgrounds (6 assets)")
     print(f"  list       - List all assets with details")
     print(f"  status     - Quick status check")
     print(f"  restore    - Restore .bak files")
@@ -710,6 +781,7 @@ def run_phase(phase: int):
         2: (63, 76),
         3: (76, 88),
         4: (88, 108),
+        5: (108, 114),
     }
     start, end = phase_ranges.get(phase, (0, len(all_assets)))
     jobs = all_assets[start:end]
@@ -718,7 +790,7 @@ def run_phase(phase: int):
 
 
 def run_all():
-    for phase in range(5):
+    for phase in range(6):
         print(f"\n{'#' * 60}")
         print(f"# Phase {phase}")
         print(f"{'#' * 60}")

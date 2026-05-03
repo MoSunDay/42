@@ -26,8 +26,8 @@ function InventoryUI.create(assetManager)
 end
 
 function InventoryUI.draw(state, inventorySystem, x, y, width, height)
-    local slots = InventorySystem.getAllSlots(inventorySystem)
-    local maxSlots = InventorySystem.getMaxSlots(inventorySystem)
+    local slots = InventorySystem.get_all_slots(inventorySystem)
+    local maxSlots = InventorySystem.get_max_slots(inventorySystem)
     
     local gridWidth = state.cols * (state.slotSize + state.slotPadding) - state.slotPadding
     local startX = x + (width - gridWidth) / 2

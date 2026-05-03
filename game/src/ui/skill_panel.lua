@@ -35,8 +35,8 @@ end
 function SkillPanel.update_skill_lists(state)
     if not state.player then return end
     
-    state.unlockedSkills = SkillSystem.getAvailableSkills(state.player)
-    state.lockedSkills = SkillSystem.getLockedSkills(state.player)
+    state.unlockedSkills = SkillSystem.get_available_skills(state.player)
+    state.lockedSkills = SkillSystem.get_locked_skills(state.player)
 end
 
 function SkillPanel.toggle(state, player)
@@ -206,13 +206,13 @@ function SkillPanel.keypressed(state, key)
         if #skills > 0 and state.selectedSkillIndex <= #skills then
             local skillData = skills[state.selectedSkillIndex]
             if state.tab == "unlocked" then
-                local success, msg = SkillSystem.upgradeSkill(state.player, skillData.id)
+                local success, msg = SkillSystem.upgrade_skill(state.player, skillData.id)
                 SkillPanel.show_message(state, msg)
                 if success then
                     SkillPanel.update_skill_lists(state)
                 end
             else
-                local success, msg = SkillSystem.unlockSkill(state.player, skillData.id)
+                local success, msg = SkillSystem.unlock_skill(state.player, skillData.id)
                 SkillPanel.show_message(state, msg)
                 if success then
                     SkillPanel.update_skill_lists(state)
@@ -283,13 +283,13 @@ function SkillPanel.mousepressed(state, x, y, button)
                 if #skills > 0 and state.selectedSkillIndex <= #skills then
                     local skillData = skills[state.selectedSkillIndex]
                     if state.tab == "unlocked" then
-                        local success, msg = SkillSystem.upgradeSkill(state.player, skillData.id)
+                        local success, msg = SkillSystem.upgrade_skill(state.player, skillData.id)
                         SkillPanel.show_message(state, msg)
                         if success then
                             SkillPanel.update_skill_lists(state)
                         end
                     else
-                        local success, msg = SkillSystem.unlockSkill(state.player, skillData.id)
+                        local success, msg = SkillSystem.unlock_skill(state.player, skillData.id)
                         SkillPanel.show_message(state, msg)
                         if success then
                             SkillPanel.update_skill_lists(state)

@@ -199,5 +199,11 @@ end
 
 ChatSystem.addMessage = ChatSystem.add_message
 ChatSystem.sendMessage = ChatSystem.send_message
+ChatSystem.isInputting = ChatSystem.is_inputting
+ChatSystem.startInput = ChatSystem.start_input
+ChatSystem.endInput = ChatSystem.end_input
+ChatSystem.addInputChar = ChatSystem.add_input_char
+ChatSystem.removeInputChar = ChatSystem.remove_input_char
+ChatSystem.getInputText = ChatSystem.get_input_text
 
 return ChatSystem

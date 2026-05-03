@@ -227,7 +227,7 @@ function UnifiedMenu.draw_equipment_slot(state, equipmentSystem, slot, slotName,
     love.graphics.setColor(state.colors.text)
     love.graphics.print(slotName, x + 10, y + 8)
     
-    local item = EquipmentSystem.getEquipped(equipmentSystem, slot)
+    local item = EquipmentSystem.get_equipped(equipmentSystem, slot)
     if item then
         local slotColor = SlotUtils.getSlotColor(slot)
         love.graphics.setColor(slotColor)
@@ -290,7 +290,7 @@ function UnifiedMenu.draw_items_tab(state, gameState, contentY, contentHeight)
     
     local inventoryInfo = string.format("Inventory: %d / %d", 
         InventorySystem.get_used_slots(inventorySystem), 
-        InventorySystem.getMaxSlots(inventorySystem))
+        InventorySystem.get_max_slots(inventorySystem))
     love.graphics.setFont(state.font)
     love.graphics.setColor(state.colors.textDim)
     love.graphics.print(inventoryInfo, state.x + 20, contentY + 45)
@@ -344,7 +344,7 @@ function UnifiedMenu.draw_party_tab(state, gameState, contentY, contentHeight)
     love.graphics.printf("Party Management", state.x, contentY + 10, state.width, "center")
     
     love.graphics.setFont(state.font)
-    love.graphics.print("Party Name: " .. partySystem:getPartyName(), state.x + 50, contentY + 60)
+    love.graphics.print("Party Name: " .. partySystem:get_party_name(), state.x + 50, contentY + 60)
     
     local members = partySystem:get_members()
     love.graphics.print("Members: " .. #members .. "/5", state.x + 50, contentY + 85)
@@ -446,12 +446,12 @@ function UnifiedMenu.handle_equipment_click(state, gameState, x, y)
         if x >= leftPanelX + 10 and x <= leftPanelX + leftPanelWidth - 10 and
            y >= slotYPos and y <= slotYPos + slotHeight then
             
-            local item = EquipmentSystem.getEquipped(equipmentSystem, slot)
+            local item = EquipmentSystem.get_equipped(equipmentSystem, slot)
             if item then
-                local success = EquipmentSystem.unequipToInventory(equipmentSystem, slot, inventorySystem)
+                local success = EquipmentSystem.unequip_to_inventory(equipmentSystem, slot, inventorySystem)
                 if success then
                     Player.update_stats_with_equipment(player)
-                    gameState:syncPlayerToCharacter()
+                    gameState:sync_player_to_character()
                 end
             end
             return true
@@ -468,10 +468,10 @@ function UnifiedMenu.handle_equipment_click(state, gameState, x, y)
     if clickedSlot then
         local item = InventorySystem.get_item(inventorySystem, clickedSlot)
         if item and item.type == ItemDatabase.TYPE.EQUIPMENT then
-            local success, msg = EquipmentSystem.equipFromInventory(equipmentSystem, inventorySystem, clickedSlot)
+            local success, msg = EquipmentSystem.equip_from_inventory(equipmentSystem, inventorySystem, clickedSlot)
             if success then
                 Player.update_stats_with_equipment(player)
-                gameState:syncPlayerToCharacter()
+                gameState:sync_player_to_character()
                 InventoryUI.clear_selection(state.inventoryUI)
             end
         end
@@ -510,10 +510,10 @@ function UnifiedMenu.handle_items_click(state, gameState, x, y)
             if item then
                 if item.type == ItemDatabase.TYPE.EQUIPMENT then
                     local equipmentSystem = gameState:getEquipmentSystem()
-                    local success, msg = EquipmentSystem.equipFromInventory(equipmentSystem, inventorySystem, selectedSlot)
+                    local success, msg = EquipmentSystem.equip_from_inventory(equipmentSystem, inventorySystem, selectedSlot)
                     if success then
                         Player.update_stats_with_equipment(player)
-                        gameState:syncPlayerToCharacter()
+                        gameState:sync_player_to_character()
                         InventoryUI.clear_selection(state.inventoryUI)
                     end
                 elseif item.type == ItemDatabase.TYPE.CONSUMABLE then
@@ -541,12 +541,12 @@ function UnifiedMenu.use_consumable(state, gameState, slotIndex)
         CombatUtils.healMutating(player, itemData.value)
         InventorySystem.remove_item(inventorySystem, slotIndex)
         InventoryUI.clear_selection(state.inventoryUI)
-        gameState:syncPlayerToCharacter()
+        gameState:sync_player_to_character()
     elseif itemData.effect == "full_heal" then
         player.hp = player.maxHp
         InventorySystem.remove_item(inventorySystem, slotIndex)
         InventoryUI.clear_selection(state.inventoryUI)
-        gameState:syncPlayerToCharacter()
+        gameState:sync_player_to_character()
     elseif itemData.effect == "cure_poison" then
         InventorySystem.remove_item(inventorySystem, slotIndex)
         InventoryUI.clear_selection(state.inventoryUI)
@@ -562,7 +562,7 @@ function UnifiedMenu.use_consumable(state, gameState, slotIndex)
         end
         InventorySystem.remove_item(inventorySystem, slotIndex)
         InventoryUI.clear_selection(state.inventoryUI)
-        gameState:syncPlayerToCharacter()
+        gameState:sync_player_to_character()
     end
 end
 

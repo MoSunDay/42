@@ -33,7 +33,7 @@ function PartyUI.draw(state, partySystem)
     local totalHeight = 30 + #members * (state.memberHeight + 5)
 
     Components.drawOrnatePanel(state.x, state.y, state.width, totalHeight, state.assetManager, {
-        title = partySystem:getPartyName() .. " (" .. #members .. "/5)",
+        title = partySystem:get_party_name() .. " (" .. #members .. "/5)",
         corners = true,
         glow = true,
         font = state.font,

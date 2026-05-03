@@ -53,7 +53,17 @@ function EquipmentUI.draw(state, equipmentSystem, x, y, width, height)
     slotY = slotY + slotHeight + 10
     slotIndex = slotIndex + 1
     
-    EquipmentUI.draw_equipment_slot(state, equipmentSystem, EquipmentSlots.ARMOR, "Armor", 
+    EquipmentUI.draw_equipment_slot(state, equipmentSystem, EquipmentSlots.HAT, "Hat", 
+        x + 20, slotY, width - 40, slotHeight, slotIndex == state.selectedSlot)
+    slotY = slotY + slotHeight + 10
+    slotIndex = slotIndex + 1
+    
+    EquipmentUI.draw_equipment_slot(state, equipmentSystem, EquipmentSlots.CLOTHES, "Clothes", 
+        x + 20, slotY, width - 40, slotHeight, slotIndex == state.selectedSlot)
+    slotY = slotY + slotHeight + 10
+    slotIndex = slotIndex + 1
+    
+    EquipmentUI.draw_equipment_slot(state, equipmentSystem, EquipmentSlots.SHOES, "Shoes", 
         x + 20, slotY, width - 40, slotHeight, slotIndex == state.selectedSlot)
     slotY = slotY + slotHeight + 10
     slotIndex = slotIndex + 1
@@ -74,7 +84,7 @@ function EquipmentUI.draw_equipment_slot(state, equipmentSystem, slot, slotName,
     love.graphics.setColor(Theme.colors.text)
     love.graphics.print(slotName, x + 10, y + 10)
     
-    local item = EquipmentSystem.getEquipped(equipmentSystem, slot)
+    local item = EquipmentSystem.get_equipped(equipmentSystem, slot)
     if item then
         love.graphics.setColor(SlotUtils.getSlotColor(slot))
         love.graphics.print(item.name, x + 10, y + 30, 0, 1.2, 1.2)

@@ -131,6 +131,7 @@ function GameState.initialize_world(state, character)
         InventorySystem.add_item(state.inventorySystem, "copper_necklace")
     end
 
+    state.player.baseHp = character.maxHp
     state.player.maxHp = character.maxHp
     state.player.hp = character.hp
     state.player.baseAttack = character.attack
@@ -162,7 +163,7 @@ function GameState.initialize_world(state, character)
     if character.spiritCrystals then
         SpiritCrystalSystem.deserialize(state.spiritCrystalSystem, character.spiritCrystals)
     end
-    EquipmentSystem.setSpiritCrystalSystem(state.equipmentSystem, state.spiritCrystalSystem)
+    EquipmentSystem.set_spirit_crystal_system(state.equipmentSystem, state.spiritCrystalSystem)
 
     state.companionSystem = CompanionSystem.create()
     if character.companions then
@@ -303,7 +304,7 @@ function GameState.update(state, dt)
     elseif state.mode == GAME_MODE.BATTLE then
         BattleSystem.update(state.battleSystem, dt)
 
-        if not state.battleSystem.isActive then
+        if not state.battleSystem.is_active then
             GameState.end_battle(state)
         end
     end
@@ -364,7 +365,7 @@ function GameState.start_battle(state)
 end
 
 function GameState.end_battle(state)
-    local battleState = BattleSystem.getState(state.battleSystem)
+    local battleState = BattleSystem.get_state(state.battleSystem)
 
     if battleState == "victory" then
         state.pendingBattleResult = "victory"

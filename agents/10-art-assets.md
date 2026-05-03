@@ -5,6 +5,23 @@
 **风格**: 简约几何风格 (Simple Geometric)
 **特点**: 简洁几何形状, 清晰轮廓, 统一线条粗细, 现代极简美学
 
+## UI 素材生成工具
+
+批量生成脚本: `game/tools/generate_all_ui.py`
+API 客户端: `game/tools/pixellab_client.py`
+
+```bash
+# 用法
+python game/tools/generate_all_ui.py status          # 查看状态
+python game/tools/generate_all_ui.py --replace phase0 # 重新生成指定阶段
+python game/tools/generate_all_ui.py --replace all    # 全量重新生成
+python game/tools/generate_all_ui.py restore          # 恢复 .bak 备份
+```
+
+API 端点:
+- Phase 0 (图标 ≤32px): `create-image-pixflux` (同步)
+- Phase 1-4 (其他 UI): `generate-ui-v2` (异步, 轮询 `background-jobs/{id}`)
+
 ## 调色板 (32色)
 
 ```

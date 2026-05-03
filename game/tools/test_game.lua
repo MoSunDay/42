@@ -33,7 +33,7 @@ love = {
 }
 
 -- 添加路径
-package.path = package.path .. ";../src/?.lua;../src/core/?.lua;../src/entities/?.lua;../src/systems/?.lua;../src/ui/?.lua"
+package.path = package.path .. ";../?.lua;../src/?.lua;../src/core/?.lua;../src/entities/?.lua;../src/systems/?.lua;../src/ui/?.lua"
 
 -- 测试模块加载
 print("1. 测试模块加载...")

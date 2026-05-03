@@ -98,6 +98,7 @@ function Enemy.is_alive(state)
 end
 
 function Enemy.get_hp_percent(state)
+    if not state.maxHp or state.maxHp <= 0 then return 0 end
     return state.hp / state.maxHp
 end
 

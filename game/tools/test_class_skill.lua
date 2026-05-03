@@ -4,7 +4,7 @@
 print("=== Class & Skill System Test ===")
 print()
 
-package.path = package.path .. ";./?.lua;./src/?.lua;./src/data/?.lua;./src/systems/?.lua;./src/systems/battle/?.lua;./account/?.lua"
+package.path = package.path .. ";../?.lua;../src/?.lua;../src/data/?.lua;../src/systems/?.lua;../src/systems/battle/?.lua"
 
 print("1. Testing module loading...")
 local modules = {
@@ -63,7 +63,7 @@ for _, classId in ipairs(classes) do
     local stats = ClassDatabase.get_base_stats(classId)
     local class = ClassDatabase.get_class(classId)
     if stats and class then
-        print(string.format("   %s: HP=%d MP=%d ATK=%d DEF=%d SPD=%d MATK=%d",
+        print(string.format("   %s: HP=%.0f MP=%.0f ATK=%.1f DEF=%.0f SPD=%.1f MATK=%.1f",
             class.name, stats.maxHp, stats.maxMp, stats.attack, stats.defense, stats.speed, stats.magicAttack))
     end
 end
@@ -94,7 +94,7 @@ local classSkillCounts = {
 }
 
 for classId, expectedCount in pairs(classSkillCounts) do
-    local skills = SkillDatabase.get_skillsByClass(classId)
+    local skills = SkillDatabase.get_skills_by_class(classId)
     local count = 0
     for _ in pairs(skills) do count = count + 1 end
     if count == expectedCount then
@@ -121,7 +121,7 @@ print("   Effect bonus by level:")
 for _, level in ipairs({1, 5, 10, 20, 50}) do
     local mult = SkillDatabase.get_effect_multiplier(level)
     local bonus = (mult - 1) * 100
-    print(string.format("     Lv%d: %.2fx (+%d%%)", level, mult, bonus))
+    print(string.format("     Lv%d: %.2fx (+%.0f%%)", level, mult, bonus))
 end
 print("   ✓ Effect formula: +3% per level")
 print()
@@ -158,7 +158,7 @@ local mockPlayer = {
     maxMp = 100,
 }
 
-SkillSystem.initPlayerSkills(mockPlayer, "dual_blade")
+SkillSystem.init_player_skills(mockPlayer, "dual_blade")
 print("   Initialized skills for Dual Blade")
 print("   Skills: " .. #mockPlayer.skills)
 
@@ -168,22 +168,22 @@ for _, skill in ipairs(mockPlayer.skills) do
 end
 print("   Tier 1 unlocked: " .. unlockedCount .. " skill(s)")
 
-local availSkills = SkillSystem.getAvailableSkills(mockPlayer)
+local availSkills = SkillSystem.get_available_skills(mockPlayer)
 print("   Available skills: " .. #availSkills)
 print("   ✓ SkillSystem initialization works")
 print()
 
 print("12. Testing skill unlock...")
-local lockedSkills = SkillSystem.getLockedSkills(mockPlayer)
+local lockedSkills = SkillSystem.get_locked_skills(mockPlayer)
 print("   Locked skills: " .. #lockedSkills)
 
 if #lockedSkills > 0 then
     local skillToUnlock = lockedSkills[1].id
-    local canUnlock, err, cost = SkillSystem.canUnlockSkill(mockPlayer, skillToUnlock)
+    local canUnlock, err, cost = SkillSystem.can_unlock_skill(mockPlayer, skillToUnlock)
     print("   Can unlock " .. skillToUnlock .. ": " .. tostring(canUnlock))
     if canUnlock then
         print("   Unlock cost: " .. cost .. " crystals")
-        local success, msg = SkillSystem.unlockSkill(mockPlayer, skillToUnlock)
+        local success, msg = SkillSystem.unlock_skill(mockPlayer, skillToUnlock)
         print("   " .. msg)
     end
 end
@@ -191,15 +191,15 @@ print("   ✓ Skill unlock logic works")
 print()
 
 print("13. Testing skill upgrade...")
-local availSkills = SkillSystem.getAvailableSkills(mockPlayer)
-if #availSkills > 0 then
-    local skillId = availSkills[1].id
-    local currentLevel = SkillSystem.getSkillLevel(mockPlayer, skillId)
-    local canUpgrade, err, cost = SkillSystem.canUpgradeSkill(mockPlayer, skillId)
+local availSkills2 = SkillSystem.get_available_skills(mockPlayer)
+if #availSkills2 > 0 then
+    local skillId = availSkills2[1].id
+    local currentLevel = SkillSystem.get_skill_level(mockPlayer, skillId)
+    local canUpgrade, err, cost = SkillSystem.can_upgrade_skill(mockPlayer, skillId)
     print("   " .. skillId .. " current level: " .. currentLevel)
     if canUpgrade then
         print("   Upgrade cost: " .. cost .. " crystals")
-        local success, msg = SkillSystem.upgradeSkill(mockPlayer, skillId)
+        local success, msg = SkillSystem.upgrade_skill(mockPlayer, skillId)
         print("   " .. msg)
     end
 end
