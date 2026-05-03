@@ -4,7 +4,7 @@ local Packet = require("network.packet")
 local network_manager = {}
 
 function network_manager.create()
-    return {
+    return setmetatable({
         socket = nil,
         host = constants.DEFAULT_HOST,
         port = constants.DEFAULT_PORT,
@@ -15,7 +15,7 @@ function network_manager.create()
         character = nil,
         message_queue = {},
         _last_update = 0,
-    }
+    }, { __index = network_manager })
 end
 
 function network_manager.connect(state, host, port)
