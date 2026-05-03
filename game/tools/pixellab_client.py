@@ -13,7 +13,7 @@ from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Optional
 
-API_KEY = os.environ.get("PIXELLAB_API_KEY", "***REMOVED***")
+API_KEY = os.environ["PIXELLAB_API_KEY"]
 BASE_URL = "https://api.pixellab.ai/v2"
 HEADERS = {
     "Authorization": f"Bearer {API_KEY}",
