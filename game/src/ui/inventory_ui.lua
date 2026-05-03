@@ -131,22 +131,22 @@ function InventoryUI.draw_item_detail(state, inventorySystem, x, y, width, heigh
             textY = textY + 18
         end
         if itemData.speed and itemData.speed ~= 0 then
-            love.graphics.setColor(0.8, 1.0, 0.3)
+            love.graphics.setColor(Theme.colors.stat.speed)
             love.graphics.print("SPD: " .. (itemData.speed > 0 and "+" or "") .. itemData.speed, textX, textY)
             textY = textY + 18
         end
         if itemData.hp and itemData.hp > 0 then
-            love.graphics.setColor(0.3, 1.0, 0.3)
+            love.graphics.setColor(Theme.colors.stat.hp)
             love.graphics.print("HP: +" .. itemData.hp, textX, textY)
             textY = textY + 18
         end
         if itemData.crit and itemData.crit > 0 then
-            love.graphics.setColor(1.0, 0.8, 0.2)
+            love.graphics.setColor(Theme.colors.stat.crit)
             love.graphics.print("CRIT: +" .. itemData.crit .. "%", textX, textY)
             textY = textY + 18
         end
         if itemData.eva and itemData.eva > 0 then
-            love.graphics.setColor(0.5, 0.8, 1.0)
+            love.graphics.setColor(Theme.colors.stat.evasion)
             love.graphics.print("EVA: +" .. itemData.eva .. "%", textX, textY)
             textY = textY + 18
         end
@@ -163,7 +163,7 @@ function InventoryUI.draw_item_detail(state, inventorySystem, x, y, width, heigh
     
     if itemData.price then
         textY = y + height - 25
-        love.graphics.setColor(1, 0.8, 0.2)
+        love.graphics.setColor(Theme.gold.bright)
         love.graphics.print("灵晶值: " .. itemData.price, textX, textY)
     end
 end

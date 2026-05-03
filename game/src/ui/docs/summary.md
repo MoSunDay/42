@@ -1,6 +1,6 @@
 # UI Module Summary
 
-> Last updated: 2026-02-21 - Skill panel added
+> Last updated: 2026-05-03 - NPC dialog, shop, battle reward, death screen added
 
 ## Purpose
 User interface components for HUD, menus, skills, and interactions.
@@ -23,7 +23,11 @@ User interface components for HUD, menus, skills, and interactions.
 | `components.lua` | Reusable UI components (9-slice, panels, buttons, bars, etc.) |
 | `tutorial_panel.lua` | Tutorial display with navigation buttons |
 | `skill_panel.lua` | Skill management (unlock/upgrade skills) |
+| `dialog_ui.lua` | NPC dialog with paging and avatar |
+| `shop_ui.lua` | Buy items from merchant NPCs with spirit crystals |
+| `death_screen.lua` | Death overlay with revive button |
 | `battle/` | Battle UI subdirectory |
+| `battle/reward_ui.lua` | Victory rewards display with crystal reveal animation |
 
 ## Key APIs
 
@@ -96,6 +100,49 @@ User interface components for HUD, menus, skills, and interactions.
 - Tabs: "unlocked" / "locked"
 - Shows skill name, level, description, MP cost, upgrade cost
 - Press `K` in exploration mode to open
+
+### dialog_ui.lua
+- `DialogUI.create(assetManager)` - Create dialog UI
+- `DialogUI.open(state, npc)` - Open dialog with NPC data
+- `DialogUI.close(state)` - Close dialog
+- `DialogUI.is_open(state)` - Check if open
+- `DialogUI.update(state, dt)` - Fade-in animation
+- `DialogUI.draw(state)` - Render dialog panel with avatar, name, text, paging
+- `DialogUI.keypressed(state, key)` - Space/Enter advance, Escape close
+- `DialogUI.mousepressed(state, x, y, button)` - Click to advance
+- Handles string arrays, structured dialogue tables, and single strings
+- Press `F` near NPC to interact
+
+### shop_ui.lua
+- `ShopUI.create(assetManager)` - Create shop UI
+- `ShopUI.open(state, npc, spiritCrystalSystem)` - Open shop with merchant NPC
+- `ShopUI.close(state)` - Close shop
+- `ShopUI.is_open(state)` - Check if open
+- `ShopUI.update(state, dt)` - Update message timer
+- `ShopUI.draw(state)` - Render item list, detail panel, balance, buy button
+- `ShopUI.keypressed(state, key)` - Up/Down select, Enter buy, Escape close
+- `ShopUI.mousepressed(state, x, y, button)` - Click items and buttons
+- Shows item name, price, stats (ATK/DEF/SPD)
+- Uses `SpiritCrystalSystem.spend_value` for purchases
+
+### battle/reward_ui.lua
+- `RewardUI.create(assetManager)` - Create reward UI
+- `RewardUI.show(state, rewards)` - Show victory rewards
+- `RewardUI.hide(state)` - Hide rewards
+- `RewardUI.is_visible(state)` - Check visibility
+- `RewardUI.is_complete(state)` - Check if reveal animation finished
+- `RewardUI.update(state, dt)` - Animate crystal reveal
+- `RewardUI.draw(state)` - Render victory overlay with crystal list
+- Crystals revealed one by one with gold particle effects
+
+### death_screen.lua
+- `DeathScreen.create(assetManager)` - Create death screen
+- `DeathScreen.show(state)` - Show death overlay
+- `DeathScreen.hide(state)` - Hide death overlay
+- `DeathScreen.is_visible(state)` - Check visibility
+- `DeathScreen.update(state, dt)` - Fade-in animation
+- `DeathScreen.draw(state)` - Render "YOU DIED" text, revive button
+- On confirm: restores HP to max, teleports to (1000, 1000)
 
 ## Color Categories (theme.lua)
 

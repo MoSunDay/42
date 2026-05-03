@@ -7,6 +7,10 @@ local SkillPanel = require("src.ui.skill_panel")
 local HUD = require("src.ui.hud")
 local ChatUI = require("src.ui.chat_ui")
 local UnifiedMenu = require("src.ui.unified_menu")
+local DialogUI = require("src.ui.dialog_ui")
+local ShopUI = require("src.ui.shop_ui")
+local RewardUI = require("src.ui.battle.reward_ui")
+local DeathScreen = require("src.ui.death_screen")
 local Enemy = require("entities.enemy")
 
 local InputSystem = {}
@@ -24,6 +28,38 @@ end
 
 function InputSystem.mousepressed(state, x, y, button)
     local mode = state.gameState:getMode()
+
+    local rewardUI = state.gameState:getRewardUI()
+    if rewardUI and RewardUI.is_visible(rewardUI) then
+        if RewardUI.mousepressed(rewardUI, x, y, button) then
+            if RewardUI.is_complete(rewardUI) then
+                state.gameState:confirm_battle_result()
+            end
+            return
+        end
+    end
+
+    local deathScreen = state.gameState:getDeathScreen()
+    if deathScreen and DeathScreen.is_visible(deathScreen) then
+        if DeathScreen.mousepressed(deathScreen, x, y, button) then
+            state.gameState:confirm_battle_result()
+            return
+        end
+    end
+
+    local dialogUI = state.gameState:getDialogUI()
+    if dialogUI and DialogUI.is_open(dialogUI) then
+        if DialogUI.mousepressed(dialogUI, x, y, button) then
+            return
+        end
+    end
+
+    local shopUI = state.gameState:getShopUI()
+    if shopUI and ShopUI.is_open(shopUI) then
+        if ShopUI.mousepressed(shopUI, x, y, button) then
+            return
+        end
+    end
 
     local skillPanel = state.gameState:getSkillPanel()
     if skillPanel and skillPanel.isOpen then
@@ -140,6 +176,38 @@ end
 function InputSystem.keypressed(state, key)
     local mode = state.gameState:getMode()
 
+    local rewardUI = state.gameState:getRewardUI()
+    if rewardUI and RewardUI.is_visible(rewardUI) then
+        if RewardUI.keypressed(rewardUI, key) then
+            if RewardUI.is_complete(rewardUI) then
+                state.gameState:confirm_battle_result()
+            end
+            return
+        end
+    end
+
+    local deathScreen = state.gameState:getDeathScreen()
+    if deathScreen and DeathScreen.is_visible(deathScreen) then
+        if DeathScreen.keypressed(deathScreen, key) then
+            state.gameState:confirm_battle_result()
+            return
+        end
+    end
+
+    local dialogUI = state.gameState:getDialogUI()
+    if dialogUI and DialogUI.is_open(dialogUI) then
+        if DialogUI.keypressed(dialogUI, key) then
+            return
+        end
+    end
+
+    local shopUI = state.gameState:getShopUI()
+    if shopUI and ShopUI.is_open(shopUI) then
+        if ShopUI.keypressed(shopUI, key) then
+            return
+        end
+    end
+
     local skillPanel = state.gameState:getSkillPanel()
     if skillPanel and skillPanel.isOpen then
         if SkillPanel.keypressed(skillPanel, key) then
@@ -168,6 +236,11 @@ function InputSystem.keypressed(state, key)
             if skillPanel then
                 SkillPanel.toggle(skillPanel, state.gameState.player)
             end
+            return
+        end
+
+        if key == "f" then
+            state.gameState:interact_nearby_npc()
             return
         end
 
@@ -253,7 +326,11 @@ function InputSystem.keypressed(state, key)
             end
         elseif battleState == "victory" or battleState == "defeat" or battleState == "escaped" then
             if key == "return" or key == "space" then
-                state.gameState:end_battle()
+                if battleState == "escaped" then
+                    state.gameState:end_battle()
+                else
+                    state.gameState:end_battle()
+                end
             end
         end
     end

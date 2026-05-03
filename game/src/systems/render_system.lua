@@ -6,6 +6,11 @@ local ChatUI = require("src.ui.chat_ui")
 local AvatarRenderer = require("account.avatar_renderer")
 local UnifiedMenu = require("src.ui.unified_menu")
 local SkillPanel = require("src.ui.skill_panel")
+local DialogUI = require("src.ui.dialog_ui")
+local ShopUI = require("src.ui.shop_ui")
+local RewardUI = require("src.ui.battle.reward_ui")
+local DeathScreen = require("src.ui.death_screen")
+local NPCManager = require("npcs.npc_manager")
 local MapManager = require("map.map_manager")
 local Animation = require("src.ui.animation")
 local Particles = require("src.ui.particles")
@@ -120,6 +125,19 @@ function RenderSystem.render_entities(state)
         end
     end
 
+    local npcManager = state.gameState:getNpcManager()
+    if npcManager then
+        local cam = state.gameState.camera
+        local sw, sh = love.graphics.getDimensions()
+        local vx1, vy1, vx2, vy2 = cam.x, cam.y, cam.x + sw, cam.y + sh
+        for id, npc in pairs(npcManager.npcs) do
+            if npc.is_alive and npc.x >= vx1 - 50 and npc.x <= vx2 + 50
+                and npc.y >= vy1 - 50 and npc.y <= vy2 + 50 then
+                NPCManager.draw_npc(npcManager, npc)
+            end
+        end
+    end
+
     if state.gameState.player then
         Player.draw(state.gameState.player)
     end
@@ -176,6 +194,26 @@ function RenderSystem.render_ui(state)
     local skillPanel = state.gameState:getSkillPanel()
     if skillPanel and skillPanel.isOpen then
         SkillPanel.draw(skillPanel)
+    end
+
+    local dialogUI = state.gameState:getDialogUI()
+    if dialogUI then
+        DialogUI.draw(dialogUI)
+    end
+
+    local shopUI = state.gameState:getShopUI()
+    if shopUI then
+        ShopUI.draw(shopUI)
+    end
+
+    local rewardUI = state.gameState:getRewardUI()
+    if rewardUI then
+        RewardUI.draw(rewardUI)
+    end
+
+    local deathScreen = state.gameState:getDeathScreen()
+    if deathScreen then
+        DeathScreen.draw(deathScreen)
     end
 
     Particles.draw()

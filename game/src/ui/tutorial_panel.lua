@@ -119,8 +119,8 @@ function TutorialPanel.draw(state)
 end
 
 function TutorialPanel.draw_background(state)
-    love.graphics.setColor(0, 0, 0, 0.5 * state.alpha)
-    love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
+    local w, h = love.graphics.getWidth(), love.graphics.getHeight()
+    Components.drawOverlay(w, h, 0.5 * state.alpha)
 end
 
 function TutorialPanel.draw_panel(state)
@@ -144,7 +144,7 @@ function TutorialPanel.draw_content(state)
     if not page then return end
 
     if page.title then
-        love.graphics.setColor(0.9, 0.9, 1, state.alpha)
+        love.graphics.setColor(Theme.gold.bright[1], Theme.gold.bright[2], Theme.gold.bright[3], state.alpha)
         love.graphics.setFont(state.font)
         
         local pageTitleX = state.panelX + 30
@@ -201,7 +201,7 @@ function TutorialPanel.draw_progress(state)
     if total == 0 then return end
     
     love.graphics.setFont(state.smallFont)
-    love.graphics.setColor(0.6, 0.6, 0.6, state.alpha)
+    love.graphics.setColor(Theme.colors.textDim[1], Theme.colors.textDim[2], Theme.colors.textDim[3], state.alpha)
     
     local progressText = string.format("%d / %d", current, total)
     local progressX = state.panelX + state.panelWidth - 60
@@ -215,9 +215,9 @@ function TutorialPanel.draw_progress(state)
     
     for i = 1, total do
         if i <= current then
-            love.graphics.setColor(0.3, 0.7, 0.9, state.alpha)
+            love.graphics.setColor(Theme.colors.info[1], Theme.colors.info[2], Theme.colors.info[3], state.alpha)
         else
-            love.graphics.setColor(0.3, 0.3, 0.3, state.alpha)
+            love.graphics.setColor(Theme.colors.textDim[1], Theme.colors.textDim[2], Theme.colors.textDim[3], state.alpha * 0.5)
         end
         love.graphics.circle("fill", dotStartX + (i - 1) * dotSpacing, dotY, 4)
     end

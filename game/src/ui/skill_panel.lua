@@ -76,7 +76,7 @@ function SkillPanel.draw(state)
     local title = string.format("技能面板 - %s", class and class.name or "Unknown")
     Components.drawOrnatePanel(panelX, panelY, panelW, panelH, state.assetManager, {title = title, corners = true, glow = true})
     
-    love.graphics.setColor(0.8, 0.6, 0.2)
+    love.graphics.setColor(Theme.gold.bright)
     love.graphics.printf(string.format("灵晶: %d", state.player.skillCrystals or 0), panelX, panelY + 40, panelW, "center")
     
     local tabW = 120
@@ -99,7 +99,7 @@ function SkillPanel.draw(state)
     local skills = state.tab == "unlocked" and state.unlockedSkills or state.lockedSkills
     
     if #skills == 0 then
-        love.graphics.setColor(0.6, 0.6, 0.6)
+        love.graphics.setColor(Theme.colors.textDim)
         love.graphics.printf(state.tab == "unlocked" and "暂无已解锁技能" or "所有技能已解锁", listX, listY + listH/2, listW, "center")
     else
         local itemH = 65
@@ -121,16 +121,16 @@ function SkillPanel.draw(state)
                 })
             end
             
-            love.graphics.setColor(1, 1, 1)
+            love.graphics.setColor(Theme.colors.text)
             local skill = skillData.data
             
             if state.tab == "unlocked" then
                 love.graphics.print(string.format("%s Lv.%d", skill.name, skillData.level), listX + 15, itemY + 5)
                 
-                love.graphics.setColor(0.7, 0.7, 0.7)
+                love.graphics.setColor(Theme.colors.textDim)
                 love.graphics.print(skill.description, listX + 15, itemY + 22)
                 
-                love.graphics.setColor(0.6, 0.8, 0.6)
+                love.graphics.setColor(Theme.colors.stat.hp)
                 local dmgText = ""
                 if skill.damageMultiplier then
                     dmgText = string.format("伤害: %d%%", skillData.effectiveDamage * 100)
@@ -139,28 +139,28 @@ function SkillPanel.draw(state)
                 end
                 love.graphics.print(dmgText, listX + 15, itemY + 39)
                 
-                love.graphics.setColor(0.5, 0.5, 0.8)
+                love.graphics.setColor(Theme.colors.mp)
                 love.graphics.print(string.format("MP: %d", skill.mpCost), listX + 200, itemY + 39)
                 
-                love.graphics.setColor(0.9, 0.7, 0.3)
+                love.graphics.setColor(Theme.gold.bright)
                 love.graphics.print(string.format("升级: %d灵晶", skillData.upgradeCost), listX + 350, itemY + 39)
             else
                 love.graphics.print(skill.name, listX + 15, itemY + 5)
                 
-                love.graphics.setColor(0.7, 0.7, 0.7)
+                love.graphics.setColor(Theme.colors.textDim)
                 love.graphics.print(skill.description, listX + 15, itemY + 22)
                 
-                love.graphics.setColor(0.6, 0.6, 0.6)
+                love.graphics.setColor(Theme.colors.textDim)
                 love.graphics.print(string.format("等级: %s", SkillDatabase.get_skill_tier_name(skill.tier)), listX + 15, itemY + 39)
                 
-                love.graphics.setColor(0.9, 0.6, 0.3)
+                love.graphics.setColor(Theme.gold.normal)
                 love.graphics.print(string.format("解锁: %d灵晶", skillData.unlockCost), listX + 350, itemY + 39)
             end
         end
     end
     
     if state.message ~= "" then
-        love.graphics.setColor(0.2, 0.8, 0.4)
+        love.graphics.setColor(Theme.colors.success)
         love.graphics.printf(state.message, panelX, panelY + panelH - 80, panelW, "center")
     end
     
@@ -176,7 +176,7 @@ function SkillPanel.draw(state)
     
     Components.drawOrnateButton(panelX + panelW - 170, btnY, btnW, btnH, "关闭", "normal", state.assetManager, love.graphics.get_font())
     
-    love.graphics.setColor(0.5, 0.5, 0.5)
+    love.graphics.setColor(Theme.colors.textDim)
     love.graphics.printf("↑↓选择  Enter确认  Tab切换  ESC关闭", panelX, panelY + panelH - 20, panelW, "center")
 end
 

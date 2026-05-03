@@ -225,19 +225,19 @@ function BattleUI.draw_turn_indicator(state, battleState, x, y)
         color = state.colors.selected
     elseif battleState == "player" then
         text = "Your Turn"
-        color = {0.2, 0.8, 1.0}
+        color = Theme.colors.battle.turnPlayer
     elseif battleState == "enemy" or battleState == "executing" then
         text = "Enemy Turn"
-        color = {1.0, 0.3, 0.3}
+        color = Theme.colors.battle.turnEnemy
     elseif battleState == "victory" then
         text = "Victory!"
-        color = {0.2, 1.0, 0.3}
+        color = Theme.colors.battle.victory
     elseif battleState == "defeat" then
         text = "Defeat..."
-        color = {0.8, 0.2, 0.2}
+        color = Theme.colors.battle.defeat
     elseif battleState == "escaped" then
         text = "Escaped!"
-        color = {0.9, 0.9, 0.2}
+        color = Theme.colors.battle.escaped
     end
     
     love.graphics.setColor(color)
@@ -299,7 +299,7 @@ function BattleUI.draw_skill_select_panel(state, battleSystem, w, h)
     
     local skills = state.availableSkills
     if #skills == 0 then
-        love.graphics.setColor(0.6, 0.6, 0.6)
+        love.graphics.setColor(Theme.colors.textDim)
         love.graphics.printf("No skills available", panelX, panelY + panelH/2, panelW, "center")
     else
         local itemH = 60
@@ -322,17 +322,17 @@ function BattleUI.draw_skill_select_panel(state, battleSystem, w, h)
                 })
             end
             
-            love.graphics.setColor(1, 1, 1)
+            love.graphics.setColor(Theme.colors.text)
             love.graphics.print(string.format("%s Lv.%d", skill.name, skillInfo.level), panelX + 20, itemY + 5)
             
-            love.graphics.setColor(0.7, 0.7, 0.7)
+            love.graphics.setColor(Theme.colors.textDim)
             love.graphics.print(skill.description, panelX + 20, itemY + 22)
             
-            local mpColor = (battleSystem.player and battleSystem.player.mp >= skill.mpCost) and {0.4, 0.7, 1.0} or {1.0, 0.4, 0.4}
+            local mpColor = (battleSystem.player and battleSystem.player.mp >= skill.mpCost) and Theme.colors.mp or Theme.colors.error
             love.graphics.setColor(mpColor)
             love.graphics.print(string.format("MP: %d", skill.mpCost), panelX + panelW - 80, itemY + 5)
             
-            love.graphics.setColor(0.6, 0.8, 0.6)
+            love.graphics.setColor(Theme.colors.success)
             local effectText = ""
             if skill.damageMultiplier then
                 effectText = string.format("DMG: %d%%", skillInfo.effectiveDamage * 100)

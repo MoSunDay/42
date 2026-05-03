@@ -2,7 +2,35 @@
 -- Top-down combat game MVP v1
 
 -- Add src directory to Lua path
-package.path = package.path .. ";src/?.lua;src/core/?.lua;src/entities/?.lua;src/systems/?.lua;src/ui/?.lua;src/animations/?.lua;src/network/?.lua;account/?.lua;map/?.lua;map/maps/?.lua;map/minimap/?.lua;npcs/?.lua;lib/?.lua"
+package.path = package.path .. ";src/?.lua;src/core/?.lua;src/entities/?.lua;src/systems/?.lua;src/ui/?.lua;src/animations/?.lua;src/network/?.lua;account/?.lua;map/?.lua;map/maps/?.lua;map/minimap/?.lua;npcs/?.lua;lib/?.lua;src/tools/?.lua;src/data/?.lua"
+
+-- Early intercept for asset generation (before loading game modules)
+local rawArgs = arg or {}
+for _, a in ipairs(rawArgs) do
+    if a == "--generate-assets" then
+        love.update = function() end
+        love.draw = function()
+            love.graphics.clear(0.1, 0.1, 0.18)
+            love.graphics.setColor(0.9, 0.9, 0.9)
+            love.graphics.printf("Generating placeholder assets...", 0, love.graphics.getHeight()/2, love.graphics.getWidth(), "center")
+        end
+        function love.load()
+            love.window.setTitle("Asset Generator")
+            love.window.setMode(800, 400, {resizable=false})
+            local ok, err = pcall(function()
+                local PlaceholderAssets = require("src.tools.placeholder_assets")
+                PlaceholderAssets.generate_all()
+            end)
+            if ok then
+                print("=== Placeholder assets generated successfully! ===")
+            else
+                print("ERROR: " .. tostring(err))
+            end
+            love.event.quit()
+        end
+        return
+    end
+end
 
 -- Core modules
 local GameState = require("core.game_state")

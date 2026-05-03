@@ -287,4 +287,7 @@ function network_manager.delete_character(state, character_id, callback)
     return true
 end
 
+network_manager.getCharacter = network_manager.get_character
+network_manager.saveCharacter = network_manager.save_character
+
 return network_manager
