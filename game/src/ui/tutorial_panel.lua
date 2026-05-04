@@ -1,5 +1,6 @@
 local TutorialPanel = {}
 
+local TutorialSystem = require("src.systems.tutorial_system")
 local Theme = require("src.ui.theme")
 local Components = require("src.ui.components")
 
@@ -75,12 +76,12 @@ function TutorialPanel.update(state, dt)
     
     TutorialPanel.update_position(state)
     
-    local mx, my = love.mouse.get_position()
+    local mx, my = love.mouse.getPosition()
     state.hoveredButton = nil
     
     local buttonStartX = state.panelX + (state.panelWidth - 320) / 2
     
-    if state.tutorialSystem:canSkip() then
+    if TutorialSystem.can_skip(state.tutorialSystem) then
         if mx >= buttonStartX and mx <= buttonStartX + state.buttonWidth and
            my >= state.buttonY and my <= state.buttonY + state.buttonHeight then
             state.hoveredButton = "skip"
@@ -99,7 +100,7 @@ function TutorialPanel.update(state, dt)
     if mx >= nextX and mx <= nextX + state.buttonWidth and
        my >= state.buttonY and my <= state.buttonY + state.buttonHeight then
         if not state.hoveredButton then
-            state.hoveredButton = state.tutorialSystem:isLastPage() and "complete" or "next"
+            state.hoveredButton = TutorialSystem.is_last_page(state.tutorialSystem) and "complete" or "next"
         end
     end
 end
@@ -140,7 +141,7 @@ function TutorialPanel.draw_panel(state)
 end
 
 function TutorialPanel.draw_content(state)
-    local page = state.tutorialSystem:getCurrentPage()
+    local page = TutorialSystem.get_current_page(state.tutorialSystem)
     if not page then return end
 
     if page.title then
@@ -165,17 +166,17 @@ end
 function TutorialPanel.draw_buttons(state)
     local buttonStartX = state.panelX + (state.panelWidth - 320) / 2
     
-    if state.tutorialSystem:canSkip() then
+    if TutorialSystem.can_skip(state.tutorialSystem) then
         TutorialPanel.draw_button(state, buttonStartX, state.buttonY, "跳过", "skip")
     end
     
     local prevX = buttonStartX + 110
-    local prevEnabled = not state.tutorialSystem:isFirstPage()
+    local prevEnabled = not TutorialSystem.is_first_page(state.tutorialSystem)
     TutorialPanel.draw_button(state, prevX, state.buttonY, "上一页", "prev", prevEnabled)
     
     local nextX = buttonStartX + 220
-    local nextText = state.tutorialSystem:isLastPage() and "完成" or "下一页"
-    TutorialPanel.draw_button(state, nextX, state.buttonY, nextText, state.tutorialSystem:isLastPage() and "complete" or "next")
+    local nextText = TutorialSystem.is_last_page(state.tutorialSystem) and "完成" or "下一页"
+    TutorialPanel.draw_button(state, nextX, state.buttonY, nextText, TutorialSystem.is_last_page(state.tutorialSystem) and "complete" or "next")
 end
 
 function TutorialPanel.draw_button(state, x, y, text, id, enabled)
@@ -197,7 +198,7 @@ function TutorialPanel.draw_button(state, x, y, text, id, enabled)
 end
 
 function TutorialPanel.draw_progress(state)
-    local current, total = state.tutorialSystem:getProgress()
+    local current, total = TutorialSystem.get_progress(state.tutorialSystem)
     if total == 0 then return end
     
     love.graphics.setFont(state.smallFont)
@@ -228,10 +229,10 @@ function TutorialPanel.handle_click(state, x, y)
     
     local buttonStartX = state.panelX + (state.panelWidth - 320) / 2
     
-    if state.tutorialSystem:canSkip() then
+    if TutorialSystem.can_skip(state.tutorialSystem) then
         if x >= buttonStartX and x <= buttonStartX + state.buttonWidth and
            y >= state.buttonY and y <= state.buttonY + state.buttonHeight then
-            state.tutorialSystem:skipTutorial()
+            TutorialSystem.skip_tutorial(state.tutorialSystem)
             TutorialPanel.hide(state)
             return true
         end
@@ -240,8 +241,8 @@ function TutorialPanel.handle_click(state, x, y)
     local prevX = buttonStartX + 110
     if x >= prevX and x <= prevX + state.buttonWidth and
        y >= state.buttonY and y <= state.buttonY + state.buttonHeight then
-        if not state.tutorialSystem:isFirstPage() then
-            state.tutorialSystem:prevPage()
+        if not TutorialSystem.is_first_page(state.tutorialSystem) then
+            TutorialSystem.prev_page(state.tutorialSystem)
         end
         return true
     end
@@ -249,11 +250,11 @@ function TutorialPanel.handle_click(state, x, y)
     local nextX = buttonStartX + 220
     if x >= nextX and x <= nextX + state.buttonWidth and
        y >= state.buttonY and y <= state.buttonY + state.buttonHeight then
-        if state.tutorialSystem:isLastPage() then
-            state.tutorialSystem:completeTutorial()
+        if TutorialSystem.is_last_page(state.tutorialSystem) then
+            TutorialSystem.complete_tutorial(state.tutorialSystem)
             TutorialPanel.hide(state)
         else
-            state.tutorialSystem:nextPage()
+            TutorialSystem.next_page(state.tutorialSystem)
         end
         return true
     end
@@ -265,21 +266,21 @@ function TutorialPanel.handle_key_press(state, key)
     if not state.visible then return false end
     
     if key == "right" or key == "space" or key == "return" then
-        if state.tutorialSystem:isLastPage() then
-            state.tutorialSystem:completeTutorial()
+        if TutorialSystem.is_last_page(state.tutorialSystem) then
+            TutorialSystem.complete_tutorial(state.tutorialSystem)
             TutorialPanel.hide(state)
         else
-            state.tutorialSystem:nextPage()
+            TutorialSystem.next_page(state.tutorialSystem)
         end
         return true
     elseif key == "left" then
-        if not state.tutorialSystem:isFirstPage() then
-            state.tutorialSystem:prevPage()
+        if not TutorialSystem.is_first_page(state.tutorialSystem) then
+            TutorialSystem.prev_page(state.tutorialSystem)
         end
         return true
     elseif key == "escape" then
-        if state.tutorialSystem:canSkip() then
-            state.tutorialSystem:skipTutorial()
+        if TutorialSystem.can_skip(state.tutorialSystem) then
+            TutorialSystem.skip_tutorial(state.tutorialSystem)
             TutorialPanel.hide(state)
         end
         return true

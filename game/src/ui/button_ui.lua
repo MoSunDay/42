@@ -46,8 +46,8 @@ end
 function ButtonUI.draw(state)
     ButtonUI.update_positions(state)
     
-    local mx, my = love.mouse.get_position()
-    local font = love.graphics.get_font()
+    local mx, my = love.mouse.getPosition()
+    local font = love.graphics.getFont()
     
     for _, button in ipairs(state.buttons) do
         local isHover = mx >= button.x and mx <= button.x + button.width and

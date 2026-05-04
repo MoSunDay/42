@@ -152,15 +152,22 @@ function Components.drawInput(x, y, w, h, is_active, assetManager)
     return false
 end
 
-function Components.drawTab(x, y, w, h, text, is_active, assetManager, font)
-    local tabName = is_active and "tab_active" or "tab_inactive"
+function Components.drawTab(x, y, w, h, text, is_active, assetManager, font, is_hovered)
+    local tabName
+    if is_active then
+        tabName = "tab_active"
+    elseif is_hovered then
+        tabName = "tab_hover"
+    else
+        tabName = "tab_default"
+    end
     local tab = assetManager and assetManager:get_ui_asset("tabs", tabName)
     
     if tab then
         local scale = w / tab:getWidth()
         love.graphics.draw(tab, x, y, 0, scale, h / tab:getHeight())
     else
-        love.graphics.setColor(is_active and Theme.colors.tab.active or Theme.colors.tab.inactive)
+        love.graphics.setColor(is_active and Theme.colors.tab.active or (is_hovered and Theme.colors.tabHover or Theme.colors.tab.inactive))
         love.graphics.rectangle("fill", x, y, w, h, 5, 5)
     end
     
@@ -267,7 +274,7 @@ function Components.drawOrnatePanel(x, y, w, h, assetManager, options)
     end
 
     if showTitle then
-        local font = options.font or love.graphics.get_font()
+        local font = options.font or love.graphics.getFont()
         local titleW = font:getWidth(showTitle) + 30
         local titleX = x + (w - titleW) / 2
         local titleY = y - 8
@@ -332,11 +339,11 @@ function Components.drawOrnateButton(x, y, w, h, text, state, assetManager, font
     end
 
     if text then
-        love.graphics.setFont(font or love.graphics.get_font())
+        love.graphics.setFont(font or love.graphics.getFont())
         local textOffsetX = options.gemColor and 15 or 0
         love.graphics.setColor(isDisabled and Theme.colors.textDim or Theme.colors.text)
-        local tw = (font or love.graphics.get_font()):getWidth(text)
-        love.graphics.print(text, x + textOffsetX + (w - textOffsetX - tw) / 2, y + (h - (font or love.graphics.get_font()):getHeight()) / 2)
+        local tw = (font or love.graphics.getFont()):getWidth(text)
+        love.graphics.print(text, x + textOffsetX + (w - textOffsetX - tw) / 2, y + (h - (font or love.graphics.getFont()):getHeight()) / 2)
     end
 end
 
@@ -389,7 +396,7 @@ function Components.drawOrnateHPBar(x, y, w, h, percent, level, assetManager)
 
     Theme.drawGoldBorder(x, y, w, h, 1)
 
-    local font = love.graphics.get_font()
+    local font = love.graphics.getFont()
     love.graphics.setFont(font)
     love.graphics.setColor(Theme.colors.text)
     local hpText = string.format("%d%%", math.floor(percent * 100))
@@ -427,7 +434,7 @@ function Components.drawOrnateMPBar(x, y, w, h, percent, assetManager)
 
     Theme.drawGoldBorder(x, y, w, h, 1)
 
-    local font = love.graphics.get_font()
+    local font = love.graphics.getFont()
     love.graphics.setColor(Theme.colors.text)
     local mpText = string.format("%d%%", math.floor(percent * 100))
     love.graphics.printf(mpText, x, y + (h - font:getHeight()) / 2, w, "center")

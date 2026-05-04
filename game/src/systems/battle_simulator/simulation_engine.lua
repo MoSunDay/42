@@ -1,4 +1,5 @@
 local SimCombatant = require("src.systems.battle_simulator.sim_combatant")
+local SkillDatabase = require("src.systems.battle_simulator.skill_database")
 
 local SimulationEngine = {}
 
@@ -139,7 +140,7 @@ function SimulationEngine.execute_action(state, actor, action, party, enemies, s
             if skill.targetType == "heal" then
                 local healTarget = SimulationEngine.get_most_damaged_ally(state, allies)
                 if healTarget then
-                    local healAmount = skill:calculateEffect(actor) or actor.magicAttack * 2
+                    local healAmount = SkillDatabase.calculate_effect(skill, actor) or actor.magicAttack * 2
                     SimCombatant.heal(healTarget, healAmount)
                     result.healAmount = healAmount
                     result.target = healTarget.id

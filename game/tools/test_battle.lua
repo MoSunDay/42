@@ -18,9 +18,9 @@ print("   Defense: " .. slime.defense)
 print("   ✓ Enemy created")
 print()
 
--- Test 2: Check is_alive method
-print("2. Testing is_alive method...")
-if slime:is_alive() then
+-- Test 2: Check is_alive
+print("2. Testing is_alive...")
+if Enemy.is_alive(slime) then
     print("   ✓ Enemy is alive (HP: " .. slime.hp .. ")")
 else
     print("   ✗ ERROR: Enemy should be alive!")
@@ -29,10 +29,10 @@ print()
 
 -- Test 3: Take damage
 print("3. Testing damage...")
-local damage = slime:take_damage(10)
+local damage = Enemy.take_damage(slime, 10)
 print("   Took " .. damage .. " damage")
 print("   HP: " .. slime.hp .. "/" .. slime.maxHp)
-if slime:is_alive() then
+if Enemy.is_alive(slime) then
     print("   ✓ Enemy still alive")
 else
     print("   ✗ ERROR: Enemy should still be alive!")
@@ -41,9 +41,9 @@ print()
 
 -- Test 4: Defeat enemy
 print("4. Testing defeat...")
-slime:take_damage(100)
+Enemy.take_damage(slime, 200)
 print("   HP: " .. slime.hp .. "/" .. slime.maxHp)
-if not slime:is_alive() then
+if not Enemy.is_alive(slime) then
     print("   ✓ Enemy defeated correctly")
 else
     print("   ✗ ERROR: Enemy should be dead!")
@@ -55,7 +55,7 @@ print("5. Testing all enemy types...")
 local types = {"slime", "goblin", "skeleton", "orc"}
 for _, type in ipairs(types) do
     local enemy = Enemy.create(type)
-    if enemy:is_alive() then
+    if Enemy.is_alive(enemy) then
         print("   ✓ " .. enemy.name .. " created (HP: " .. enemy.hp .. ")")
     else
         print("   ✗ ERROR: " .. type .. " should be alive!")
@@ -76,4 +76,3 @@ print("=== All Tests Complete! ===")
 print()
 print("If all tests passed, the battle system should work correctly.")
 print("Run the game and walk around to trigger battles!")
-

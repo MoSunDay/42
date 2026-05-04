@@ -12,6 +12,7 @@ local ShopUI = require("src.ui.shop_ui")
 local RewardUI = require("src.ui.battle.reward_ui")
 local DeathScreen = require("src.ui.death_screen")
 local Enemy = require("entities.enemy")
+local RenderSystem = require("src.systems.render_system")
 
 local InputSystem = {}
 
@@ -19,17 +20,17 @@ function InputSystem.create(gameState, renderSystem)
     return {
         gameState = gameState,
         renderSystem = renderSystem,
-        battleUI = renderSystem:get_battle_ui(),
-        fullscreenMap = renderSystem:get_fullscreen_map(),
-        hud = renderSystem:get_hud(),
-        chatUI = renderSystem:get_chat_ui(),
+        battleUI = RenderSystem.get_battle_ui(renderSystem),
+        fullscreenMap = RenderSystem.get_fullscreen_map(renderSystem),
+        hud = RenderSystem.get_hud(renderSystem),
+        chatUI = RenderSystem.get_chat_ui(renderSystem),
     }
 end
 
 function InputSystem.mousepressed(state, x, y, button)
-    local mode = state.gameState:getMode()
+    local mode = state.gameState:get_mode()
 
-    local rewardUI = state.gameState:getRewardUI()
+    local rewardUI = state.gameState:get_reward_ui()
     if rewardUI and RewardUI.is_visible(rewardUI) then
         if RewardUI.mousepressed(rewardUI, x, y, button) then
             if RewardUI.is_complete(rewardUI) then
@@ -39,7 +40,7 @@ function InputSystem.mousepressed(state, x, y, button)
         end
     end
 
-    local deathScreen = state.gameState:getDeathScreen()
+    local deathScreen = state.gameState:get_death_screen()
     if deathScreen and DeathScreen.is_visible(deathScreen) then
         if DeathScreen.mousepressed(deathScreen, x, y, button) then
             state.gameState:confirm_battle_result()
@@ -47,21 +48,21 @@ function InputSystem.mousepressed(state, x, y, button)
         end
     end
 
-    local dialogUI = state.gameState:getDialogUI()
+    local dialogUI = state.gameState:get_dialog_ui()
     if dialogUI and DialogUI.is_open(dialogUI) then
         if DialogUI.mousepressed(dialogUI, x, y, button) then
             return
         end
     end
 
-    local shopUI = state.gameState:getShopUI()
+    local shopUI = state.gameState:get_shop_ui()
     if shopUI and ShopUI.is_open(shopUI) then
         if ShopUI.mousepressed(shopUI, x, y, button) then
             return
         end
     end
 
-    local skillPanel = state.gameState:getSkillPanel()
+    local skillPanel = state.gameState:get_skill_panel()
     if skillPanel and skillPanel.isOpen then
         if SkillPanel.mousepressed(skillPanel, x, y, button) then
             return
@@ -69,7 +70,7 @@ function InputSystem.mousepressed(state, x, y, button)
     end
 
     if mode == "exploration" then
-        local unifiedMenu = state.renderSystem:get_unified_menu()
+        local unifiedMenu = RenderSystem.get_unified_menu(state.renderSystem)
         if unifiedMenu and UnifiedMenu.is_menu_open(unifiedMenu) then
             if UnifiedMenu.mousepressed(unifiedMenu, x, y, button, state.gameState) then
                 return
@@ -79,7 +80,7 @@ function InputSystem.mousepressed(state, x, y, button)
         if FullscreenMap.is_map_open(state.fullscreenMap) then
             local worldX, worldY = FullscreenMap.mousepressed(state.fullscreenMap, x, y, button, state.gameState.map)
             if worldX and worldY then
-                state.gameState:movePlayerTo(worldX, worldY)
+                state.gameState:move_player_to(worldX, worldY)
             end
             return
         end
@@ -93,20 +94,20 @@ function InputSystem.mousepressed(state, x, y, button)
             local buttonKey = HUD.is_mouse_over_button(state.hud, x, y)
             if buttonKey then
                 if buttonKey == "menu" then
-                    local unifiedMenu = state.renderSystem:get_unified_menu()
+                    local unifiedMenu = RenderSystem.get_unified_menu(state.renderSystem)
                     if unifiedMenu then
                         UnifiedMenu.toggle(unifiedMenu)
                     end
                     return
                 elseif buttonKey == "party" then
-                    local unifiedMenu = state.renderSystem:get_unified_menu()
+                    local unifiedMenu = RenderSystem.get_unified_menu(state.renderSystem)
                     if unifiedMenu then
                         UnifiedMenu.open(unifiedMenu)
                         UnifiedMenu.set_tab(unifiedMenu, 3)
                     end
                     return
                 elseif buttonKey == "pet" then
-                    local unifiedMenu = state.renderSystem:get_unified_menu()
+                    local unifiedMenu = RenderSystem.get_unified_menu(state.renderSystem)
                     if unifiedMenu then
                         UnifiedMenu.open(unifiedMenu)
                         UnifiedMenu.set_tab(unifiedMenu, 4)
@@ -116,8 +117,8 @@ function InputSystem.mousepressed(state, x, y, button)
             end
         end
 
-        local chatUI = state.renderSystem:get_chat_ui()
-        local chatSystem = state.gameState:getChatSystem()
+        local chatUI = RenderSystem.get_chat_ui(state.renderSystem)
+        local chatSystem = state.gameState:get_chat_system()
         if chatUI and chatSystem then
             if ChatUI.mousepressed(chatUI, x, y, button, chatSystem) then
                 return
@@ -127,12 +128,12 @@ function InputSystem.mousepressed(state, x, y, button)
         if button == 1 then
             local worldX, worldY = Camera.to_world(state.gameState.camera, x, y)
 
-            state.gameState:movePlayerTo(worldX, worldY)
+            state.gameState:move_player_to(worldX, worldY)
 
         end
     elseif mode == "battle" then
         if button == 1 then
-            local battleSystem = state.gameState:getBattleSystem()
+            local battleSystem = state.gameState:get_battle_system()
             local battleState = BattleSystem.get_state(battleSystem)
 
             if battleState == "player" then
@@ -174,9 +175,9 @@ function InputSystem.mousepressed(state, x, y, button)
 end
 
 function InputSystem.keypressed(state, key)
-    local mode = state.gameState:getMode()
+    local mode = state.gameState:get_mode()
 
-    local rewardUI = state.gameState:getRewardUI()
+    local rewardUI = state.gameState:get_reward_ui()
     if rewardUI and RewardUI.is_visible(rewardUI) then
         if RewardUI.keypressed(rewardUI, key) then
             if RewardUI.is_complete(rewardUI) then
@@ -186,7 +187,7 @@ function InputSystem.keypressed(state, key)
         end
     end
 
-    local deathScreen = state.gameState:getDeathScreen()
+    local deathScreen = state.gameState:get_death_screen()
     if deathScreen and DeathScreen.is_visible(deathScreen) then
         if DeathScreen.keypressed(deathScreen, key) then
             state.gameState:confirm_battle_result()
@@ -194,21 +195,21 @@ function InputSystem.keypressed(state, key)
         end
     end
 
-    local dialogUI = state.gameState:getDialogUI()
+    local dialogUI = state.gameState:get_dialog_ui()
     if dialogUI and DialogUI.is_open(dialogUI) then
         if DialogUI.keypressed(dialogUI, key) then
             return
         end
     end
 
-    local shopUI = state.gameState:getShopUI()
+    local shopUI = state.gameState:get_shop_ui()
     if shopUI and ShopUI.is_open(shopUI) then
         if ShopUI.keypressed(shopUI, key) then
             return
         end
     end
 
-    local skillPanel = state.gameState:getSkillPanel()
+    local skillPanel = state.gameState:get_skill_panel()
     if skillPanel and skillPanel.isOpen then
         if SkillPanel.keypressed(skillPanel, key) then
             return
@@ -216,7 +217,7 @@ function InputSystem.keypressed(state, key)
     end
 
     if mode == "exploration" then
-        local unifiedMenu = state.renderSystem:get_unified_menu()
+        local unifiedMenu = RenderSystem.get_unified_menu(state.renderSystem)
         if unifiedMenu then
             if key == "m" then
                 UnifiedMenu.toggle(unifiedMenu)
@@ -230,7 +231,7 @@ function InputSystem.keypressed(state, key)
     end
 
     if mode == "exploration" then
-        local chatSystem = state.gameState:getChatSystem()
+        local chatSystem = state.gameState:get_chat_system()
         
         if key == "k" then
             if skillPanel then
@@ -248,7 +249,7 @@ function InputSystem.keypressed(state, key)
             if key == "return" then
                 local text = chatSystem:endInput()
                 if text and text ~= "" then
-                    state.gameState:sendChatMessage(text)
+                    state.gameState:send_chat_message(text)
                 end
                 return
             elseif key == "escape" then
@@ -277,7 +278,7 @@ function InputSystem.keypressed(state, key)
     end
 
     if mode == "battle" and state.battleUI then
-        local battleSystem = state.gameState:getBattleSystem()
+        local battleSystem = state.gameState:get_battle_system()
         local battleState = BattleSystem.get_state(battleSystem)
 
         if BattleUI.is_skill_mode(state.battleUI) then
@@ -337,15 +338,15 @@ function InputSystem.keypressed(state, key)
 end
 
 function InputSystem.wheelmoved(state, x, y)
-    local mode = state.gameState:getMode()
+    local mode = state.gameState:get_mode()
 
     if mode == "exploration" then
-        local chatUI = state.renderSystem:get_chat_ui()
+        local chatUI = RenderSystem.get_chat_ui(state.renderSystem)
         if chatUI then
             ChatUI.mousescroll(chatUI, x, y)
         end
     elseif mode == "battle" then
-        local battleSystem = state.gameState:getBattleSystem()
+        local battleSystem = state.gameState:get_battle_system()
         if battleSystem and battleSystem.battleLog then
             BattleLog.scroll(battleSystem.battleLog, -y * 20)
         end
@@ -353,10 +354,10 @@ function InputSystem.wheelmoved(state, x, y)
 end
 
 function InputSystem.mousemoved(state, x, y)
-    local mode = state.gameState:getMode()
+    local mode = state.gameState:get_mode()
     
     if mode == "exploration" then
-        local unifiedMenu = state.renderSystem:get_unified_menu()
+        local unifiedMenu = RenderSystem.get_unified_menu(state.renderSystem)
         if unifiedMenu and UnifiedMenu.is_menu_open(unifiedMenu) then
             UnifiedMenu.mousemoved(unifiedMenu, x, y, state.gameState)
         end

@@ -304,4 +304,89 @@ function TilesetManager.create_procedural_tileset(state, name, colors, tileSize)
     return tileset
 end
 
+local THEME_TILE_ORDER = {"grass1","grass2","grass3","grass4","road1","road2"}
+
+function TilesetManager.create_theme_tileset(state, themeName, theme, tileSize)
+    tileSize = tileSize or 32
+    local tilesetName = "theme_" .. themeName
+
+    if state.tilesets[tilesetName] then
+        return state.tilesets[tilesetName]
+    end
+
+    local imagePath = "assets/images/tilesets/" .. tilesetName .. ".png"
+    local info = love.filesystem.getInfo(imagePath)
+
+    if info then
+        local tileset = TilesetManager.load(state, tilesetName, imagePath, {
+            tileSize = tileSize,
+            margin = 0,
+            spacing = 0
+        })
+        return tileset
+    end
+
+    local colors = {}
+    for _, key in ipairs(THEME_TILE_ORDER) do
+        local c = theme[key] or {0.5, 0.5, 0.5}
+        table.insert(colors, {c[1], c[2], c[3]})
+    end
+
+    return TilesetManager.create_procedural_tileset(state, tilesetName, colors, tileSize)
+end
+
+function TilesetManager.get_theme_tile_quad(state, themeName, tileType)
+    local tilesetName = "theme_" .. themeName
+    local tileset = state.tilesets[tilesetName]
+    if not tileset then return nil end
+
+    for i, key in ipairs(THEME_TILE_ORDER) do
+        if key == tileType then
+            if tileset.quads and tileset.quads[i] then
+                return tileset.image, tileset.quads[i], tileset.tileSize
+            end
+            return nil
+        end
+    end
+    return nil
+end
+
+function TilesetManager.ensure_theme_tileset(state, themeName, theme, tileSize)
+    local tilesetName = "theme_" .. themeName
+    if not state.tilesets[tilesetName] then
+        return TilesetManager.create_theme_tileset(state, themeName, theme, tileSize)
+    end
+    return state.tilesets[tilesetName]
+end
+
+function TilesetManager.draw_theme_tile(state, themeName, tileType, px, py, mapTileSize, theme)
+    local image, quad, srcTileSize = TilesetManager.get_theme_tile_quad(state, themeName, tileType)
+
+    if image and quad then
+        local scale = mapTileSize / srcTileSize
+        love.graphics.draw(image, quad, px, py, 0, scale, scale)
+        return true
+    end
+
+    local fallbackColor = nil
+    if theme then
+        fallbackColor = theme[tileType]
+    end
+    if not fallbackColor then
+        for i, key in ipairs(THEME_TILE_ORDER) do
+            if key == tileType and i <= #(theme or {}) then
+                fallbackColor = theme[key]
+                break
+            end
+        end
+    end
+    if not fallbackColor then
+        fallbackColor = {0.5, 0.5, 0.5}
+    end
+
+    love.graphics.setColor(fallbackColor)
+    love.graphics.rectangle("fill", px, py, mapTileSize, mapTileSize)
+    return true
+end
+
 return TilesetManager

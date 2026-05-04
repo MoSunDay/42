@@ -56,7 +56,7 @@ function PetUI.draw_pet_panel(state, pet, x, y, width, height, assetManager)
     Theme.draw_gem_icon(x + 25, y + 25, 12, Theme.gem.emerald)
 
     love.graphics.setColor(Theme.gold.bright)
-    love.graphics.setFont(love.graphics.get_font())
+    love.graphics.setFont(love.graphics.getFont())
     love.graphics.print(pet.name, x + 45, y + 12)
 
     local hpPercent = pet.hp / pet.maxHp

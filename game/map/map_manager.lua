@@ -56,7 +56,7 @@ function MapManager.load_map(mapId, useTiled)
         MapManager.currentMap = map
         
         if MapManager.tileAnimator then
-            MapManager.tileAnimator:scanMapForAnimatedTiles(map)
+            TileAnimator.scan_map_for_animated_tiles(MapManager.tileAnimator, map)
         end
         
         if MapManager.particleSystem and map.season then
@@ -192,7 +192,7 @@ end
 
 function MapManager.update(dt, camera, screenWidth)
     if MapManager.tileAnimator then
-        MapManager.tileAnimator:update(dt)
+        TileAnimator.update(MapManager.tileAnimator, dt)
     end
     
     if MapManager.particleSystem and camera and MapManager.currentMap then

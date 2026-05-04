@@ -50,11 +50,13 @@ print("   Map bounds: 2000 x 2000")
 
 print("\n2. Testing boundary restrictions...")
 
+local cr = player.collisionRadius
+
 -- Test moving beyond right boundary
 print("\n   Test 1: Move beyond right boundary (3000, 1000)")
 Player.move_to(player, 3000, 1000)
 print("   Target set to: (" .. player.targetX .. ", " .. player.targetY .. ")")
-if player.targetX <= 2000 - player.width/2 then
+if player.targetX <= 2000 - cr then
     print("   ✓ Right boundary restriction working")
 else
     print("   ✗ Right boundary restriction FAILED")
@@ -64,7 +66,7 @@ end
 print("\n   Test 2: Move beyond bottom boundary (1000, 3000)")
 Player.move_to(player, 1000, 3000)
 print("   Target set to: (" .. player.targetX .. ", " .. player.targetY .. ")")
-if player.targetY <= 2000 - player.height/2 then
+if player.targetY <= 2000 - cr then
     print("   ✓ Bottom boundary restriction working")
 else
     print("   ✗ Bottom boundary restriction FAILED")
@@ -74,7 +76,7 @@ end
 print("\n   Test 3: Move beyond left boundary (-100, 1000)")
 Player.move_to(player, -100, 1000)
 print("   Target set to: (" .. player.targetX .. ", " .. player.targetY .. ")")
-if player.targetX >= player.width/2 then
+if player.targetX >= cr then
     print("   ✓ Left boundary restriction working")
 else
     print("   ✗ Left boundary restriction FAILED")
@@ -84,7 +86,7 @@ end
 print("\n   Test 4: Move beyond top boundary (1000, -100)")
 Player.move_to(player, 1000, -100)
 print("   Target set to: (" .. player.targetX .. ", " .. player.targetY .. ")")
-if player.targetY >= player.height/2 then
+if player.targetY >= cr then
     print("   ✓ Top boundary restriction working")
 else
     print("   ✗ Top boundary restriction FAILED")
@@ -111,7 +113,7 @@ for i = 1, 50 do
 end
 
 print("   Final position: (" .. player.x .. ", " .. player.y .. ")")
-if player.x <= 2000 - player.width/2 then
+if player.x <= 2000 - player.collisionRadius then
     print("   ✓ Movement boundary restriction working")
 else
     print("   ✗ Movement boundary restriction FAILED")

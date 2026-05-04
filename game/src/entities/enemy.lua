@@ -23,7 +23,7 @@ function Enemy.create(enemyType, assetManager)
     state.crystalBonus = template.crystalBonus or 0
     state.multiTarget = template.multiTarget or false
     state.boss = template.boss or false
-    state.color = template.color
+    state.color = { template.color[1], template.color[2], template.color[3] } and {template.color[1], template.color[2], template.color[3]}
 
     state.isDefending = false
 

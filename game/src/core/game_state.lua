@@ -31,7 +31,7 @@ local GAME_MODE = {
     BATTLE = "battle"
 }
 
-local USE_NETWORK = false
+local USE_NETWORK = true
 local SERVER_HOST = "127.0.0.1"
 local SERVER_PORT = 9000
 
@@ -88,8 +88,8 @@ end
 function GameState.initialize_world(state, character)
     print("Initializing game world for: " .. character.characterName)
 
-    local mapId = character.mapId or "town_01"
-    local mapData = MapManager.loadMap(mapId)
+    local mapId = character.mapId or "newbie_village"
+    local mapData = MapManager.load_map(mapId)
 
     if mapData then
         state.map = mapData
@@ -178,7 +178,7 @@ function GameState.initialize_world(state, character)
 
     if not CollisionSystem.is_walkable(state.collisionSystem, state.player.x, state.player.y) then
         print("Warning: Player spawned in non-walkable area, finding valid position...")
-        local validX, validY = CollisionSystem.getValidPosition(
+        local validX, validY = CollisionSystem.get_valid_position(
             state.collisionSystem, state.player.x, state.player.y, state.player.collisionRadius
         )
         state.player.x = validX
@@ -241,7 +241,7 @@ function GameState.initialize_world(state, character)
     state.partySystem = PartySystem.create()
     state.partySystem:setPartyName("My Party")
 
-    local playerMember = PartySystem.createMemberData(
+    local playerMember = PartySystem.create_member_data(
         character.id or "player1",
         character.characterName,
         character.hp,
@@ -265,7 +265,7 @@ function GameState.update(state, dt)
     state.time = state.time + dt
 
     if state.mode == GAME_MODE.LOGIN then
-        state.loginUI:update(dt)
+        LoginUI.update(state.loginUI, dt)
     elseif state.mode == GAME_MODE.CHARACTER_SELECT then
     elseif state.mode == GAME_MODE.EXPLORATION then
         DialogUI.update(state.dialogUI, dt)
@@ -396,7 +396,7 @@ function GameState.confirm_battle_result(state)
         if state.pendingRewards then
             if state.pendingRewards.crystals and state.spiritCrystalSystem then
                 for _, crystal in ipairs(state.pendingRewards.crystals) do
-                    SpiritCrystalSystem.add_crystal(state.spiritCrystalSystem, crystal.type, crystal.tier, 1)
+                    SpiritCrystalSystem.add_crystal(state.spiritCrystalSystem, crystal.tier, 1)
                 end
             end
         end
@@ -496,25 +496,31 @@ end
 
 function GameState.textinput(state, text)
     if state.mode == GAME_MODE.LOGIN then
-        state.loginUI:textinput(text)
+        LoginUI.textinput(state.loginUI, text)
     elseif state.mode == GAME_MODE.CHARACTER_SELECT then
-        state.characterSelectUI:textinput(text)
+        CharacterSelectUI.textinput(state.characterSelectUI, text)
     end
 end
 
 function GameState.keypressed(state, key)
     if state.mode == GAME_MODE.LOGIN then
-        state.loginUI:keypressed(key)
+        LoginUI.keypressed(state.loginUI, key)
     elseif state.mode == GAME_MODE.CHARACTER_SELECT then
-        state.characterSelectUI:keypressed(key)
+        local character = CharacterSelectUI.keypressed(state.characterSelectUI, key)
+        if character then
+            CharacterSelectUI.trigger_character_selected(state.characterSelectUI, character)
+        end
     end
 end
 
 function GameState.mousepressed(state, x, y, button)
     if state.mode == GAME_MODE.LOGIN then
-        state.loginUI:mousepressed(x, y, button)
+        LoginUI.mousepressed(state.loginUI, x, y, button)
     elseif state.mode == GAME_MODE.CHARACTER_SELECT then
-        state.characterSelectUI:mousepressed(x, y, button)
+        local character = CharacterSelectUI.mousepressed(state.characterSelectUI, x, y, button)
+        if character then
+            CharacterSelectUI.trigger_character_selected(state.characterSelectUI, character)
+        end
     end
 end
 

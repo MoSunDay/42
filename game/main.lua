@@ -83,13 +83,13 @@ function love.update(dt)
         GameState.update(game.state, dt)
     end
     if game.renderSystem then
-        game.renderSystem:update(dt)
+        RenderSystem.update(game.renderSystem, dt)
     end
 end
 
 function love.draw()
     if game.renderSystem then
-        game.renderSystem:render()
+        RenderSystem.render(game.renderSystem)
     end
 end
 
@@ -100,18 +100,16 @@ function love.keypressed(key)
     elseif game.state and GameState.get_mode(game.state) == "character_select" then
         GameState.keypressed(game.state, key)
     elseif game.inputSystem then
-        game.inputSystem:keypressed(key)
+        InputSystem.keypressed(game.inputSystem, key)
     end
 end
 
 function love.textinput(text)
-    -- Handle login text input
     if game.state and GameState.get_mode(game.state) == "login" then
         GameState.textinput(game.state, text)
     elseif game.state and GameState.get_mode(game.state) == "character_select" then
         GameState.textinput(game.state, text)
     elseif game.state and GameState.get_mode(game.state) == "exploration" then
-        -- Handle chat input
         local chatSystem = GameState.get_chat_system(game.state)
         if chatSystem and chatSystem:isInputting() then
             chatSystem:addInputChar(text)
@@ -120,26 +118,23 @@ function love.textinput(text)
 end
 
 function love.mousepressed(x, y, button)
-    -- Handle mouse input based on game mode
     if game.state and GameState.get_mode(game.state) == "login" then
         GameState.mousepressed(game.state, x, y, button)
     elseif game.state and GameState.get_mode(game.state) == "character_select" then
         GameState.mousepressed(game.state, x, y, button)
     elseif game.inputSystem then
-        game.inputSystem:mousepressed(x, y, button)
+        InputSystem.mousepressed(game.inputSystem, x, y, button)
     end
 end
 
 function love.wheelmoved(x, y)
-    -- Handle mouse wheel scroll
     if game.inputSystem then
-        game.inputSystem:wheelmoved(x, y)
+        InputSystem.wheelmoved(game.inputSystem, x, y)
     end
 end
 
 function love.mousemoved(x, y)
-    -- Handle mouse move (for hover effects)
     if game.inputSystem then
-        game.inputSystem:mousemoved(x, y)
+        InputSystem.mousemoved(game.inputSystem, x, y)
     end
 end

@@ -131,7 +131,7 @@ function HUD.show_minimap_hint(state)
 end
 
 function HUD.draw_buttons(state)
-    local mouseX, mouseY = love.mouse.get_position()
+    local mouseX, mouseY = love.mouse.getPosition()
     local totalWidth = 0
     local gap = 10
     for _, btn in ipairs(state.buttons) do

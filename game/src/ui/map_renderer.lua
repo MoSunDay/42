@@ -317,7 +317,7 @@ function MapRenderer.drawRoundedRectLine(x, y, width, height, radius)
 end
 
 function MapRenderer.drawMapLabel(x, y, text, font)
-    font = font or love.graphics.get_font()
+    font = font or love.graphics.getFont()
     
     local textWidth = font:getWidth(text)
     local textHeight = font:getHeight()

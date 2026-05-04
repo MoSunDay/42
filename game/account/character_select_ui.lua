@@ -110,7 +110,7 @@ local function draw_background(w, h)
 end
 
 local function draw_step_indicator(currentStep, w, y)
-    local font = love.graphics.get_font()
+    local font = love.graphics.getFont()
     local diamondSize = 6
     local gap = 50
     local startX = w / 2 - gap
@@ -157,7 +157,6 @@ function CharacterSelectUI.draw_select_screen(state)
     local w, h = love.graphics.getDimensions()
     draw_background(w, h)
 
-    love.graphics.setFont(love.graphics.get_font())
     love.graphics.setColor(Theme.gold.bright)
     love.graphics.printf("Select Character", 0, 50, w, "center")
     Theme.draw_diamond_separator(w / 2, 75, 200)
@@ -194,10 +193,10 @@ function CharacterSelectUI.draw_select_screen(state)
     local buttonY = h - 150
 
     if #characters > 0 then
-        Components.drawOrnateButton(w/2 - 220, buttonY, state.buttonWidth, state.buttonHeight, "Select", "normal", state.assetManager, love.graphics.get_font(), { gemColor = "blue" })
+        Components.drawOrnateButton(w/2 - 220, buttonY, state.buttonWidth, state.buttonHeight, "Select", "normal", state.assetManager, love.graphics.getFont(), { gemColor = "blue" })
     end
 
-    Components.drawOrnateButton(w/2 + 20, buttonY, state.buttonWidth, state.buttonHeight, "Create New", "normal", state.assetManager, love.graphics.get_font(), { gemColor = "green" })
+    Components.drawOrnateButton(w/2 + 20, buttonY, state.buttonWidth, state.buttonHeight, "Create New", "normal", state.assetManager, love.graphics.getFont(), { gemColor = "green" })
 
     love.graphics.setColor(Theme.colors.textDim)
     love.graphics.printf("Use UP/DOWN to select, ENTER to confirm", 0, h - 50, w, "center")
@@ -247,8 +246,8 @@ function CharacterSelectUI.draw_name_step(state, w, h)
     love.graphics.printf("Click the input box and type your name (3-20 characters)", 0, 280, w, "center")
 
     local buttonY = h - 120
-    Components.drawOrnateButton(w/2 - 100, buttonY, state.buttonWidth, state.buttonHeight, "Next", "normal", state.assetManager, love.graphics.get_font(), { gemColor = "green" })
-    Components.drawOrnateButton(w/2 + 110, buttonY, state.buttonWidth, state.buttonHeight, "Cancel", "normal", state.assetManager, love.graphics.get_font(), { gemColor = "red" })
+    Components.drawOrnateButton(w/2 - 100, buttonY, state.buttonWidth, state.buttonHeight, "Next", "normal", state.assetManager, love.graphics.getFont(), { gemColor = "green" })
+    Components.drawOrnateButton(w/2 + 110, buttonY, state.buttonWidth, state.buttonHeight, "Cancel", "normal", state.assetManager, love.graphics.getFont(), { gemColor = "red" })
 end
 
 function CharacterSelectUI.draw_class_step(state, w, h)
@@ -318,8 +317,8 @@ function CharacterSelectUI.draw_class_step(state, w, h)
     end
 
     local buttonY = h - 80
-    Components.drawOrnateButton(w/2 - 320, buttonY, state.buttonWidth, state.buttonHeight, "Back", "normal", state.assetManager, love.graphics.get_font(), { gemColor = "red" })
-    Components.drawOrnateButton(w/2 - 100, buttonY, state.buttonWidth, state.buttonHeight, "Next", "normal", state.assetManager, love.graphics.get_font(), { gemColor = "green" })
+    Components.drawOrnateButton(w/2 - 320, buttonY, state.buttonWidth, state.buttonHeight, "Back", "normal", state.assetManager, love.graphics.getFont(), { gemColor = "red" })
+    Components.drawOrnateButton(w/2 - 100, buttonY, state.buttonWidth, state.buttonHeight, "Next", "normal", state.assetManager, love.graphics.getFont(), { gemColor = "green" })
 end
 
 function CharacterSelectUI.format_passive_bonus(state, bonus)
@@ -381,8 +380,8 @@ function CharacterSelectUI.draw_appearance_step(state, w, h)
     end
 
     local buttonY = h - 80
-    Components.drawOrnateButton(w/2 - 320, buttonY, state.buttonWidth, state.buttonHeight, "Back", "normal", state.assetManager, love.graphics.get_font(), { gemColor = "red" })
-    Components.drawOrnateButton(w/2 - 100, buttonY, state.buttonWidth, state.buttonHeight, "Create", "normal", state.assetManager, love.graphics.get_font(), { gemColor = "green" })
+    Components.drawOrnateButton(w/2 - 320, buttonY, state.buttonWidth, state.buttonHeight, "Back", "normal", state.assetManager, love.graphics.getFont(), { gemColor = "red" })
+    Components.drawOrnateButton(w/2 - 100, buttonY, state.buttonWidth, state.buttonHeight, "Create", "normal", state.assetManager, love.graphics.getFont(), { gemColor = "green" })
 end
 
 function CharacterSelectUI.draw(state)

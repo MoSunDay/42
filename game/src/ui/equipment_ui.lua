@@ -130,7 +130,7 @@ function EquipmentUI.navigate_up(state)
 end
 
 function EquipmentUI.navigate_down(state)
-    state.selectedSlot = math.min(3, state.selectedSlot + 1)
+    state.selectedSlot = math.min(5, state.selectedSlot + 1)
 end
 
 function EquipmentUI.is_visible(state)

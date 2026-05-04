@@ -102,7 +102,7 @@ function ChatSystem.draw_speech_bubble(bubble)
     local text = bubble.text
     local maxWidth = 200
 
-    local font = love.graphics.get_font()
+    local font = love.graphics.getFont()
     local _, wrappedText = font:getWrap(text, maxWidth)
     local textHeight = #wrappedText * font:getHeight()
     local textWidth = 0

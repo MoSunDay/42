@@ -370,7 +370,7 @@ function TiledLoader.parse_json(data)
 end
 
 function TiledLoader.decode_base64_layer(data, compression, width, height)
-    local decoded = TiledLoader.decodeBase64(data)
+    local decoded = decode_base64(data)
     local tiles = {}
 
     for i = 1, #decoded, 4 do
