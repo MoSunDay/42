@@ -21,6 +21,8 @@ local Map = require("entities.map")
 local EncounterZone = require("entities.encounter_zone")
 local Player = require("entities.player")
 local MapData = require("map.map_data")
+local LoginUI = require("account.login_ui")
+local CharacterSelectUI = require("account.character_select_ui")
 
 local RenderSystem = {}
 
@@ -49,7 +51,7 @@ function RenderSystem.update(state, dt)
 end
 
 function RenderSystem.render(state)
-    local mode = state.gameState:getMode()
+    local mode = state.gameState:get_mode()
 
     if mode == "login" then
         RenderSystem.render_login(state)
@@ -63,17 +65,17 @@ function RenderSystem.render(state)
 end
 
 function RenderSystem.render_login(state)
-    local loginUI = state.gameState:getLoginUI()
+    local loginUI = state.gameState:get_login_ui()
     if loginUI then
-        loginUI:draw()
+        LoginUI.draw(loginUI)
     end
 end
 
 function RenderSystem.render_character_select(state)
-    local characterSelectUI = state.gameState:getCharacterSelectUI()
+    local characterSelectUI = state.gameState:get_character_select_ui()
 
     if characterSelectUI then
-        characterSelectUI:draw()
+        CharacterSelectUI.draw(characterSelectUI)
     end
 end
 
@@ -91,7 +93,7 @@ function RenderSystem.render_exploration(state)
 end
 
 function RenderSystem.render_battle(state)
-    local battleSystem = state.gameState:getBattleSystem()
+    local battleSystem = state.gameState:get_battle_system()
     local player = state.gameState.player
     local map = state.gameState.map
 
@@ -125,7 +127,7 @@ function RenderSystem.render_entities(state)
         end
     end
 
-    local npcManager = state.gameState:getNpcManager()
+    local npcManager = state.gameState:get_npc_manager()
     if npcManager then
         local cam = state.gameState.camera
         local sw, sh = love.graphics.getDimensions()
@@ -142,7 +144,7 @@ function RenderSystem.render_entities(state)
         Player.draw(state.gameState.player)
     end
 
-    local chatSystem = state.gameState:getChatSystem()
+    local chatSystem = state.gameState:get_chat_system()
     if chatSystem then
         chatSystem:draw_speech_bubbles()
     end
@@ -163,7 +165,7 @@ function RenderSystem.render_overlay_layer(state)
 end
 
 function RenderSystem.render_ui(state)
-    local playerX, playerY = state.gameState:getPlayerPosition()
+    local playerX, playerY = state.gameState:get_player_position()
     UI.draw(state.hud, playerX, playerY, state.gameState.map)
 
     local AccountManager = require("account.account_manager")
@@ -178,7 +180,7 @@ function RenderSystem.render_ui(state)
         PartyUI.draw(state.partyUI, partySystem)
     end
 
-    local chatSystem = state.gameState:getChatSystem()
+    local chatSystem = state.gameState:get_chat_system()
     if chatSystem then
         ChatUI.draw(state.chatUI, chatSystem)
     end
@@ -191,27 +193,27 @@ function RenderSystem.render_ui(state)
         UnifiedMenu.draw(state.unifiedMenu, state.gameState)
     end
 
-    local skillPanel = state.gameState:getSkillPanel()
+    local skillPanel = state.gameState:get_skill_panel()
     if skillPanel and skillPanel.isOpen then
         SkillPanel.draw(skillPanel)
     end
 
-    local dialogUI = state.gameState:getDialogUI()
+    local dialogUI = state.gameState:get_dialog_ui()
     if dialogUI then
         DialogUI.draw(dialogUI)
     end
 
-    local shopUI = state.gameState:getShopUI()
+    local shopUI = state.gameState:get_shop_ui()
     if shopUI then
         ShopUI.draw(shopUI)
     end
 
-    local rewardUI = state.gameState:getRewardUI()
+    local rewardUI = state.gameState:get_reward_ui()
     if rewardUI then
         RewardUI.draw(rewardUI)
     end
 
-    local deathScreen = state.gameState:getDeathScreen()
+    local deathScreen = state.gameState:get_death_screen()
     if deathScreen then
         DeathScreen.draw(deathScreen)
     end

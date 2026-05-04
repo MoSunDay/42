@@ -66,14 +66,39 @@ function InventoryUI.draw_slot(state, slotIndex, item, x, y, isHovered, isSelect
         if #name > 8 then
             name = string.sub(name, 1, 7) .. ".."
         end
-        local font = love.graphics.get_font()
+        local font = love.graphics.getFont()
         local textWidth = font:getWidth(name)
         local textX = x + (state.slotSize - textWidth) / 2
         love.graphics.print(name, textX, y + state.slotSize - 18, 0, 0.8, 0.8)
         
-        local icon = item.type == ItemDatabase.TYPE.CONSUMABLE and "P" or SlotUtils.getSlotIcon(item.slot)
-        love.graphics.setColor(state.colors.text)
-        love.graphics.printf(icon, x, y + 8, state.slotSize, "center")
+        local iconName = SlotUtils.getItemIconAsset(item)
+        local iconImg = state.assetManager and iconName and state.assetManager:get_ui_icon(iconName)
+        if iconImg then
+            local iconSize = state.slotSize * 0.5
+            Components.drawSprite(iconImg, x + (state.slotSize - iconSize) / 2, y + 4, iconSize, iconSize)
+        else
+        local iconName = SlotUtils.getItemIconAsset(item)
+        local iconImg = iconName and state.assetManager and state.assetManager:get_ui_icon(iconName)
+        if iconImg then
+            local iconSize = state.slotSize * 0.5
+            Components.drawSprite(iconImg, x + (state.slotSize - iconSize) / 2, y + 5, iconSize, iconSize)
+        else
+        local iconAssetName = SlotUtils.get_itemIconName(item)
+        local iconImg = iconAssetName and state.assetManager:get_ui_icon(iconAssetName)
+        if iconImg then
+            local iconSize = state.slotSize * 0.45
+            local iconX = x + (state.slotSize - iconSize) / 2
+            local iconY = y + 5
+            local scale = iconSize / iconImg:getWidth()
+            love.graphics.setColor(1, 1, 1, 0.85)
+            love.graphics.draw(iconImg, iconX, iconY, 0, scale, scale)
+        else
+            local icon = item.type == ItemDatabase.TYPE.CONSUMABLE and "P" or SlotUtils.getSlotIcon(item.slot)
+            love.graphics.setColor(state.colors.text)
+            love.graphics.printf(icon, x, y + 8, state.slotSize, "center")
+        end
+        end
+        end
     else
         love.graphics.setColor(state.colors.textDim[1], state.colors.textDim[2], state.colors.textDim[3], 0.3)
         love.graphics.printf(tostring(slotIndex), x, y + (state.slotSize - 15) / 2, state.slotSize, "center")

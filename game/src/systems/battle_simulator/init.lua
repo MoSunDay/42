@@ -302,11 +302,22 @@ function BattleSimulator.run_multiple(state, iterations)
         iterations = iterations,
     }
     
+    local savedA = {}
+    local savedB = {}
+    for _, unit in ipairs(state.teamA) do table.insert(savedA, unit) end
+    for _, unit in ipairs(state.teamB) do table.insert(savedB, unit) end
+
     for i = 1, iterations do
         BattleSimulator.reset(state)
-        for _, unit in ipairs(state.teamA) do SimCombatant.reset(unit) end
-        for _, unit in ipairs(state.teamB) do SimCombatant.reset(unit) end
-        
+        for _, unit in ipairs(savedA) do
+            SimCombatant.reset(unit)
+            table.insert(state.teamA, unit)
+        end
+        for _, unit in ipairs(savedB) do
+            SimCombatant.reset(unit)
+            table.insert(state.teamB, unit)
+        end
+
         local result = BattleSimulator.run(state)
         results.totalTurns = results.totalTurns + result.turns
         

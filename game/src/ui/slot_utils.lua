@@ -25,8 +25,27 @@ local SLOT_FALLBACK = {
     [ItemDatabase.SLOTS.NECKLACE] = "N",
 }
 
+local CONSUMABLE_ICON_ASSETS = {
+    heal = "hp_potion",
+    full_heal = "hp_potion",
+    cure_poison = "hp_potion",
+    mp_restore = "mp_potion",
+    temp_atk = "attack",
+    random = "item",
+}
+
 local function getSlotColor(slotType)
     return SLOT_COLORS[slotType] or Theme.colors.text
+end
+
+local function getSlotIcon(slotType)
+    if not slotType then return "?" end
+    return SLOT_FALLBACK[slotType] or "?"
+end
+
+local function getSlotIconAsset(slotType)
+    if not slotType then return nil end
+    return SLOT_ICONS[slotType]
 end
 
 local function getSlotIconName(slotType)
@@ -34,9 +53,20 @@ local function getSlotIconName(slotType)
     return SLOT_ICONS[slotType]
 end
 
-local function getSlotIcon(slotType)
-    if not slotType then return "?" end
-    return SLOT_FALLBACK[slotType] or "?"
+local function getItemIconAsset(item)
+    if not item then return nil end
+    if item.type == ItemDatabase.TYPE.CONSUMABLE then
+        return CONSUMABLE_ICON_ASSETS[item.effect] or "item"
+    end
+    return SLOT_ICONS[item.slot] or "item"
+end
+
+local function get_itemColor(item)
+    if not item then return Theme.colors.inventory.slot end
+    if item.type == ItemDatabase.TYPE.CONSUMABLE then
+        return Theme.colors.inventory.consumable
+    end
+    return SLOT_COLORS[item.slot] or Theme.colors.inventory.equipment
 end
 
 local function get_itemIconName(item)
@@ -50,18 +80,12 @@ local function get_itemIconName(item)
     return SLOT_ICONS[item.slot]
 end
 
-local function get_itemColor(item)
-    if not item then return Theme.colors.inventory.slot end
-    if item.type == ItemDatabase.TYPE.CONSUMABLE then
-        return Theme.colors.inventory.consumable
-    end
-    return SLOT_COLORS[item.slot] or Theme.colors.inventory.equipment
-end
-
 return {
     getSlotColor = getSlotColor,
     getSlotIcon = getSlotIcon,
+    getSlotIconAsset = getSlotIconAsset,
     getSlotIconName = getSlotIconName,
+    getItemIconAsset = getItemIconAsset,
     get_itemColor = get_itemColor,
     get_itemIconName = get_itemIconName,
 }

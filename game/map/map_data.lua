@@ -1,6 +1,7 @@
 -- map_data.lua - Map data structure with layered rendering
 -- 地图数据结构，支持多层渲染和视口裁剪
 
+local Camera = require("core.camera")
 local MapThemes = require("map.map_themes")
 local MapObjectRenderer = require("map.map_object_renderer")
 
@@ -78,7 +79,7 @@ function MapData.get_visible_tile_range(state, camera)
         return 0, 0, tilesX - 1, tilesY - 1
     end
 
-    local camX, camY, camX2, camY2 = camera:getVisibleBounds()
+    local camX, camY, camX2, camY2 = Camera.get_visible_bounds(camera)
 
     local startX = math.max(0, math.floor(camX / state.tileSize) - 1)
     local startY = math.max(0, math.floor(camY / state.tileSize) - 1)
@@ -231,7 +232,7 @@ function MapData.draw_objects_layer(state, camera)
     for _, building in ipairs(state.buildings) do
         local visible = true
         if camera and camera.isVisible then
-            visible = camera:isVisible(building.x, building.y, building.width, building.height)
+            visible = Camera.is_visible(camera, building.x, building.y, building.width, building.height)
         end
         if visible then
             MapData.draw_building(state, building)
@@ -316,7 +317,7 @@ function MapData.draw_overlay_layer(state, camera)
     for _, overlay in ipairs(state.overlays) do
         local isVisible = true
         if camera and camera.isVisible then
-            isVisible = camera:isVisible(overlay.x, overlay.y, overlay.width or state.tileSize, overlay.height or state.tileSize)
+            isVisible = Camera.is_visible(camera, overlay.x, overlay.y, overlay.width or state.tileSize, overlay.height or state.tileSize)
         end
 
         if isVisible then

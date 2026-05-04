@@ -107,11 +107,11 @@ function Player.init_sprite_animator(state)
             frameDuration = 0.12
         })
 
-        state.spriteAnimator:loadFromAssetManager(state.assetManager, state.appearanceId)
+        SpriteAnimator.load_from_asset_manager(state.spriteAnimator, state.assetManager, state.appearanceId)
 
-        if not state.spriteAnimator:hasAnimation("walking") then
+        if not SpriteAnimator.has_animation(state.spriteAnimator, "walking") then
             local basePath = "assets/images/characters/" .. state.appearanceId .. "/rotations"
-            state.spriteAnimator:loadDirectionalSprites(basePath)
+            SpriteAnimator.load_directional_sprites(state.spriteAnimator, basePath)
         end
 
         state.useSpriteAnimator = true
@@ -149,7 +149,7 @@ end
 
 function Player.move_to(state, x, y)
     if state.collisionSystem then
-        x, y = CollisionSystem.getClosestWalkable(state.collisionSystem, x, y, state.x, state.y, state.collisionRadius)
+        x, y = CollisionSystem.get_closest_walkable(state.collisionSystem, x, y, state.x, state.y, state.collisionRadius)
     end
 
     state.targetX = math.max(state.collisionRadius, math.min(x, state.mapWidth - state.collisionRadius))
@@ -190,9 +190,9 @@ end
 function Player.update(state, dt)
     if state.spriteAnimator then
         local spriteDir = DIRECTION_MAP[state.direction] or "south"
-        state.spriteAnimator:setDirection(spriteDir)
-        state.spriteAnimator:setAnimationState(state.isMoving)
-        state.spriteAnimator:update(dt)
+        SpriteAnimator.set_direction(state.spriteAnimator, spriteDir)
+        SpriteAnimator.set_animation_state(state.spriteAnimator, state.isMoving)
+        SpriteAnimator.update(state.spriteAnimator, dt)
     end
 
     if state.animationManager then
@@ -264,8 +264,8 @@ function Player.draw(state)
 
     if state.useSpriteAnimator and state.spriteAnimator then
         local spriteDir = DIRECTION_MAP[state.direction] or "south"
-        state.spriteAnimator:setDirection(spriteDir)
-        state.spriteAnimator:draw(state.x, state.y, 2, offsetX, offsetY)
+        SpriteAnimator.set_direction(state.spriteAnimator, spriteDir)
+        SpriteAnimator.draw(state.spriteAnimator, state.x, state.y, 2, offsetX, offsetY)
     elseif state.appearance then
         AppearanceSystem.draw_sprite(state.x, state.y, 32, state.appearance, offsetX, offsetY, scaleX, scaleY)
     elseif state.sprite then

@@ -1,6 +1,8 @@
 -- particle_system.lua - Environmental particle system
 -- 环境粒子系统，支持季节性粒子效果
 
+local Camera = require("core.camera")
+
 local ParticleSystem = {}
 
 local SEASON_CONFIGS = {
@@ -292,7 +294,7 @@ function ParticleSystem.draw(state, camera)
 
     local camX, camY, camX2, camY2 = 0, 0, math.huge, math.huge
     if camera and camera.getVisibleBounds then
-        camX, camY, camX2, camY2 = camera:getVisibleBounds()
+        camX, camY, camX2, camY2 = Camera.get_visible_bounds(camera)
     end
 
     for _, p in ipairs(state.particles) do

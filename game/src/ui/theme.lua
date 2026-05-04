@@ -39,8 +39,10 @@ Theme.colors = {
     
     tab = {
         active = {0.169, 0.298, 0.502},
-        inactive = {0.122, 0.122, 0.157}
+        inactive = {0.122, 0.122, 0.157},
+        hover = {0.133, 0.220, 0.380}
     },
+    tabHover = {0.133, 0.220, 0.380},
     
     input = {
         background = {0.078, 0.078, 0.118},
@@ -108,7 +110,11 @@ Theme.colors = {
         slotSelected = {0.271, 0.500, 0.714},
         border = {0.271, 0.400, 0.549},
         equipment = {0.200, 0.600, 0.400},
-        consumable = {0.800, 0.500, 0.300}
+        consumable = {0.800, 0.500, 0.300},
+        text = {0.910, 0.910, 0.910},
+        textDim = {0.600, 0.600, 0.600},
+        weapon = {0.900, 0.400, 0.400},
+        clothes = {0.400, 0.600, 0.900}
     },
     
     map = {
@@ -451,5 +457,37 @@ function Theme.draw_diamond_separator(cx, y, width)
     love.graphics.rectangle("fill", -3, -3, 6, 6)
     love.graphics.pop()
 end
+
+function Theme.drawGlow(x, y, w, h, color, intensity)
+    intensity = intensity or 0.2
+    love.graphics.setColor(color[1], color[2], color[3], intensity)
+    love.graphics.setLineWidth(4)
+    love.graphics.rectangle("line", x - 2, y - 2, w + 4, h + 4, 10, 10)
+    love.graphics.setLineWidth(1)
+end
+
+function Theme.drawShimmer(x, y, w, h, intensity)
+end
+
+function Theme.drawCornerOrnaments(x, y, w, h, size)
+    size = size or 10
+    love.graphics.setColor(Theme.colors.borderBright)
+    local s = size
+    love.graphics.line(x, y, x + s, y)
+    love.graphics.line(x, y, x, y + s)
+    love.graphics.line(x + w, y, x + w - s, y)
+    love.graphics.line(x + w, y, x + w, y + s)
+    love.graphics.line(x, y + h, x + s, y + h)
+    love.graphics.line(x, y + h, x, y + h - s)
+    love.graphics.line(x + w, y + h, x + w - s, y + h)
+    love.graphics.line(x + w, y + h, x + w, y + h - s)
+end
+
+Theme.drawGoldBorder = Theme.draw_gold_border
+Theme.drawGemIcon = Theme.draw_gem_icon
+Theme.drawGradient = Theme.draw_gradient
+Theme.drawDiamondSeparator = Theme.draw_diamond_separator
+Theme.getAnimTime = Theme.get_anim_time
+Theme.getHpColor = Theme.get_hp_color
 
 return Theme

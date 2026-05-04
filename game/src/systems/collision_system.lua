@@ -28,7 +28,7 @@ function CollisionSystem.is_walkable(state, x, y)
         local tileX = math.floor(x / state.map.tileSize)
         local tileY = math.floor(y / state.map.tileSize)
 
-        if state.map.collisionMap[tileY] and state.map.collisionMap[tileY][tileX] then
+        if state.map.collisionMap[tileY] and state.map.collisionMap[tileY][tileX] == 1 then
             return false
         end
     end

@@ -54,7 +54,7 @@ function DungeonSystem.start_dungeon(state)
     state.currentAreaIndex = state.currentDungeon.startArea or 1
     state.state = "active"
     
-    local area = state.currentDungeon:getArea(state.currentAreaIndex)
+    local area = state.currentDungeon.getArea(state.currentAreaIndex)
     if area then
         DungeonSystem.setup_area(state, area)
     end
@@ -162,7 +162,7 @@ function DungeonSystem.area_cleared(state)
         end
     end
     
-    local area = state.currentDungeon:getArea(state.currentAreaIndex)
+    local area = state.currentDungeon.getArea(state.currentAreaIndex)
     if area and area.waves then
         if state.currentWave < #area.waves then
             return false
@@ -181,7 +181,7 @@ function DungeonSystem.check_area_progress(state)
     state.areaClearedFlags[areaIndex] = true
     table.insert(state.clearedAreas, areaIndex)
     
-    local area = state.currentDungeon:getArea(areaIndex)
+    local area = state.currentDungeon.getArea(areaIndex)
     if area and area.rewards and area.rewards.firstClear then
         if not state.dungeonClearHistory[state.currentDungeon.id] then
             state.pendingRewards = area.rewards.firstClear
@@ -211,12 +211,12 @@ end
 
 function DungeonSystem.advance_to_next_area(state)
     local nextAreaIndex = state.currentAreaIndex + 1
-    if nextAreaIndex > state.currentDungeon:getAreaCount() then
+    if nextAreaIndex > state.currentDungeon.getAreaCount() then
         return false
     end
     
     state.currentAreaIndex = nextAreaIndex
-    local area = state.currentDungeon:getArea(nextAreaIndex)
+    local area = state.currentDungeon.getArea(nextAreaIndex)
     if area then
         DungeonSystem.setup_area(state, area)
     end
@@ -225,7 +225,7 @@ function DungeonSystem.advance_to_next_area(state)
 end
 
 function DungeonSystem.process_wave(state)
-    local area = state.currentDungeon:getArea(state.currentAreaIndex)
+    local area = state.currentDungeon.getArea(state.currentAreaIndex)
     if not area or not area.waves then return false end
     
     if state.currentWave < #area.waves then
@@ -261,7 +261,7 @@ function DungeonSystem.claim_rewards(state)
     
     for _, reward in ipairs(rewards) do
         if reward.tier and state.spiritCrystalSystem then
-            state.spiritCrystalSystem:add_crystal(reward.tier, reward.count)
+            SpiritCrystalSystem.add_crystal(state.spiritCrystalSystem, reward.tier, reward.count)
         end
     end
     
@@ -277,7 +277,7 @@ function DungeonSystem.skip_tutorial(state)
 end
 
 function DungeonSystem.get_spawn_position(state)
-    local area = state.currentDungeon:getArea(state.currentAreaIndex)
+    local area = state.currentDungeon.getArea(state.currentAreaIndex)
     if area and area.spawnPoint then
         return area.spawnPoint.x, area.spawnPoint.y
     end
@@ -285,7 +285,7 @@ function DungeonSystem.get_spawn_position(state)
 end
 
 function DungeonSystem.get_exit_position(state)
-    local area = state.currentDungeon:getArea(state.currentAreaIndex)
+    local area = state.currentDungeon.getArea(state.currentAreaIndex)
     if area and area.exitPoint then
         return area.exitPoint.x, area.exitPoint.y
     end
@@ -309,14 +309,14 @@ function DungeonSystem.is_at_exit(state, playerX, playerY)
 end
 
 function DungeonSystem.get_current_area_info(state)
-    return state.currentDungeon:getArea(state.currentAreaIndex)
+    return state.currentDungeon.getArea(state.currentAreaIndex)
 end
 
 function DungeonSystem.get_progress(state)
     return {
         dungeonId = state.currentDungeon and state.currentDungeon.id,
         currentArea = state.currentAreaIndex,
-        totalAreas = state.currentDungeon and state.currentDungeon:getAreaCount() or 0,
+        totalAreas = state.currentDungeon and state.currentDungeon.getAreaCount() or 0,
         clearedAreas = #state.clearedAreas,
         state = state.state,
         bossDefeated = state.bossDefeated

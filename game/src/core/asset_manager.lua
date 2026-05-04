@@ -51,6 +51,10 @@ function AssetManager.create()
         effects = {},
         input = {},
         minimap = {},
+        login = {},
+        charSelect = {},
+        chat = {},
+        menu = {},
         portraits = { large = {}, small = {} }
     }
 
@@ -240,7 +244,11 @@ function AssetManager.load_ui_assets(state)
         {name = "classes", path = "classes/"},
         {name = "effects", path = "effects/"},
         {name = "input", path = "input/"},
-        {name = "minimap", path = "minimap/"}
+        {name = "minimap", path = "minimap/"},
+        {name = "login", path = "login/"},
+        {name = "charSelect", path = "character_select/"},
+        {name = "chat", path = "chat/"},
+        {name = "menu", path = "menu/"}
     }
 
     for _, category in ipairs(uiCategories) do

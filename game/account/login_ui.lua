@@ -188,7 +188,7 @@ function LoginUI.draw(state)
         state.submitButtonRect = {x = fieldX, y = contentY + fieldGap * 2 + 20, width = fieldW, height = fieldH}
     end
 
-    local mx, my = love.mouse.get_position()
+    local mx, my = love.mouse.getPosition()
     local submitHover = LoginUI.is_mouse_over(state, state.submitButtonRect, mx, my)
     local buttonText = state.mode == MODE.LOGIN and "Login" or "Create Account"
     local isDisabled = state.isSubmitting or state.isConnecting

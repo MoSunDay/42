@@ -36,7 +36,7 @@ function CharacterData.create(config)
     state.skillCrystals = config.skillCrystals or 0
     
     if not config.skills or #config.skills == 0 then
-        SkillSystem.initPlayerSkills(state, state.classId)
+        SkillSystem.init_player_skills(state, state.classId)
     end
     
     return state

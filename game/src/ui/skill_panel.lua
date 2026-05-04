@@ -86,8 +86,8 @@ function SkillPanel.draw(state)
     local unlockedTabX = panelX + panelW/2 - tabW - 10
     local lockedTabX = panelX + panelW/2 + 10
     
-    Components.drawTab(unlockedTabX, tabY, tabW, tabH, "已解锁", state.tab == "unlocked", state.assetManager, love.graphics.get_font())
-    Components.drawTab(lockedTabX, tabY, tabW, tabH, "未解锁", state.tab == "locked", state.assetManager, love.graphics.get_font())
+    Components.drawTab(unlockedTabX, tabY, tabW, tabH, "已解锁", state.tab == "unlocked", state.assetManager, love.graphics.getFont())
+    Components.drawTab(lockedTabX, tabY, tabW, tabH, "未解锁", state.tab == "locked", state.assetManager, love.graphics.getFont())
     
     local listY = tabY + tabH + 15
     local listH = 280
@@ -169,12 +169,12 @@ function SkillPanel.draw(state)
     local btnH = 35
     
     if state.tab == "unlocked" and #state.unlockedSkills > 0 then
-        Components.drawOrnateButton(panelX + 50, btnY, btnW, btnH, "升级技能", "normal", state.assetManager, love.graphics.get_font())
+        Components.drawOrnateButton(panelX + 50, btnY, btnW, btnH, "升级技能", "normal", state.assetManager, love.graphics.getFont())
     elseif state.tab == "locked" and #state.lockedSkills > 0 then
-        Components.drawOrnateButton(panelX + 50, btnY, btnW, btnH, "解锁技能", "normal", state.assetManager, love.graphics.get_font())
+        Components.drawOrnateButton(panelX + 50, btnY, btnW, btnH, "解锁技能", "normal", state.assetManager, love.graphics.getFont())
     end
     
-    Components.drawOrnateButton(panelX + panelW - 170, btnY, btnW, btnH, "关闭", "normal", state.assetManager, love.graphics.get_font())
+    Components.drawOrnateButton(panelX + panelW - 170, btnY, btnW, btnH, "关闭", "normal", state.assetManager, love.graphics.getFont())
     
     love.graphics.setColor(Theme.colors.textDim)
     love.graphics.printf("↑↓选择  Enter确认  Tab切换  ESC关闭", panelX, panelY + panelH - 20, panelW, "center")
