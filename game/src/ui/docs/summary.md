@@ -1,9 +1,25 @@
 # UI Module Summary
 
-> Last updated: 2026-05-03 - NPC dialog, shop, battle reward, death screen added
+> Last updated: 2026-05-05 - PixelLab style added for Login/Character Select/Create
 
 ## Purpose
 User interface components for HUD, menus, skills, and interactions.
+
+## Visual Styles
+
+### PixelLab Style (Login, Character Select, Character Create)
+- Clean pixel-art aesthetic inspired by [pixellab.ai](https://www.pixellab.ai)
+- Deep background gradient `#0f131c` → `#141b23`
+- Neon accent colors: cyan `#4db5e6`, green `#4ee666`, blue `#4590e6`
+- Simple 2px pixel borders, no rounded corners
+- Pill-style buttons with bottom highlights on hover
+- Dot-based step indicators with connecting lines
+- Defined in `Theme.pixelLab.colors` and `Theme.pixelLab.draw*` functions
+
+### Ornate Fantasy Style (In-game: Battle, Inventory, HUD, etc.)
+- Gold borders, corner ornaments, gem icons, diamond separators
+- Parchment panels, shimmer effects, glow effects
+- Defined in `Theme.gold`, `Theme.gem`, `Theme.parchment`, `Theme.draw*` functions
 
 ## Files
 

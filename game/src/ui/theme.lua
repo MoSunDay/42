@@ -490,4 +490,158 @@ Theme.drawDiamondSeparator = Theme.draw_diamond_separator
 Theme.getAnimTime = Theme.get_anim_time
 Theme.getHpColor = Theme.get_hp_color
 
+-- PixelLab-inspired style: clean pixel-art UI theme
+Theme.pixelLab = {
+    colors = {
+        bg = {0.059, 0.075, 0.110},
+        bgPanel = {0.078, 0.098, 0.141},
+        bgCard = {0.102, 0.129, 0.180},
+        bgCardHover = {0.141, 0.173, 0.235},
+        bgInput = {0.067, 0.086, 0.129},
+        text = {0.910, 0.910, 0.910},
+        textDim = {0.588, 0.588, 0.627},
+        textMuted = {0.431, 0.431, 0.471},
+        neonBlue = {0.302, 0.710, 0.902},
+        neonGreen = {0.306, 0.902, 0.502},
+        neonPink = {0.937, 0.373, 0.600},
+        neonYellow = {0.937, 0.827, 0.302},
+        neonPurple = {0.667, 0.302, 0.937},
+        neonCyan = {0.302, 0.902, 0.902},
+        border = {0.235, 0.314, 0.400},
+        borderDim = {0.157, 0.216, 0.282},
+        borderActive = {0.302, 0.710, 0.902},
+        button = {0.173, 0.235, 0.329},
+        buttonHover = {0.235, 0.314, 0.431},
+        buttonPrimary = {0.251, 0.580, 0.902},
+        buttonPrimaryHover = {0.349, 0.690, 0.980},
+        buttonDanger = {0.847, 0.286, 0.286},
+        buttonDangerHover = {0.937, 0.373, 0.373},
+        inputBorder = {0.235, 0.314, 0.400},
+        inputBorderFocus = {0.302, 0.710, 0.902},
+        stepDot = {0.302, 0.710, 0.902},
+        stepDotInactive = {0.157, 0.216, 0.282},
+    },
+}
+
+function Theme.pixelLab.drawPanel(x, y, w, h, options)
+    options = options or {}
+    local bg = options.bg or Theme.pixelLab.colors.bgPanel
+    local borderColor = options.borderColor or Theme.pixelLab.colors.border
+    local borderWidth = options.borderWidth or 2
+    local isHovered = options.hovered
+
+    if isHovered then
+        bg = Theme.pixelLab.colors.bgCardHover
+        borderColor = Theme.pixelLab.colors.borderActive
+    end
+
+    love.graphics.setColor(bg)
+    love.graphics.rectangle("fill", x, y, w, h)
+
+    love.graphics.setColor(borderColor)
+    love.graphics.setLineWidth(borderWidth)
+    love.graphics.rectangle("line", x, y, w, h)
+    love.graphics.setLineWidth(1)
+
+    if options.innerBorder then
+        love.graphics.setColor(borderColor[1], borderColor[2], borderColor[3], 0.15)
+        love.graphics.rectangle("line", x + 3, y + 3, w - 6, h - 6)
+    end
+end
+
+function Theme.pixelLab.drawButton(x, y, w, h, text, state, font, options)
+    options = options or {}
+    local colors = Theme.pixelLab.colors
+    local btnColor, borderColor
+
+    if state == "primary" or state == "submit" then
+        btnColor = options.hover and colors.buttonPrimaryHover or colors.buttonPrimary
+        borderColor = btnColor
+    elseif state == "danger" then
+        btnColor = options.hover and colors.buttonDangerHover or colors.buttonDanger
+        borderColor = btnColor
+    elseif state == "disabled" then
+        btnColor = colors.bgInput
+        borderColor = colors.borderDim
+    else
+        btnColor = options.hover and colors.buttonHover or colors.button
+        borderColor = colors.border
+    end
+
+    love.graphics.setColor(btnColor)
+    love.graphics.rectangle("fill", x, y, w, h)
+
+    love.graphics.setColor(borderColor)
+    love.graphics.setLineWidth(2)
+    love.graphics.rectangle("line", x, y, w, h)
+    love.graphics.setLineWidth(1)
+
+    if options.hover and not (state == "disabled") then
+        love.graphics.setColor(1, 1, 1, 0.06)
+        love.graphics.rectangle("fill", x, y + h / 2, w, h / 2)
+    end
+
+    if text and font then
+        local usedFont = font or love.graphics.getFont()
+        love.graphics.setFont(usedFont)
+        love.graphics.setColor(state == "disabled" and colors.textDim or colors.text)
+        local tw = usedFont:getWidth(text)
+        local th = usedFont:getHeight()
+        love.graphics.print(text, x + (w - tw) / 2, y + (h - th) / 2)
+    end
+end
+
+function Theme.pixelLab.drawBorder(x, y, w, h, color, width)
+    color = color or Theme.pixelLab.colors.border
+    width = width or 2
+    love.graphics.setColor(color)
+    love.graphics.setLineWidth(width)
+    love.graphics.rectangle("line", x, y, w, h)
+    love.graphics.setLineWidth(1)
+end
+
+function Theme.pixelLab.drawSeparator(x1, x2, y, color)
+    color = color or Theme.pixelLab.colors.border
+    love.graphics.setColor(color)
+    love.graphics.setLineWidth(1)
+    love.graphics.line(x1, y, x2, y)
+    love.graphics.setColor(color[1], color[2], color[3], 0.15)
+    love.graphics.line(x1, y + 1, x2, y + 1)
+end
+
+function Theme.pixelLab.drawDot(x, y, size, color)
+    size = size or 4
+    color = color or Theme.pixelLab.colors.stepDot
+    love.graphics.setColor(color[1] * 0.5, color[2] * 0.5, color[3] * 0.5, 0.3)
+    love.graphics.circle("fill", x + 1, y + 1, size)
+    love.graphics.setColor(color)
+    love.graphics.circle("fill", x, y, size)
+end
+
+function Theme.pixelLab.drawDotLine(x1, x2, y, isActive, color)
+    color = color or Theme.pixelLab.colors.stepDot
+    if isActive then
+        love.graphics.setColor(color)
+    else
+        love.graphics.setColor(Theme.pixelLab.colors.stepDotInactive)
+    end
+    love.graphics.setLineWidth(2)
+    love.graphics.line(x1, y, x2, y)
+    love.graphics.setLineWidth(1)
+end
+
+function Theme.pixelLab.drawInput(x, y, w, h, isActive)
+    local colors = Theme.pixelLab.colors
+    love.graphics.setColor(colors.bgInput)
+    love.graphics.rectangle("fill", x, y, w, h)
+    love.graphics.setColor(isActive and colors.inputBorderFocus or colors.inputBorder)
+    love.graphics.setLineWidth(2)
+    love.graphics.rectangle("line", x, y, w, h)
+    love.graphics.setLineWidth(1)
+    if isActive then
+        love.graphics.setColor(colors.inputBorderFocus[1], colors.inputBorderFocus[2], colors.inputBorderFocus[3], 0.08)
+        love.graphics.rectangle("fill", x, y, w, h)
+    end
+end
+
 return Theme
