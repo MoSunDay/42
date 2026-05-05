@@ -7,6 +7,8 @@ local Components = require("src.ui.components")
 local Particles = require("src.ui.particles")
 
 local CharacterSelectUI = {}
+local PL = Theme.pixelLab
+local C = PL.colors
 
 function CharacterSelectUI.create(assetManager)
     local state = {
@@ -29,14 +31,20 @@ function CharacterSelectUI.create(assetManager)
         currentClassList = {},
 
         appearances = {
-            {id = "blue_hero", name = "Blue Hero"},
-            {id = "red_warrior", name = "Red Warrior"},
-            {id = "green_ranger", name = "Green Ranger"},
-            {id = "yellow_mage", name = "Yellow Mage"},
-            {id = "purple_assassin", name = "Purple Assassin"},
-            {id = "cyan_priest", name = "Cyan Priest"},
-            {id = "orange_knight", name = "Orange Knight"},
-            {id = "pink_dancer", name = "Pink Dancer"}
+            {id = "blue_hero", name = "Blue Hero", classId = nil},
+            {id = "red_warrior", name = "Red Warrior", classId = nil},
+            {id = "green_ranger", name = "Green Ranger", classId = nil},
+            {id = "yellow_mage", name = "Yellow Mage", classId = nil},
+            {id = "purple_assassin", name = "Purple Assassin", classId = nil},
+            {id = "cyan_priest", name = "Cyan Priest", classId = nil},
+            {id = "orange_knight", name = "Orange Knight", classId = nil},
+            {id = "pink_dancer", name = "Pink Dancer", classId = nil},
+            {id = "dual_blade", name = "Dual Blade", classId = "dual_blade"},
+            {id = "great_sword", name = "Great Sword", classId = "great_sword"},
+            {id = "blade_master", name = "Blade Master", classId = "blade_master"},
+            {id = "sealer", name = "Sealer", classId = "sealer"},
+            {id = "healer", name = "Healer", classId = "healer"},
+            {id = "elementalist", name = "Elementalist", classId = "elementalist"}
         },
         selectedAppearanceIndex = 1,
 
@@ -104,43 +112,52 @@ function CharacterSelectUI.ensure_particles(state)
 end
 
 local function draw_background(w, h)
-    love.graphics.setColor(Theme.colors.background)
-    love.graphics.rectangle("fill", 0, 0, w, h)
-    Theme.draw_shimmer(0, 0, w, h, 0.2)
+    Theme.draw_gradient(0, 0, w, h, C.bg, C.bgPanel, 12)
 end
 
-local function draw_step_indicator(currentStep, w, y)
+local function draw_pixel_bar(x, y, w, h, percent, fillColor, bgColor)
+    love.graphics.setColor(bgColor or C.textMuted)
+    love.graphics.rectangle("fill", x, y, w, h)
+    percent = math.max(0, math.min(1, percent))
+    if percent > 0 then
+        love.graphics.setColor(fillColor or C.neonGreen)
+        love.graphics.rectangle("fill", x, y, w * percent, h)
+        love.graphics.setColor(fillColor[1], fillColor[2], fillColor[3], 0.3)
+        love.graphics.rectangle("fill", x, y, w * percent, h / 2)
+    end
+    love.graphics.setColor(C.border)
+    love.graphics.setLineWidth(1)
+    love.graphics.rectangle("line", x, y, w, h)
+end
+
+local function draw_step_indicator(state, currentStep, w, y)
+    local am = state and state.assetManager
     local font = love.graphics.getFont()
-    local diamondSize = 6
-    local gap = 50
+    local dotSize = 7
+    local gap = 60
     local startX = w / 2 - gap
+
+    local dotActive = am and am:get_ui_asset("charSelect", "pixellab_dot_active")
+    local dotInactive = am and am:get_ui_asset("charSelect", "pixellab_dot_inactive")
 
     for i = 1, 3 do
         local cx = startX + (i - 1) * gap
         local is_active = (i == currentStep)
+        local dotAsset = is_active and dotActive or dotInactive
 
-        if is_active then
-            love.graphics.setColor(Theme.gold.bright)
+        if dotAsset then
+            love.graphics.setColor(1, 1, 1)
+            local s = dotSize / dotAsset:getWidth()
+            love.graphics.draw(dotAsset, cx - dotSize, y - dotSize, 0, s, s)
         else
-            love.graphics.setColor(Theme.colors.textDim)
-        end
-        love.graphics.polygon("fill",
-            cx, y - diamondSize,
-            cx + diamondSize, y,
-            cx, y + diamondSize,
-            cx - diamondSize, y
-        )
-
-        if is_active then
-            Theme.draw_glow(cx - diamondSize, y - diamondSize, diamondSize * 2, diamondSize * 2, Theme.gold.bright, 0.3)
+            local color = is_active and C.neonCyan or C.stepDotInactive
+            PL.drawDot(cx, y, dotSize - 2, color)
         end
 
         if i < 3 then
-            local lineX1 = cx + diamondSize + 4
-            local lineX2 = cx + gap - diamondSize - 4
-            love.graphics.setColor(is_active and Theme.gold.normal or Theme.colors.textDim)
-            love.graphics.setLineWidth(1)
-            love.graphics.line(lineX1, y, lineX2, y)
+            local lineX1 = cx + dotSize + 3
+            local lineX2 = cx + gap - dotSize - 3
+            PL.drawDotLine(lineX1, lineX2, y, is_active, C.neonCyan)
         end
     end
 
@@ -148,8 +165,8 @@ local function draw_step_indicator(currentStep, w, y)
     love.graphics.setFont(font)
     for i = 1, 3 do
         local cx = startX + (i - 1) * gap
-        love.graphics.setColor(i == currentStep and Theme.gold.bright or Theme.colors.textDim)
-        love.graphics.printf(stepNames[i], cx - 30, y + diamondSize + 4, 60, "center")
+        love.graphics.setColor(i == currentStep and C.neonCyan or C.textDim)
+        love.graphics.printf(stepNames[i], cx - 35, y + dotSize + 6, 70, "center")
     end
 end
 
@@ -157,60 +174,87 @@ function CharacterSelectUI.draw_select_screen(state)
     local w, h = love.graphics.getDimensions()
     draw_background(w, h)
 
-    love.graphics.setColor(Theme.gold.bright)
-    love.graphics.printf("Select Character", 0, 50, w, "center")
-    Theme.draw_diamond_separator(w / 2, 75, 200)
+    love.graphics.setFont(love.graphics.newFont(28))
+    love.graphics.setColor(C.neonCyan)
+    love.graphics.printf("SELECT CHARACTER", 0, 40, w, "center")
 
+    local sepAsset = state.assetManager and state.assetManager:get_ui_asset("charSelect", "pixellab_separator")
+    if sepAsset then
+        love.graphics.setColor(1, 1, 1)
+        local sx = 280 / sepAsset:getWidth()
+        love.graphics.draw(sepAsset, w / 2 - 140, 62, 0, sx, 1)
+    else
+        PL.drawSeparator(w / 2 - 140, w / 2 + 140, 68)
+    end
+
+    local font = love.graphics.getFont()
     local characters = state.characters
-    local startY = 120
+    local startY = 100
+    local slotAsset = state.assetManager and state.assetManager:get_ui_asset("charSelect", "pixellab_slot")
+    local slotW = 560
+    local slotH = 66
+
     for i, char in ipairs(characters) do
-        local y = startY + (i - 1) * 80
+        local y = startY + (i - 1) * 78
         local isSelected = (i == state.selectedCharIndex)
 
-        if isSelected then
-            Components.drawOrnatePanel(w/2 - 250, y, 500, 70, state.assetManager, { corners = true, glow = true, shimmer = true })
-            love.graphics.setColor(Theme.colors.accentBlue[1], Theme.colors.accentBlue[2], Theme.colors.accentBlue[3], 0.3)
-            love.graphics.rectangle("fill", w/2 - 250, y, 500, 70, 5, 5)
-            Theme.draw_gold_border(w/2 - 250, y, 500, 70, 2)
-            Theme.draw_corner_ornaments(w/2 - 250, y, 500, 70, 8)
-        else
-            Components.drawOrnatePanel(w/2 - 250, y, 500, 70, state.assetManager, { corners = true, glow = false })
+        local usedAsset = false
+        if slotAsset then
+            usedAsset = Components.draw9Slice(slotAsset, w / 2 - slotW / 2, y, slotW, slotH, 8)
+        end
+        if not usedAsset then
+            PL.drawPanel(w / 2 - 280, y, slotW, slotH, {
+                hovered = isSelected,
+                innerBorder = isSelected,
+            })
         end
 
-        AvatarRenderer.draw_avatar(w/2 - 200, y + 35, 25, char)
+        if isSelected then
+            love.graphics.setColor(C.neonCyan[1], C.neonCyan[2], C.neonCyan[3], 0.06)
+            love.graphics.rectangle("fill", w / 2 - 280, y, 4, slotH)
+        end
 
-        love.graphics.setColor(Theme.colors.text)
-        love.graphics.print(char.characterName or char.name or "Unknown", w/2 - 150, y + 8)
-        love.graphics.setColor(Theme.colors.accentBlue)
-        love.graphics.print(CharacterData.get_class_name(char), w/2 - 150, y + 24)
+        AvatarRenderer.draw_avatar(w / 2 - 240, y + 33, 22, char)
+
+        love.graphics.setFont(font)
+        love.graphics.setColor(C.text)
+        love.graphics.print(char.characterName or char.name or "Unknown", w / 2 - 190, y + 8)
+        love.graphics.setColor(C.neonCyan)
+        love.graphics.print(CharacterData.get_class_name(char), w / 2 - 190, y + 24)
 
         local hpPercent = char.hp and char.maxHp and char.maxHp > 0 and (char.hp / char.maxHp) or 0
         local mpPercent = char.mp and char.maxMp and char.maxMp > 0 and (char.mp / char.maxMp) or 0
-        Components.drawOrnateHPBar(w/2 - 150, y + 42, 120, 10, hpPercent, nil, state.assetManager)
-        Components.drawOrnateMPBar(w/2 + 10, y + 42, 80, 10, mpPercent, state.assetManager)
+        draw_pixel_bar(w / 2 - 190, y + 44, 120, 8, hpPercent, C.neonGreen, C.neonPink)
+        draw_pixel_bar(w / 2 + 10, y + 44, 80, 8, mpPercent, C.neonBlue, C.textMuted)
     end
 
-    local buttonY = h - 150
-
+    local buttonY = h - 140
     if #characters > 0 then
-        Components.drawOrnateButton(w/2 - 220, buttonY, state.buttonWidth, state.buttonHeight, "Select", "normal", state.assetManager, love.graphics.getFont(), { gemColor = "blue" })
+        local mx, my = love.mouse.getPosition()
+        local selHover = mx >= w / 2 - 220 and mx <= w / 2 - 20 and my >= buttonY and my <= buttonY + 40
+        PL.drawButton(w / 2 - 220, buttonY, state.buttonWidth, 40,
+            "Select", "primary", font, { hover = selHover })
     end
 
-    Components.drawOrnateButton(w/2 + 20, buttonY, state.buttonWidth, state.buttonHeight, "Create New", "normal", state.assetManager, love.graphics.getFont(), { gemColor = "green" })
+    local mx, my = love.mouse.getPosition()
+    local createHover = mx >= w / 2 + 20 and mx <= w / 2 + 220 and my >= buttonY and my <= buttonY + 40
+    PL.drawButton(w / 2 + 20, buttonY, state.buttonWidth, 40,
+        "Create New", "primary", font, { hover = createHover })
 
-    love.graphics.setColor(Theme.colors.textDim)
-    love.graphics.printf("Use UP/DOWN to select, ENTER to confirm", 0, h - 50, w, "center")
+    love.graphics.setColor(C.textMuted)
+    love.graphics.printf("UP/DOWN: Select  |  ENTER: Confirm", 0, h - 40, w, "center")
 end
 
 function CharacterSelectUI.draw_create_screen(state)
     local w, h = love.graphics.getDimensions()
     draw_background(w, h)
 
-    love.graphics.setColor(Theme.gold.bright)
-    love.graphics.printf("Create New Character", 0, 30, w, "center")
-    Theme.draw_diamond_separator(w / 2, 55, 200)
+    love.graphics.setFont(love.graphics.newFont(26))
+    love.graphics.setColor(C.neonCyan)
+    love.graphics.printf("CREATE CHARACTER", 0, 25, w, "center")
+    PL.drawSeparator(w / 2 - 150, w / 2 + 150, 52)
 
-    draw_step_indicator(state.createStep, w, 70)
+    draw_step_indicator(state, state.createStep, w, 70)
 
     if state.createStep == 1 then
         CharacterSelectUI.draw_name_step(state, w, h)
@@ -222,103 +266,102 @@ function CharacterSelectUI.draw_create_screen(state)
 end
 
 function CharacterSelectUI.draw_name_step(state, w, h)
-    love.graphics.setColor(Theme.colors.textDim)
-    love.graphics.printf("Enter Character Name", 0, 100, w, "center")
+    local font = love.graphics.getFont()
+    love.graphics.setColor(C.textDim)
+    love.graphics.printf("Enter Character Name", 0, 90, w, "center")
 
-    love.graphics.setColor(Theme.colors.textDim)
-    love.graphics.print("Character Name:", w/2 - 200, 150)
+    PL.drawPanel(w / 2 - 230, 120, 460, 120, { innerBorder = true })
 
-    Components.drawInput(w/2 - 200, 175, 400, 40, state.nameInputActive, state.assetManager)
+    love.graphics.setColor(C.textDim)
+    love.graphics.print("Character Name:", w / 2 - 200, 140)
 
-    love.graphics.setColor(Theme.colors.text)
+    Theme.pixelLab.drawInput(w / 2 - 200, 165, 400, 40, state.nameInputActive)
+
+    love.graphics.setColor(C.text)
     local displayName = state.newCharName
     if state.nameInputActive and math.floor(love.timer.getTime() * 2) % 2 == 0 then
         displayName = displayName .. "|"
     end
-    love.graphics.print(displayName, w/2 - 190, 183)
+    love.graphics.print(displayName, w / 2 - 190, 173)
 
     if state.errorMessage ~= "" then
         love.graphics.setColor(Theme.colors.error)
-        love.graphics.printf(state.errorMessage, 0, 230, w, "center")
+        love.graphics.printf(state.errorMessage, 0, 215, w, "center")
     end
 
-    love.graphics.setColor(Theme.colors.textDim)
-    love.graphics.printf("Click the input box and type your name (3-20 characters)", 0, 280, w, "center")
+    love.graphics.setColor(C.textMuted)
+    love.graphics.printf("Click the input box and type your name (3-20 characters)", 0, 245, w, "center")
 
-    local buttonY = h - 120
-    Components.drawOrnateButton(w/2 - 100, buttonY, state.buttonWidth, state.buttonHeight, "Next", "normal", state.assetManager, love.graphics.getFont(), { gemColor = "green" })
-    Components.drawOrnateButton(w/2 + 110, buttonY, state.buttonWidth, state.buttonHeight, "Cancel", "normal", state.assetManager, love.graphics.getFont(), { gemColor = "red" })
+    local buttonY = h - 110
+    local mx, my = love.mouse.getPosition()
+    local nextHover = mx >= w / 2 - 100 and mx <= w / 2 + 100 and my >= buttonY and my <= buttonY + 38
+    local cancelHover = mx >= w / 2 + 110 and mx <= w / 2 + 310 and my >= buttonY and my <= buttonY + 38
+    PL.drawButton(w / 2 - 100, buttonY, state.buttonWidth, 38, "Next", "primary", font, { hover = nextHover })
+    PL.drawButton(w / 2 + 110, buttonY, state.buttonWidth, 38, "Cancel", "danger", font, { hover = cancelHover })
 end
 
 function CharacterSelectUI.draw_class_step(state, w, h)
-    love.graphics.setColor(Theme.colors.textDim)
-    love.graphics.printf("Choose Your Class", 0, 100, w, "center")
+    local font = love.graphics.getFont()
 
-    love.graphics.setColor(Theme.colors.textDim)
-    love.graphics.print("Select Category:", w/2 - 300, 130)
+    love.graphics.setColor(C.textDim)
+    love.graphics.printf("Choose Your Class", 0, 90, w, "center")
 
-    local catStartX = w/2 - 300
+    love.graphics.setColor(C.textDim)
+    love.graphics.print("Category:", w / 2 - 280, 120)
+
+    local catStartX = w / 2 - 280
     for i, cat in ipairs(state.categories) do
         local x = catStartX + (i - 1) * 160
         local isSelected = (i == state.selectedCategoryIndex)
 
-        if isSelected then
-            Components.drawOrnatePanel(x, 150, 150, 50, state.assetManager, { corners = true, glow = false })
-            love.graphics.setColor(Theme.colors.accentBlue[1], Theme.colors.accentBlue[2], Theme.colors.accentBlue[3], 0.4)
-            love.graphics.rectangle("fill", x, 150, 150, 50, 5, 5)
-            Theme.draw_gold_border(x, 150, 150, 50, 1)
-        else
-            Components.drawOrnatePanel(x, 150, 150, 50, state.assetManager, { corners = true, glow = false })
-            love.graphics.setColor(Theme.colors.panel[1], Theme.colors.panel[2], Theme.colors.panel[3], 0.5)
-            love.graphics.rectangle("fill", x, 150, 150, 50, 5, 5)
-        end
+        PL.drawPanel(x, 140, 150, 50, { hovered = isSelected })
 
-        love.graphics.setColor(Theme.colors.text)
-        love.graphics.printf(cat.name, x, 160, 150, "center")
-        love.graphics.setColor(Theme.colors.textDim)
-        love.graphics.printf(cat.description, x, 178, 150, "center")
+        love.graphics.setColor(C.text)
+        love.graphics.printf(cat.name, x, 148, 150, "center")
+        love.graphics.setColor(C.textDim)
+        love.graphics.printf(cat.description, x, 166, 150, "center")
     end
 
-    love.graphics.setColor(Theme.colors.textDim)
-    love.graphics.print("Select Class:", w/2 - 300, 220)
+    love.graphics.setColor(C.textDim)
+    love.graphics.print("Classes:", w / 2 - 280, 210)
 
-    local classStartY = 250
+    local classStartY = 235
     for i, class in ipairs(state.currentClassList) do
-        local y = classStartY + (i - 1) * 100
+        local y = classStartY + (i - 1) * 98
         local isSelected = (i == state.selectedClassIndex)
 
+        PL.drawPanel(w / 2 - 280, y, 560, 88, {
+            hovered = isSelected,
+            innerBorder = isSelected,
+        })
+
         if isSelected then
-            Components.drawOrnatePanel(w/2 - 300, y, 600, 90, state.assetManager, { corners = true, glow = true })
-            love.graphics.setColor(Theme.colors.accentBlue[1], Theme.colors.accentBlue[2], Theme.colors.accentBlue[3], 0.35)
-            love.graphics.rectangle("fill", w/2 - 300, y, 600, 90, 8, 8)
-            Theme.draw_gold_border(w/2 - 300, y, 600, 90, 2)
-            Theme.draw_corner_ornaments(w/2 - 300, y, 600, 90, 6)
-        else
-            Components.drawOrnatePanel(w/2 - 300, y, 600, 90, state.assetManager, { corners = true, glow = false })
-            love.graphics.setColor(Theme.colors.panel[1], Theme.colors.panel[2], Theme.colors.panel[3], 0.4)
-            love.graphics.rectangle("fill", w/2 - 300, y, 600, 90, 8, 8)
+            love.graphics.setColor(C.neonCyan[1], C.neonCyan[2], C.neonCyan[3], 0.06)
+            love.graphics.rectangle("fill", w / 2 - 280, y, 4, 88)
         end
 
-        love.graphics.setColor(Theme.colors.text)
-        love.graphics.print(class.name, w/2 - 280, y + 10)
+        love.graphics.setColor(C.text)
+        love.graphics.print(class.name, w / 2 - 260, y + 8)
+        love.graphics.setColor(C.textDim)
+        love.graphics.print(class.description, w / 2 - 260, y + 28)
 
-        love.graphics.setColor(Theme.colors.textDim)
-        love.graphics.print(class.description, w/2 - 280, y + 32)
-
-        love.graphics.setColor(Theme.colors.success)
+        love.graphics.setColor(C.neonGreen)
         local bonusText = CharacterSelectUI.format_passive_bonus(state, class.passiveBonus)
-        love.graphics.print("被动: " .. bonusText, w/2 - 280, y + 54)
+        love.graphics.print("Passive: " .. bonusText, w / 2 - 260, y + 48)
 
-        love.graphics.setColor(Theme.colors.textDim)
-        local statsText = string.format("HP:%d MP:%d ATK:%d DEF:%d SPD:%d",
+        love.graphics.setColor(C.textMuted)
+        local statsText = string.format("HP:%d  MP:%d  ATK:%d  DEF:%d  SPD:%d",
             class.baseStats.hp, class.baseStats.mp, class.baseStats.attack,
             class.baseStats.defense, class.baseStats.speed)
-        love.graphics.print(statsText, w/2 - 280, y + 72)
+        love.graphics.print(statsText, w / 2 - 260, y + 66)
     end
 
     local buttonY = h - 80
-    Components.drawOrnateButton(w/2 - 320, buttonY, state.buttonWidth, state.buttonHeight, "Back", "normal", state.assetManager, love.graphics.getFont(), { gemColor = "red" })
-    Components.drawOrnateButton(w/2 - 100, buttonY, state.buttonWidth, state.buttonHeight, "Next", "normal", state.assetManager, love.graphics.getFont(), { gemColor = "green" })
+    local mx, my = love.mouse.getPosition()
+    local backHover = mx >= w / 2 - 320 and mx <= w / 2 - 120 and my >= buttonY and my <= buttonY + 38
+    local nextHover = mx >= w / 2 - 100 and mx <= w / 2 + 100 and my >= buttonY and my <= buttonY + 38
+    PL.drawButton(w / 2 - 320, buttonY, state.buttonWidth, 38, "Back", "danger", font, { hover = backHover })
+    PL.drawButton(w / 2 - 100, buttonY, state.buttonWidth, 38, "Next", "primary", font, { hover = nextHover })
 end
 
 function CharacterSelectUI.format_passive_bonus(state, bonus)
@@ -340,15 +383,17 @@ function CharacterSelectUI.format_passive_bonus(state, bonus)
 end
 
 function CharacterSelectUI.draw_appearance_step(state, w, h)
-    love.graphics.setColor(Theme.colors.textDim)
-    love.graphics.printf("Select Appearance", 0, 100, w, "center")
+    local font = love.graphics.getFont()
+
+    love.graphics.setColor(C.textDim)
+    love.graphics.printf("Select Appearance", 0, 90, w, "center")
 
     local selectedClass = state.currentClassList[state.selectedClassIndex]
-    love.graphics.setColor(Theme.colors.accentBlue)
-    love.graphics.printf(string.format("Creating: %s - %s", state.newCharName, selectedClass.name), 0, 120, w, "center")
+    love.graphics.setColor(C.neonCyan)
+    love.graphics.printf(string.format("Creating: %s - %s", state.newCharName, selectedClass.name), 0, 108, w, "center")
 
-    local gridStartX = w/2 - 280
-    local gridStartY = 155
+    local gridStartX = w / 2 - 280
+    local gridStartY = 135
     local cellWidth = 140
     local cellHeight = 110
 
@@ -357,31 +402,31 @@ function CharacterSelectUI.draw_appearance_step(state, w, h)
         local row = math.floor((i - 1) / 4)
         local x = gridStartX + col * cellWidth
         local y = gridStartY + row * cellHeight
-
         local isSelected = (i == state.selectedAppearanceIndex)
 
+        PL.drawPanel(x, y, 130, 100, {
+            hovered = isSelected,
+            innerBorder = isSelected,
+        })
+
         if isSelected then
-            Components.drawOrnatePanel(x, y, 130, 100, state.assetManager, { corners = true, glow = true })
-            love.graphics.setColor(Theme.colors.accentBlue[1], Theme.colors.accentBlue[2], Theme.colors.accentBlue[3], 0.3)
-            love.graphics.rectangle("fill", x, y, 130, 100, 5, 5)
-            Theme.draw_gold_border(x, y, 130, 100, 1)
-            Theme.draw_corner_ornaments(x, y, 130, 100, 5)
-        else
-            Components.drawOrnatePanel(x, y, 130, 100, state.assetManager, { corners = true, glow = false })
-            love.graphics.setColor(Theme.colors.panel[1], Theme.colors.panel[2], Theme.colors.panel[3], 0.3)
-            love.graphics.rectangle("fill", x, y, 130, 100, 5, 5)
+            love.graphics.setColor(C.neonCyan[1], C.neonCyan[2], C.neonCyan[3], 0.06)
+            love.graphics.rectangle("fill", x, y, 4, 100)
         end
 
         local preset = AppearanceSystem.get_preset(appearance.id)
         AppearanceSystem.draw_avatar(x + 65, y + 35, 22, preset)
 
-        love.graphics.setColor(Theme.colors.text)
+        love.graphics.setColor(C.text)
         love.graphics.printf(appearance.name, x, y + 72, 130, "center")
     end
 
     local buttonY = h - 80
-    Components.drawOrnateButton(w/2 - 320, buttonY, state.buttonWidth, state.buttonHeight, "Back", "normal", state.assetManager, love.graphics.getFont(), { gemColor = "red" })
-    Components.drawOrnateButton(w/2 - 100, buttonY, state.buttonWidth, state.buttonHeight, "Create", "normal", state.assetManager, love.graphics.getFont(), { gemColor = "green" })
+    local mx, my = love.mouse.getPosition()
+    local backHover = mx >= w / 2 - 320 and mx <= w / 2 - 120 and my >= buttonY and my <= buttonY + 38
+    local createHover = mx >= w / 2 - 100 and mx <= w / 2 + 100 and my >= buttonY and my <= buttonY + 38
+    PL.drawButton(w / 2 - 320, buttonY, state.buttonWidth, 38, "Back", "danger", font, { hover = backHover })
+    PL.drawButton(w / 2 - 100, buttonY, state.buttonWidth, 38, "Create", "primary", font, { hover = createHover })
 end
 
 function CharacterSelectUI.draw(state)
@@ -457,28 +502,27 @@ end
 
 function CharacterSelectUI.mousepressed(state, x, y, button)
     local w, h = love.graphics.getDimensions()
+    local btnH = 38
 
     if state.mode == "select" then
         local characters = state.characters
-
-        local startY = 120
+        local startY = 100
         for i, char in ipairs(characters) do
-            local charY = startY + (i - 1) * 80
-            if button == 1 and x >= w/2 - 250 and x <= w/2 + 250 and y >= charY and y <= charY + 70 then
+            local charY = startY + (i - 1) * 78
+            if button == 1 and x >= w / 2 - 280 and x <= w / 2 + 280 and y >= charY and y <= charY + 66 then
                 state.selectedCharIndex = i
                 return characters[i]
             end
         end
 
-        local buttonY = h - 150
-
-        if button == 1 and x >= w/2 - 220 and x <= w/2 - 20 and y >= buttonY and y <= buttonY + state.buttonHeight then
+        local buttonY = h - 140
+        if button == 1 and x >= w / 2 - 220 and x <= w / 2 - 20 and y >= buttonY and y <= buttonY + btnH then
             if #characters > 0 and state.selectedCharIndex <= #characters then
                 return characters[state.selectedCharIndex]
             end
         end
 
-        if button == 1 and x >= w/2 + 20 and x <= w/2 + 220 and y >= buttonY and y <= buttonY + state.buttonHeight then
+        if button == 1 and x >= w / 2 + 20 and x <= w / 2 + 220 and y >= buttonY and y <= buttonY + btnH then
             state.mode = "create"
             state.newCharName = ""
             state.errorMessage = ""
@@ -497,55 +541,57 @@ function CharacterSelectUI.mousepressed(state, x, y, button)
 end
 
 function CharacterSelectUI.handle_create_mouse_press(state, x, y, button, w, h)
+    local btnH = 38
+
     if state.createStep == 1 then
-        if button == 1 and x >= w/2 - 200 and x <= w/2 + 200 and y >= 175 and y <= 215 then
+        if button == 1 and x >= w / 2 - 200 and x <= w / 2 + 200 and y >= 165 and y <= 205 then
             state.nameInputActive = true
         else
             state.nameInputActive = false
         end
 
-        local buttonY = h - 120
-        if button == 1 and x >= w/2 - 100 and x <= w/2 + 100 and y >= buttonY and y <= buttonY + state.buttonHeight then
+        local buttonY = h - 110
+        if button == 1 and x >= w / 2 - 100 and x <= w / 2 + 100 and y >= buttonY and y <= buttonY + btnH then
             if CharacterSelectUI.validate_name(state) then
                 state.createStep = 2
             end
         end
 
-        if button == 1 and x >= w/2 + 110 and x <= w/2 + 310 and y >= buttonY and y <= buttonY + state.buttonHeight then
+        if button == 1 and x >= w / 2 + 110 and x <= w / 2 + 310 and y >= buttonY and y <= buttonY + btnH then
             state.mode = "select"
             state.newCharName = ""
             state.errorMessage = ""
         end
 
     elseif state.createStep == 2 then
-        local catStartX = w/2 - 300
+        local catStartX = w / 2 - 280
         for i, cat in ipairs(state.categories) do
             local cx = catStartX + (i - 1) * 160
-            if button == 1 and x >= cx and x <= cx + 150 and y >= 150 and y <= 200 then
+            if button == 1 and x >= cx and x <= cx + 150 and y >= 140 and y <= 190 then
                 state.selectedCategoryIndex = i
                 CharacterSelectUI.update_class_list(state)
             end
         end
 
-        local classStartY = 250
+        local classStartY = 235
         for i, class in ipairs(state.currentClassList) do
-            local cy = classStartY + (i - 1) * 100
-            if button == 1 and x >= w/2 - 300 and x <= w/2 + 300 and y >= cy and y <= cy + 90 then
+            local cy = classStartY + (i - 1) * 98
+            if button == 1 and x >= w / 2 - 280 and x <= w / 2 + 280 and y >= cy and y <= cy + 88 then
                 state.selectedClassIndex = i
             end
         end
 
         local buttonY = h - 80
-        if button == 1 and x >= w/2 - 320 and x <= w/2 - 120 and y >= buttonY and y <= buttonY + state.buttonHeight then
+        if button == 1 and x >= w / 2 - 320 and x <= w / 2 - 120 and y >= buttonY and y <= buttonY + btnH then
             state.createStep = 1
         end
-        if button == 1 and x >= w/2 - 100 and x <= w/2 + 100 and y >= buttonY and y <= buttonY + state.buttonHeight then
+        if button == 1 and x >= w / 2 - 100 and x <= w / 2 + 100 and y >= buttonY and y <= buttonY + btnH then
             state.createStep = 3
         end
 
     elseif state.createStep == 3 then
-        local gridStartX = w/2 - 280
-        local gridStartY = 155
+        local gridStartX = w / 2 - 280
+        local gridStartY = 135
         local cellWidth = 140
         local cellHeight = 110
 
@@ -561,10 +607,10 @@ function CharacterSelectUI.handle_create_mouse_press(state, x, y, button, w, h)
         end
 
         local buttonY = h - 80
-        if button == 1 and x >= w/2 - 320 and x <= w/2 - 120 and y >= buttonY and y <= buttonY + state.buttonHeight then
+        if button == 1 and x >= w / 2 - 320 and x <= w / 2 - 120 and y >= buttonY and y <= buttonY + btnH then
             state.createStep = 2
         end
-        if button == 1 and x >= w/2 - 100 and x <= w/2 + 100 and y >= buttonY and y <= buttonY + state.buttonHeight then
+        if button == 1 and x >= w / 2 - 100 and x <= w / 2 + 100 and y >= buttonY and y <= buttonY + btnH then
             return CharacterSelectUI.create_character(state)
         end
     end

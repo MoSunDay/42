@@ -5,6 +5,8 @@ local Components = require("src.ui.components")
 local Particles = require("src.ui.particles")
 
 local LoginUI = {}
+local PL = Theme.pixelLab
+local C = PL.colors
 
 local MODE = {
     LOGIN = "login",
@@ -125,34 +127,26 @@ end
 function LoginUI.draw(state)
     local w, h = love.graphics.getDimensions()
 
-    love.graphics.setColor(Theme.colors.background)
-    love.graphics.rectangle("fill", 0, 0, w, h)
-
-    local loginBg = state.assetManager and state.assetManager:get_ui_panel("login_panel")
-    if loginBg then
-        local scaleX = w / loginBg:getWidth()
-        local scaleY = h / loginBg:getHeight()
-        love.graphics.setColor(1, 1, 1, 0.3)
-        love.graphics.draw(loginBg, 0, 0, 0, scaleX, scaleY)
-    end
-
-    Theme.draw_shimmer(0, 0, w, h, 0.15)
+    Theme.draw_gradient(0, 0, w, h, C.bg, C.bgPanel, 12)
 
     LoginUI.ensure_particles(state)
 
     love.graphics.setFont(state.titleFont)
-    love.graphics.setColor(Theme.gold.bright)
-    love.graphics.printf("Fantasy RPG", 0, h * 0.06, w, "center")
-    Theme.draw_diamond_separator(w / 2, h * 0.06 + 38, 300)
+    love.graphics.setColor(C.neonCyan)
+    love.graphics.printf("PIXEL RPG", 0, h * 0.05, w, "center")
+
+    love.graphics.setFont(state.smallFont)
+    love.graphics.setColor(C.textDim)
+    love.graphics.printf("AI-Generated Pixel Art Adventure", 0, h * 0.05 + 38, w, "center")
 
     local panelW = 420
     local panelH = state.panelHeight
     local panelX = (w - panelW) / 2
-    local panelY = (h - panelH) / 2 + 20
+    local panelY = (h - panelH) / 2 + 10
 
     LoginUI.draw_panel(state, panelX, panelY, panelW, panelH)
 
-    Theme.draw_diamond_separator(w / 2, panelY + 48, panelW - 80)
+    PL.drawSeparator(panelX + 20, panelX + panelW - 20, panelY + 44)
 
     local tabW = panelW / 2
     state.loginTabRect = {x = panelX, y = panelY, width = tabW, height = 40}
@@ -162,7 +156,6 @@ function LoginUI.draw(state)
     LoginUI.draw_tab(state, "Register", state.registerTabRect, state.mode == MODE.REGISTER)
 
     local contentY = panelY + 60
-
     local fieldX = panelX + 30
     local fieldW = panelW - 60
     local fieldH = 40
@@ -180,22 +173,26 @@ function LoginUI.draw(state)
         state.characterNameFieldRect = {x = fieldX, y = contentY + fieldGap * 2, width = fieldW, height = fieldH}
         LoginUI.draw_input_field(state, "Character Name:", state.characterName, state.characterNameFieldRect,
             state.selectedField == "characterName")
-
         state.submitButtonRect = {x = fieldX, y = contentY + fieldGap * 3 + 20, width = fieldW, height = fieldH}
     else
         state.characterNameFieldRect = {x = 0, y = 0, width = 0, height = 0}
-
         state.submitButtonRect = {x = fieldX, y = contentY + fieldGap * 2 + 20, width = fieldW, height = fieldH}
     end
 
     local mx, my = love.mouse.getPosition()
     local submitHover = LoginUI.is_mouse_over(state, state.submitButtonRect, mx, my)
-    local buttonText = state.mode == MODE.LOGIN and "Login" or "Create Account"
+    local buttonText = state.mode == MODE.LOGIN and "Sign In" or "Create Account"
     local isDisabled = state.isSubmitting or state.isConnecting
-    LoginUI.draw_button(state, buttonText, state.submitButtonRect, false, submitHover, isDisabled)
+    local btnState = isDisabled and "disabled" or "primary"
+
+    PL.drawButton(
+        state.submitButtonRect.x, state.submitButtonRect.y,
+        state.submitButtonRect.width, state.submitButtonRect.height,
+        buttonText, btnState, state.normalFont,
+        { hover = submitHover and not isDisabled }
+    )
 
     local msgY = state.submitButtonRect.y + state.submitButtonRect.height + 15
-
     if state.errorMessage ~= "" then
         love.graphics.setFont(state.smallFont)
         love.graphics.setColor(Theme.colors.error)
@@ -206,77 +203,80 @@ function LoginUI.draw(state)
         love.graphics.printf(state.successMessage, panelX, msgY, panelW, "center")
     elseif state.isConnecting then
         love.graphics.setFont(state.smallFont)
-        love.graphics.setColor(Theme.colors.textDim)
+        love.graphics.setColor(C.textDim)
         love.graphics.printf("Connecting to server...", panelX, msgY, panelW, "center")
     end
 
     love.graphics.setFont(state.smallFont)
-    love.graphics.setColor(Theme.colors.textDim)
-    love.graphics.printf("Tab: Switch field | Enter: Submit", 0, h - 40, w, "center")
+    love.graphics.setColor(C.textMuted)
+    love.graphics.printf("Tab: Switch  |  Enter: Submit", 0, h - 30, w, "center")
 end
 
 function LoginUI.draw_panel(state, x, y, w, h)
-    Components.drawOrnatePanel(x, y, w, h, state.assetManager, {
-        title = "",
-        corners = true,
-        glow = true,
-        shimmer = true,
-        font = state.titleFont,
-        style = "login_panel",
-    })
-    Theme.draw_gold_border(x, y, w, h, 2)
-    Theme.draw_corner_ornaments(x, y, w, h, 12)
+    local pixellabPanel = state.assetManager and state.assetManager:get_ui_panel("pixellab_panel")
+    if pixellabPanel and Components.draw9Slice(pixellabPanel, x, y, w, h, 16) then
+        return true
+    end
+    PL.drawPanel(x, y, w, h, { innerBorder = true })
+    return false
 end
 
 function LoginUI.draw_tab(state, text, rect, is_active)
-    Components.drawTab(rect.x, rect.y, rect.width, rect.height, text, is_active, state.assetManager, state.normalFont)
+    local assetName = is_active and "pixellab_active" or "pixellab_inactive"
+    local tabAsset = state.assetManager and state.assetManager:get_ui_asset("tabs", assetName)
 
-    if is_active then
-        Theme.draw_gold_border(rect.x, rect.y, rect.width, rect.height, 1)
+    if tabAsset then
+        love.graphics.setColor(1, 1, 1)
+        local sx = rect.width / tabAsset:getWidth()
+        local sy = rect.height / tabAsset:getHeight()
+        love.graphics.draw(tabAsset, rect.x, rect.y, 0, sx, sy)
+    else
+        if is_active then
+            love.graphics.setColor(C.bgCard)
+            love.graphics.rectangle("fill", rect.x, rect.y, rect.width, rect.height)
+            love.graphics.setColor(C.neonCyan)
+            love.graphics.setLineWidth(2)
+            love.graphics.rectangle("line", rect.x, rect.y, rect.width, rect.height)
+            love.graphics.setLineWidth(1)
+            love.graphics.setColor(C.neonCyan)
+            love.graphics.rectangle("fill", rect.x + rect.width * 0.2, rect.y + rect.height - 2, rect.width * 0.6, 3)
+        else
+            love.graphics.setColor(C.bgInput)
+            love.graphics.rectangle("fill", rect.x, rect.y, rect.width, rect.height)
+        end
     end
+
+    love.graphics.setFont(state.normalFont)
+    love.graphics.setColor(is_active and C.text or C.textDim)
+    love.graphics.printf(text, rect.x, rect.y + 10, rect.width, "center")
 end
 
 function LoginUI.draw_input_field(state, label, text, rect, selected)
-    love.graphics.setFont(state.normalFont)
+    local inputAsset = state.assetManager and state.assetManager:get_ui_asset("input", "pixellab_input")
 
-    love.graphics.setColor(Theme.colors.textDim)
+    love.graphics.setFont(state.normalFont)
+    love.graphics.setColor(C.textDim)
     love.graphics.print(label, rect.x, rect.y - 22)
 
-    Components.drawInput(rect.x, rect.y, rect.width, rect.height, selected, state.assetManager)
-
-    if selected then
-        Theme.draw_glow(rect.x, rect.y, rect.width, rect.height, Theme.colors.accentBlue, 0.08)
+    if inputAsset then
+        love.graphics.setColor(1, 1, 1)
+        local sx = rect.width / inputAsset:getWidth()
+        local sy = rect.height / inputAsset:getHeight()
+        love.graphics.draw(inputAsset, rect.x, rect.y, 0, sx, sy)
+    else
+        PL.drawInput(rect.x, rect.y, rect.width, rect.height, selected)
     end
 
-    love.graphics.setColor(Theme.colors.text)
+    love.graphics.setColor(C.text)
     love.graphics.print(text, rect.x + 10, rect.y + 10)
 
     if selected then
         local cursorX = rect.x + 10 + state.normalFont:getWidth(text)
         local time = love.timer.getTime()
         if math.floor(time * 2) % 2 == 0 then
-            love.graphics.setColor(Theme.colors.text)
-            love.graphics.rectangle("fill", cursorX, rect.y + 8, 2, 24)
+            love.graphics.setColor(C.neonCyan)
+            love.graphics.rectangle("fill", cursorX, rect.y + 10, 2, 20)
         end
-    end
-end
-
-function LoginUI.draw_button(state, text, rect, disabled, hover, submitting)
-    local btnState = "normal"
-    if submitting then
-        btnState = "pressed"
-    elseif hover and not disabled then
-        btnState = "hover"
-    end
-
-    Components.drawOrnateButton(rect.x, rect.y, rect.width, rect.height,
-        text, btnState, state.assetManager, state.normalFont, {gemColor = Theme.gem.sapphire})
-
-    love.graphics.setFont(state.normalFont)
-    if submitting then
-        love.graphics.setColor(Theme.colors.textDim)
-        local _, centerTextY = rect.x, rect.y + 10
-        love.graphics.printf("Please wait...", rect.x, centerTextY, rect.width, "center")
     end
 end
 

@@ -1,6 +1,16 @@
 # Account Module Summary
 
-> Last updated: 2026-02-21 - Class selection in character creation
+> Last updated: 2026-05-05 - PixelLab style overhaul for login/character select
+
+## Visual Style
+
+Login and Character Select UIs now use the PixelLab pixel-art style defined in `Theme.pixelLab`:
+- Deep color gradient backgrounds (no image assets, pure code)
+- Clean pixel borders (2px rects, no rounded corners)
+- Neon cyan/green/blue accent colors for titles, selected states, and primary buttons
+- Dot-based step indicators (circles + connecting lines) for the 3-step creation flow
+- Pill-style buttons with bottom-half highlight on hover
+- Direct function calls to `Theme.pixelLab.draw*` — no `Components.*` dependency
 
 ## Purpose
 Account management, login UI, and character selection with class system.
