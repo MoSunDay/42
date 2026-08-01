@@ -4,12 +4,9 @@ from typing import Optional, Dict, Any
 
 from .constants import HEADER_SIZE, PACKET_TYPE, RELIABLE_TYPES
 
-_HEADER = struct.Struct("!HBBIIBBB")
-_LEN_FMT = struct.Struct("!H")
-_MSG_FMT = struct.Struct("!B")
-_FLAGS_FMT = struct.Struct("!B")
-_SEQ_FMT = struct.Struct("!I")
-_ACK_FMT = struct.Struct("!IB")
+# 13-byte BE header: total_len u16 | msg_type u8 | flags u8 | seq u32 | ack u32 | ack_mask u8
+_HEADER = struct.Struct("!HBBI")  # total_len, msg_type, flags, seq (8 bytes)
+_ACK_FMT = struct.Struct("!IB")  # ack, ack_mask (5 bytes)
 
 
 def is_reliable(msg_type: int) -> bool:
@@ -28,19 +25,27 @@ def pack_packet(
     if payload is not None:
         payload_bytes = json.dumps(payload, ensure_ascii=False).encode("utf-8")
     total_len = HEADER_SIZE + len(payload_bytes)
-    header = _HEADER.pack(total_len, msg_type, flags, seq, ack, ack_mask)
+    header = _HEADER.pack(total_len, msg_type, flags, seq) + _ACK_FMT.pack(ack, ack_mask)
     return header + payload_bytes
 
 
 def unpack_packet(data: bytes) -> Optional[Dict[str, Any]]:
-    if len(data) < HEADER_SIZE:
+    if len(data) < 8:
         return None
     total_len, msg_type, flags, seq = struct.unpack_from("!HBBI", data, 0)
+    if len(data) < HEADER_SIZE:
+        # 8-byte prefix only: ack/ack_mask default to 0
+        return {
+            "msg_type": msg_type,
+            "seq": seq,
+            "ack": 0,
+            "ack_mask": 0,
+            "flags": flags,
+            "payload": None,
+        }
     if total_len != len(data):
         return None
-    ack, ack_mask = 0, 0
-    if len(data) >= 13:
-        ack, ack_mask = struct.unpack_from("!IB", data, 8)
+    ack, ack_mask = struct.unpack_from("!IB", data, 8)
     payload_bytes = data[HEADER_SIZE:total_len]
     payload = None
     if payload_bytes:

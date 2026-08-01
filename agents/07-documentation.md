@@ -57,10 +57,11 @@ Each code module has a `docs/summary.md` file that describes:
 | Account | `game/account/docs/summary.md` |
 | Map | `game/map/docs/summary.md` |
 | NPCs | `game/npcs/docs/summary.md` |
-| Server | `server/docs/summary.md` |
-| Server Handlers | `server/handlers/docs/summary.md` |
-| Server Protocol | `server/protocol/docs/summary.md` |
-| Server Storage | `server/storage/docs/summary.md` |
+| Server | `server/README.md` |
+| Server (Rust) | `server/src/` → `server/README.md` |
+| Legacy Server Handlers | `server/legacy_python/handlers/docs/summary.md` |
+| Legacy Server Protocol | `server/legacy_python/protocol/docs/summary.md` |
+| Legacy Server Storage | `server/legacy_python/storage/docs/summary.md` |
 | Tests | `tests/docs/summary.md` |
 | Tools | `tools/docs/summary.md` |
 

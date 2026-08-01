@@ -175,6 +175,7 @@ def register(username: str, password: str) -> Dict[str, Any]:
     return _send_and_wait(
         PACKET_TYPE["REGISTER"],
         {"username": username, "password": password},
+        response_type=PACKET_TYPE["LOGIN"],  # server answers REGISTER with a LOGIN-typed reply
         on_response=on_resp,
     )
 

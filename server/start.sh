@@ -1,31 +1,21 @@
 #!/bin/bash
-# Start the Game Account API Server
+# Start the RUDP game server (Rust, wire-compatible with the Lua client).
+# Usage: ./start.sh [port]   (default 9000; env GAME_PORT also honored)
+set -e
+cd "$(dirname "$0")"
 
-echo "=========================================="
-echo "Game Account API Server"
-echo "=========================================="
-
-# Check if Python is installed
-if ! command -v python3 &> /dev/null; then
-    echo "Error: Python 3 is not installed"
+if ! command -v cargo >/dev/null 2>&1; then
+    echo "Error: cargo is not installed"
     exit 1
 fi
 
-# Check if virtual environment exists
-if [ ! -d "venv" ]; then
-    echo "Creating virtual environment..."
-    python3 -m venv venv
+if [ ! -f target/release/game-server ]; then
+    echo "Building release binary..."
+    cargo build --release
 fi
 
-# Activate virtual environment
-echo "Activating virtual environment..."
-source venv/bin/activate
-
-# Install dependencies
-echo "Installing dependencies..."
-pip install -q -r requirements.txt
-
-# Start the server
-echo "Starting server..."
-python app.py
-
+echo "=========================================="
+echo "Game Account API Server (Rust RUDP)"
+echo "Port: ${1:-9000}   Accounts: $(pwd)/data/accounts.json"
+echo "=========================================="
+exec target/release/game-server "$@"

@@ -10,20 +10,31 @@ cd game && love .
 cd game && love . --console
 ```
 
-## Server (Python/Sanic)
+## Server (Rust RUDP)
 
 ```bash
-# Install dependencies
-cd server && pip install -r requirements.txt
-
-# Run the server
-cd server && python app.py
-
-# Or use the startup script (creates venv automatically)
+# Build and run (binds 0.0.0.0:9000 UDP; start.sh builds if missing)
 cd server && ./start.sh
+# or: cd server && cargo run --release
 
-# Server runs on http://localhost:8000
+# Unit/integration tests (no server needed)
+cd server && cargo test              # 27 tests
+
+# Wire-format checks (no server needed)
+cd server && python3 test_protocol.py   # 26 checks
+
+# Live integration (server must be running)
+cd server && python3 test_client.py     # 16 checks
 ```
+
+Server source lives in `server/src/` (Rust). The old Python/Sanic server is
+archived in `server/legacy_python/` and is not run by `start.sh`; it remains
+the semantic reference for protocol behavior. Client-side protocol reference:
+`server/headless_client/protocol/` (mirrors `game/src/network/`). See
+`server/README.md` for the wire format and message-type table.
+
+> Note: `game/conf.lua` requires LÖVE >= 11.3 (tested on 11.3; 11.4+ shows a
+> version compatibility dialog that can block headless automation).
 
 ## Testing
 

@@ -267,7 +267,9 @@ function GameState.update(state, dt)
     if state.mode == GAME_MODE.LOGIN then
         LoginUI.update(state.loginUI, dt)
     elseif state.mode == GAME_MODE.CHARACTER_SELECT then
+        NetworkManager.update(state.network)
     elseif state.mode == GAME_MODE.EXPLORATION then
+        NetworkManager.update(state.network)
         DialogUI.update(state.dialogUI, dt)
         ShopUI.update(state.shopUI, dt)
 
@@ -302,6 +304,7 @@ function GameState.update(state, dt)
             GameState.check_encounters(state)
         end
     elseif state.mode == GAME_MODE.BATTLE then
+        NetworkManager.update(state.network)
         BattleSystem.update(state.battleSystem, dt)
 
         if not state.battleSystem.is_active then

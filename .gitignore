@@ -32,6 +32,7 @@ Desktop.ini
 # Build artifacts
 build/
 dist/
+server/target/
 *.exe
 *.app
 *.dmg

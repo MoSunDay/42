@@ -42,12 +42,13 @@
 │   ├── assets/             # Images, sounds
 │   └── tools/              # Test files and utilities
 │
-└── server/                  # Python API server → [docs/summary.md](../server/docs/summary.md)
-    ├── app.py              # Main server application
-    ├── handlers/           # Request handlers
-    │   └── common.py       # Shared handler utilities
-    ├── requirements.txt    # Python dependencies
-    └── start.sh            # Startup script
+└── server/                  # Rust RUDP server (UDP/9000) → [README.md](../server/README.md)
+    ├── src/                # Rust source (main, packet, rudp, handlers, accounts, storage)
+    ├── headless_client/    # Python client + protocol lib (tests, tooling)
+    ├── test_protocol.py    # Wire-format checks (26)
+    ├── test_client.py      # Live integration checks (16)
+    ├── legacy_python/      # Archived Python/Sanic server (semantic reference)
+    └── start.sh            # Build (if needed) + run
 ```
 
 > 详见各模块的 `docs/summary.md` 获取详细 API 和文件说明。

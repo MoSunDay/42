@@ -1,96 +1,86 @@
 #!/usr/bin/env python3
-"""Test script for UDP server"""
+"""Live integration tests against a running RUDP server (default 127.0.0.1:9000).
 
-import socket
-import time
+Requires the server to be started first:  ./start.sh
+"""
+
 import sys
+import os
+import time
+import random
+import string
 
-sys.path.insert(0, ".")
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from protocol.packet import Packet, PacketType, PacketBuilder
+from headless_client.client import (
+    connect, disconnect, login, register, create_character,
+    select_character, delete_character, get_state, move_to,
+)
 
+HOST = os.environ.get("SERVER_HOST", "127.0.0.1")
+PORT = int(os.environ.get("SERVER_PORT", "9000"))
 
-def recv_response(sock, expected_type=None, max_tries=5):
-    for _ in range(max_tries):
-        try:
-            data, addr = sock.recvfrom(4096)
-            response = Packet.unpack(data)
-
-            if expected_type is None or response.msg_type == expected_type:
-                return response
-        except socket.timeout:
-            return None
-    return None
+PASS = 0
 
 
-def test_server(host="127.0.0.1", port=9000):
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.settimeout(2.0)
+def check(name, cond, detail=""):
+    global PASS
+    if not cond:
+        raise AssertionError(f"FAIL: {name} {detail}")
+    PASS += 1
+    print(f"  ok: {name}")
 
-    print(f"Testing UDP server at {host}:{port}")
-    print("=" * 50)
 
-    print("\n1. Testing login with 'test/123'...")
-    login_pkt = PacketBuilder.login("test", "123")
-    sock.sendto(login_pkt.pack(), (host, port))
+def rand_name(prefix):
+    return prefix + "_" + "".join(random.choices(string.ascii_lowercase, k=8))
 
-    response = recv_response(sock, PacketType.LOGIN)
-    if response:
-        payload = response.get_payload_json()
-        if payload:
-            print(f"   Success: {payload.get('success')}")
-            if payload.get("character"):
-                char = payload["character"]
-                print(
-                    f"   Character: {char.get('characterName')} (Lv.{char.get('level')})"
-                )
-    else:
-        print("   ERROR: No LOGIN response")
 
-    print("\n2. Testing invalid login...")
-    bad_login = PacketBuilder.login("invalid", "wrong")
-    sock.sendto(bad_login.pack(), (host, port))
+def main():
+    print(f"connecting to {HOST}:{PORT}")
+    r = connect(HOST, PORT)
+    check("connect", r.get("success") is True, str(r))
 
-    response = recv_response(sock, PacketType.LOGIN)
-    if response:
-        payload = response.get_payload_json()
-        if payload:
-            print(f"   Success: {payload.get('success')}")
-            print(f"   Error: {payload.get('error')}")
-    else:
-        print("   ERROR: No LOGIN response")
+    r = login("test", "123")
+    check("login test/123", r.get("success") is True and "characters" in r, str(r))
+    check("default char present", len(r.get("characters", [])) >= 1)
+    chars = r.get("characters", [])
+    default_id = chars[0]["id"] if chars else None
+    state = get_state()
+    check("state entered character select", state.get("mode") == "character_select", str(state))
 
-    print("\n3. Testing registration...")
-    reg_pkt = PacketBuilder.register(
-        "testuser_" + str(int(time.time()) % 10000), "pass123"
-    )
-    sock.sendto(reg_pkt.pack(), (host, port))
+    r = login("test", "wrong-password")
+    check("bad login rejected", r.get("success") is False and r.get("error"), str(r))
 
-    response = recv_response(sock, PacketType.LOGIN)
-    if response:
-        payload = response.get_payload_json()
-        if payload:
-            print(f"   Success: {payload.get('success')}")
-            if payload.get("character"):
-                print(f"   New character: {payload['character'].get('characterName')}")
-    else:
-        print("   ERROR: No LOGIN response")
+    user = rand_name("u")
+    r = register(user, "pass123")
+    check("register new account", r.get("success") is True, str(r))
+    check("register answers with LOGIN-typed success + characters", "characters" in r, str(r))
+    check("new account gets first character", len(r.get("characters", [])) == 1, str(r))
+    check("first char named after username", r["characters"][0]["characterName"] == user, str(r))
 
-    print("\n4. Testing heartbeat...")
-    hb_pkt = PacketBuilder.heartbeat(0)
-    sock.sendto(hb_pkt.pack(), (host, port))
+    cname = rand_name("hero")
+    r = create_character(cname, "warrior", {"avatarColor": [0.2, 0.6, 1.0]})
+    check("create character", r.get("success") is True, str(r))
+    cid = r.get("character", {}).get("id")
+    check("created char has id", bool(cid), str(r))
 
-    response = recv_response(sock, PacketType.ACK)
-    if response:
-        print(f"   Response type: {response.msg_type.name}")
-    else:
-        print("   ERROR: No ACK response")
+    r = select_character(cid)
+    check("select character", r.get("success") is True, str(r))
+    state = get_state()
+    check("state entered exploration", state.get("mode") == "exploration", str(state))
 
-    print("\n" + "=" * 50)
-    print("Test complete")
+    r = move_to(12.5, 34.0)
+    check("position update sent", r.get("success") is True, str(r))
 
-    sock.close()
+    r = select_character(cid)  # re-select to confirm server still tracks session
+    check("reselect character", r.get("success") is True, str(r))
+
+    r = delete_character(cid)
+    check("delete character", r.get("success") is True, str(r))
+
+    disconnect()
+    print(f"\n{PASS} checks passed")
 
 
 if __name__ == "__main__":
-    test_server()
+    main()

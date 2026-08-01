@@ -1,347 +1,106 @@
-# Game Account API Server
+# game-server — Rust RUDP Server
 
-Simple HTTP API server using Python Sanic framework for managing game accounts and character data.
+RUDP (reliable UDP) game server for PIXEL RPG. Wire-compatible with the LÖVE
+Lua client (`game/src/network/`) and the headless Python client
+(`server/headless_client/`).
 
-## Features
-
-- ✅ Account registration
-- ✅ Account login with password hashing
-- ✅ Character data management
-- ✅ Persistent storage (JSON file)
-- ✅ RESTful API design
-- ✅ Auto-reload in development mode
-
-## Installation
-
-### 1. Install Python Dependencies
+## Build & Run
 
 ```bash
-cd game/server
-pip install -r requirements.txt
+# Requires Rust toolchain (rustc/cargo 1.96+)
+cargo build --release
+
+# Run (binds 0.0.0.0:9000 UDP)
+./start.sh            # builds if missing, then runs target/release/game-server
+# or directly:
+cargo run --release
 ```
 
-### 2. Run the Server
+Stop with Ctrl+C (SIGINT handler performs graceful shutdown + store save).
+
+## Tests
 
 ```bash
-python app.py
+cargo test            # 27 unit/integration tests (accounts, handlers, rudp, packet)
+python3 test_protocol.py   # 26 wire-format checks (standalone, no server needed)
+# Live integration (server must be running):
+python3 test_client.py     # 16 checks: login, register auto-char, CRUD, movement, state machine
 ```
 
-The server will start on `http://localhost:8000`
+Lua-side compatibility is covered by `game/tools/test_*.lua` (9 suites under
+`lua5.4`) plus the LÖVE e2e probe (see `features/changelog/2026-08-01/rust-server-rewrite.md`).
 
-## API Endpoints
+## Wire Protocol
 
-### 1. Health Check
+13-byte big-endian header + JSON payload (UTF-8):
 
-**GET** `/api/health`
-
-Check if the server is running.
-
-**Response:**
-```json
-{
-  "status": "healthy",
-  "timestamp": "2025-10-11T10:30:00",
-  "accounts_count": 2
-}
+```
+offset  field        size  note
+0       total_len    u16   header(13) + payload bytes
+2       msg_type     u8    see PACKET_TYPE below
+3       flags        u8    bit0 = RELIABLE
+4       seq          u32   sender sequence number (starts at 1)
+8       ack          u32   last received seq from peer
+12      ack_mask     u8    bitfield of received seqs (1 = received)
 ```
 
-### 2. Register Account
+ACK packets are `msg_type=ACK` with `seq=0`, `ack=incoming seq`. HEARTBEAT
+uses `seq=0`. An 8-byte header prefix (`len in [8,13)`) is tolerated by both
+server and client (`ack=0`, `ack_mask=0`, no payload).
 
-**POST** `/api/register`
+### Message Types (`server/headless_client/protocol/constants.py`)
 
-Create a new account.
+| type | value | reliable |
+|------|-------|----------|
+| LOGIN | 1 | yes |
+| REGISTER | 2 | yes |
+| LOGOUT | 3 | yes |
+| ACK | 10 | no |
+| HEARTBEAT | 11 | no |
+| ERROR | 12 | no (unless force-reliable, e.g. duplicate SELECT 409) |
+| GET_CHARACTER | 13 | yes |
+| SAVE_CHARACTER | 14 | yes |
+| CREATE_CHARACTER | 15 | yes |
+| LIST_CHARACTERS | 16 | yes |
+| SELECT_CHARACTER | 17 | yes |
+| DELETE_CHARACTER | 18 | yes |
+| POSITION_UPDATE | 20 | no |
+| BATTLE_ACTION | 21 | yes |
+| CHAT_MESSAGE | 22 | yes |
 
-**Request Body:**
-```json
-{
-  "username": "player1",
-  "password": "mypassword",
-  "characterName": "Warrior",
-  "avatarColor": [1.0, 0.5, 0.2]
-}
-```
+### Semantics (verified against `legacy_python/`)
 
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Account created successfully",
-  "username": "player1"
-}
-```
+- Reliable messages: 500ms × 5 retries, then dropped.
+- 30s idle timeout closes the session.
+- First non-ACK/HEARTBEAT packet creates a session; per-session server seq
+  starts at 1.
+- LOGIN and REGISTER both reply with a LOGIN-typed `{success, characters}`;
+  login succeeds with 0 characters.
+- Broadcast excludes the sender by SocketAddr.
+- SAVE_CHARACTER is lenient and preserves `id/level/exp/gold`.
+- SELECT_CHARACTER kicks duplicates with a force-reliable ERROR 409.
+- Register auto-creates a first character named `characterName or username`
+  (legacy `json_store.create_account` behavior).
+- Failed login clears any previous `username/character_id` on the session.
 
-### 3. Login
+## Storage
 
-**POST** `/api/login`
+`data/accounts.json` (auto-created from `data/accounts.seed.json` on first
+run; seed contains `test/123`, `admin/admin`, `player/pass`). Legacy Python
+store (`legacy_python/`) can be migrated via `migrate_legacy` in
+`src/storage.rs`. Store is written on change and on graceful shutdown.
 
-Login to an existing account.
+## Layout
 
-**Request Body:**
-```json
-{
-  "username": "test",
-  "password": "123"
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Login successful",
-  "character": {
-    "characterName": "Hero",
-    "level": 5,
-    "exp": 50,
-    "gold": 500,
-    "hp": 150,
-    "maxHp": 150,
-    "attack": 25,
-    "defense": 10,
-    "speed": 6,
-    "x": 1000,
-    "y": 1200,
-    "mapId": "town_01",
-    "avatarColor": [0.2, 0.6, 1.0]
-  }
-}
-```
-
-### 4. Get Account Info
-
-**GET** `/api/account/<username>`
-
-Get account information.
-
-**Response:**
-```json
-{
-  "success": true,
-  "account": {
-    "username": "test",
-    "character": {...},
-    "created_at": "2025-10-11T10:00:00",
-    "last_login": "2025-10-11T10:30:00"
-  }
-}
-```
-
-### 5. Update Account
-
-**PUT** `/api/account/<username>`
-
-Update character data.
-
-**Request Body:**
-```json
-{
-  "character": {
-    "characterName": "Hero",
-    "level": 6,
-    "exp": 75,
-    "gold": 650,
-    "hp": 180,
-    "maxHp": 180,
-    "attack": 28,
-    "defense": 12,
-    "speed": 6,
-    "x": 1500,
-    "y": 1800,
-    "mapId": "town_01",
-    "avatarColor": [0.2, 0.6, 1.0]
-  }
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Account updated successfully"
-}
-```
-
-### 6. List All Accounts
-
-**GET** `/api/accounts`
-
-List all accounts (admin endpoint).
-
-**Response:**
-```json
-{
-  "success": true,
-  "count": 2,
-  "accounts": [
-    {
-      "username": "test",
-      "level": 5,
-      "gold": 500,
-      "created_at": "2025-10-11T10:00:00",
-      "last_login": "2025-10-11T10:30:00"
-    },
-    {
-      "username": "admin",
-      "level": 10,
-      "gold": 9999,
-      "created_at": "2025-10-11T10:00:00",
-      "last_login": null
-    }
-  ]
-}
-```
-
-## Default Accounts
-
-The server comes with two default accounts:
-
-| Username | Password | Level | Gold |
-|----------|----------|-------|------|
-| test     | 123      | 5     | 500  |
-| admin    | admin    | 10    | 9999 |
-
-## Data Storage
-
-Account data is stored in `server/data/accounts.json`.
-
-**Example:**
-```json
-{
-  "test": {
-    "username": "test",
-    "password_hash": "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
-    "character": {
-      "characterName": "Hero",
-      "level": 5,
-      "exp": 50,
-      "gold": 500,
-      "hp": 150,
-      "maxHp": 150,
-      "attack": 25,
-      "defense": 10,
-      "speed": 6,
-      "x": 1000,
-      "y": 1200,
-      "mapId": "town_01",
-      "avatarColor": [0.2, 0.6, 1.0]
-    },
-    "created_at": "2025-10-11T10:00:00",
-    "last_login": "2025-10-11T10:30:00"
-  }
-}
-```
-
-## Testing with curl
-
-### Register
-```bash
-curl -X POST http://localhost:8000/api/register \
-  -H "Content-Type: application/json" \
-  -d '{"username":"player1","password":"pass123","characterName":"Warrior"}'
-```
-
-### Login
-```bash
-curl -X POST http://localhost:8000/api/login \
-  -H "Content-Type: application/json" \
-  -d '{"username":"test","password":"123"}'
-```
-
-### Get Account
-```bash
-curl http://localhost:8000/api/account/test
-```
-
-### Update Account
-```bash
-curl -X PUT http://localhost:8000/api/account/test \
-  -H "Content-Type: application/json" \
-  -d '{"character":{"characterName":"Hero","level":6,"exp":75,"gold":650,"hp":180,"maxHp":180,"attack":28,"defense":12,"speed":6,"x":1500,"y":1800,"mapId":"town_01","avatarColor":[0.2,0.6,1.0]}}'
-```
-
-### List Accounts
-```bash
-curl http://localhost:8000/api/accounts
-```
-
-## Security Notes
-
-⚠️ **This is a simple implementation for development/learning purposes.**
-
-For production use, you should add:
-- JWT authentication tokens
-- HTTPS/TLS encryption
-- Rate limiting
-- Input validation and sanitization
-- SQL database instead of JSON file
-- Password complexity requirements
-- Account lockout after failed attempts
-- CORS configuration
-- Logging and monitoring
-
-## Integration with Game Client
-
-The game client can use HTTP requests to communicate with this API:
-
-```lua
--- Example: Login (requires HTTP library)
-local http = require("socket.http")
-local json = require("json")
-
-local response = http.request{
-    url = "http://localhost:8000/api/login",
-    method = "POST",
-    headers = {
-        ["Content-Type"] = "application/json"
-    },
-    source = ltn12.source.string(json.encode({
-        username = "test",
-        password = "123"
-    }))
-}
-```
-
-## Development
-
-### Auto-reload
-
-The server runs in debug mode with auto-reload enabled. Any changes to `app.py` will automatically restart the server.
-
-### Adding New Endpoints
-
-1. Add a new route function:
-```python
-@app.route("/api/myendpoint", methods=["GET"])
-async def my_endpoint(request: Request):
-    return json_response({"message": "Hello!"})
-```
-
-2. The server will auto-reload and the endpoint will be available.
-
-## Troubleshooting
-
-### Port Already in Use
-
-If port 8000 is already in use, change the port in `app.py`:
-```python
-app.run(host="0.0.0.0", port=8001, debug=True)
-```
-
-### Module Not Found
-
-Make sure you've installed the requirements:
-```bash
-pip install -r requirements.txt
-```
-
-### Permission Denied
-
-Make sure the script is executable:
-```bash
-chmod +x app.py
-```
-
-## License
-
-MIT License - Feel free to use and modify for your projects.
-
+| file | purpose |
+|------|---------|
+| `src/main.rs` | UDP socket loop, session dispatch |
+| `src/packet.rs` | header encode/decode, message types |
+| `src/rudp.rs` | reliability: seq/ack tracking, retry, timeout |
+| `src/handlers.rs` | per-message-type handling |
+| `src/accounts.rs` | account/character business logic |
+| `src/storage.rs` | JSON persistence, hashing (sha2), legacy migration |
+| `src/constants.rs` | tuning constants |
+| `src/tests.rs` | integration tests (27) |
+| `headless_client/` | Python client + protocol lib (used by tests) |
+| `legacy_python/` | archived Python/Sanic server (semantic reference only) |

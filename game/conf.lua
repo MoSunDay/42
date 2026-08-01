@@ -2,7 +2,7 @@
 
 function love.conf(t)
     t.identity = "combat-game-mvp"
-    t.version = "11.4"
+    t.version = "11.3"
     t.console = false
     
     t.window.title = "3D 俯瞰视角战斗游戏 - MVP v1"
